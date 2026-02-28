@@ -1,0 +1,151 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ─── Base ─────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #000000;
+  color: #ffffff;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Hex grid background ───────────────────────────────── */
+.hex-bg {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100'%3E%3Cpath d='M28 66L0 50V16L28 0l28 16v34L28 66zm0-2l26-15V18L28 2 2 18v31l26 15z' fill='%23FFB800' fill-opacity='0.045'/%3E%3C/svg%3E");
+}
+
+/* ─── Glows ─────────────────────────────────────────────── */
+.gold-glow {
+  box-shadow: 0 0 32px rgba(255, 184, 0, 0.35), 0 0 64px rgba(255, 184, 0, 0.12);
+}
+
+.neon-glow {
+  box-shadow: 0 0 24px rgba(57, 255, 20, 0.4);
+}
+
+.gold-text-glow {
+  text-shadow: 0 0 20px rgba(255, 184, 0, 0.6);
+}
+
+/* ─── Gradient text ─────────────────────────────────────── */
+.gradient-gold {
+  background: linear-gradient(135deg, #FFB800 0%, #FF8C00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-gold-green {
+  background: linear-gradient(135deg, #FFB800 0%, #39FF14 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Card surface ──────────────────────────────────────── */
+.hyve-card {
+  background: linear-gradient(135deg, rgba(17, 17, 17, 0.9) 0%, rgba(13, 13, 13, 0.95) 100%);
+  border: 1px solid rgba(255, 184, 0, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.hyve-card:hover {
+  border-color: rgba(255, 184, 0, 0.35);
+  transform: translateY(-3px);
+}
+
+/* ─── Buttons ───────────────────────────────────────────── */
+.btn-primary {
+  background: linear-gradient(135deg, #FFB800 0%, #FF8C00 100%);
+  color: #000000;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: all 0.25s ease;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 0 32px rgba(255, 184, 0, 0.5);
+  transform: translateY(-2px);
+}
+
+.btn-outline {
+  border: 1px solid rgba(255, 184, 0, 0.4);
+  color: #FFB800;
+  transition: all 0.25s ease;
+}
+
+.btn-outline:hover {
+  border-color: #FFB800;
+  background: rgba(255, 184, 0, 0.08);
+  box-shadow: 0 0 20px rgba(255, 184, 0, 0.2);
+}
+
+/* ─── Form inputs ───────────────────────────────────────── */
+.hyve-input {
+  background: rgba(17, 17, 17, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.hyve-input:focus {
+  outline: none;
+  border-color: rgba(255, 184, 0, 0.5);
+  box-shadow: 0 0 0 3px rgba(255, 184, 0, 0.1);
+}
+
+.hyve-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* ─── Section divider ───────────────────────────────────── */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 184, 0, 0.3), transparent);
+}
+
+/* ─── Animated orbit ring (hero decoration) ─────────────── */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes spin-reverse {
+  from { transform: rotate(360deg); }
+  to   { transform: rotate(0deg); }
+}
+
+.orbit {
+  animation: spin-slow 18s linear infinite;
+}
+
+.orbit-reverse {
+  animation: spin-reverse 24s linear infinite;
+}
+
+/* ─── Fade-in on scroll (JS adds .visible class) ────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
