@@ -20,17 +20,21 @@ export async function POST(req: NextRequest) {
 
   const origin = req.headers.get('origin') || 'https://hyveapp.co'
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'subscription',
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${origin}/download?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/#pricing`,
-    allow_promotion_codes: true,
-    billing_address_collection: 'auto',
-    subscription_data: {
-      metadata: { product: 'hyve_app' },
-    },
-  })
-
-  return NextResponse.json({ url: session.url })
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${origin}/download?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/#pricing`,
+      allow_promotion_codes: true,
+      billing_address_collection: 'auto',
+      subscription_data: {
+        metadata: { product: 'hyve_app' },
+      },
+    })
+    return NextResponse.json({ url: session.url })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
