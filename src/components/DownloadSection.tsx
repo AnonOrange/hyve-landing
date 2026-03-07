@@ -1,6 +1,4 @@
 export default function DownloadSection() {
-  const apkUrl = process.env.NEXT_PUBLIC_APK_URL || '#'
-
   return (
     <section id="download" className="py-24 px-6">
       {/* Gold gradient divider */}
@@ -19,18 +17,17 @@ export default function DownloadSection() {
             </span>
 
             <h2 className="text-4xl md:text-5xl font-black text-white mb-4">
-              Try HYVE Beta Today
+              Get HYVE Today
             </h2>
             <p className="text-white/50 text-lg max-w-xl mx-auto mb-10">
-              Download the Android APK and start messaging securely. Setup takes under 60 seconds.
+              Subscribe and download the Android APK. Setup takes under 60 seconds.
             </p>
 
             {/* Platform cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto mb-10">
               {/* Android */}
               <a
-                href={apkUrl}
-                download
+                href="#pricing"
                 className="btn-primary rounded-2xl p-5 flex flex-col items-center gap-2 group"
               >
                 <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
