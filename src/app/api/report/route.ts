@@ -52,13 +52,13 @@ ${escHtml(message)}
         </div>
 
         <p style="margin-top: 24px; font-size: 11px; color: rgba(255,255,255,0.2);">
-          Sent via HYVE Beta feedback form — hyveapp.com
+          Sent via HYVE Beta feedback form — hyveapp.co
         </p>
       </div>
     `
 
     await resend.emails.send({
-      // NOTE: Once you verify hyveapp.com on Resend, change this to: 'HYVE Beta <no-reply@hyveapp.com>'
+      // NOTE: Once you verify hyveapp.co on Resend, change this to: 'HYVE Beta <no-reply@hyveapp.co>'
       from: 'HYVE Beta Reports <onboarding@resend.dev>',
       to: RECIPIENT,
       reply_to: email,

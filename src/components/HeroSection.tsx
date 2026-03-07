@@ -36,32 +36,13 @@ export default function HeroSection() {
 
       {/* Center hexagon icon */}
       <div className="relative mb-8 reveal">
-        <div className="flex items-center justify-center w-24 h-24 gold-glow rounded-2xl">
-          <svg viewBox="0 0 96 96" className="w-24 h-24">
-            <defs>
-              <linearGradient id="heroGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#39FF14" />
-                <stop offset="100%" stopColor="#FFB800" />
-              </linearGradient>
-            </defs>
-            <polygon
-              points="48,6 86,27 86,69 48,90 10,69 10,27"
-              fill="none"
-              stroke="url(#heroGrad)"
-              strokeWidth="3"
-            />
-            <text
-              x="48"
-              y="60"
-              textAnchor="middle"
-              fill="#FFB800"
-              fontSize="42"
-              fontWeight="900"
-              fontFamily="Inter, sans-serif"
-            >
-              H
-            </text>
-          </svg>
+        <div className="flex items-center justify-center w-28 h-28 gold-glow rounded-2xl">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/HYVEComIcon.png"
+            alt="HYVE"
+            className="w-28 h-28 object-contain"
+          />
         </div>
       </div>
 

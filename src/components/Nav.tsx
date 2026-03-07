@@ -23,28 +23,13 @@ export default function Nav() {
     >
       <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* Logo */}
-        <a href="#" className="flex items-center gap-2 group">
-          {/* Hexagon H mark */}
-          <div className="relative w-9 h-9 flex items-center justify-center">
-            <svg viewBox="0 0 36 36" className="w-9 h-9 absolute inset-0">
-              <polygon
-                points="18,2 33,10 33,26 18,34 3,26 3,10"
-                fill="none"
-                stroke="url(#navGrad)"
-                strokeWidth="1.5"
-              />
-              <defs>
-                <linearGradient id="navGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#39FF14" />
-                  <stop offset="100%" stopColor="#FFB800" />
-                </linearGradient>
-              </defs>
-            </svg>
-            <span className="relative font-black text-gold text-sm leading-none">H</span>
-          </div>
-          <span className="font-black text-xl text-white tracking-tight group-hover:text-gold transition-colors">
-            HYVE
-          </span>
+        <a href="#" className="flex items-center group">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/hyvelloo.png"
+            alt="HYVE"
+            className="h-10 w-auto object-contain"
+          />
         </a>
 
         {/* Nav links */}

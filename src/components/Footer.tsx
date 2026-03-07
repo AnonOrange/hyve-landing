@@ -4,22 +4,13 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <svg viewBox="0 0 36 36" className="w-7 h-7">
-            <polygon
-              points="18,2 33,10 33,26 18,34 3,26 3,10"
-              fill="none"
-              stroke="url(#footerGrad)"
-              strokeWidth="1.5"
-            />
-            <defs>
-              <linearGradient id="footerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#39FF14" />
-                <stop offset="100%" stopColor="#FFB800" />
-              </linearGradient>
-            </defs>
-          </svg>
-          <span className="font-black text-white tracking-tight">HYVE</span>
-          <span className="text-white/30 text-xs ml-1">Beta</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/hyvelloo.png"
+            alt="HYVE"
+            className="h-8 w-auto object-contain"
+          />
+          <span className="text-white/30 text-xs">Beta</span>
         </div>
 
         {/* Links */}
