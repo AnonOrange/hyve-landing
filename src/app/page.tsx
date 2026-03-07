@@ -2,6 +2,8 @@ import BetaBanner from '@/components/BetaBanner'
 import Nav from '@/components/Nav'
 import HeroSection from '@/components/HeroSection'
 import TechSection from '@/components/TechSection'
+import LocationSection from '@/components/LocationSection'
+import PricingSection from '@/components/PricingSection'
 import DownloadSection from '@/components/DownloadSection'
 import DisclaimerSection from '@/components/DisclaimerSection'
 import ReportForm from '@/components/ReportForm'
@@ -15,6 +17,8 @@ export default function HomePage() {
       <main>
         <HeroSection />
         <TechSection />
+        <LocationSection />
+        <PricingSection />
         <DownloadSection />
         <DisclaimerSection />
         <ReportForm />

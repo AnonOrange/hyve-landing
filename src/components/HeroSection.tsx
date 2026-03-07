@@ -15,16 +15,25 @@ export default function HeroSection() {
     })
   }, [])
 
-  const apkUrl = process.env.NEXT_PUBLIC_APK_URL || '#download'
-
   return (
     <section
       ref={sectionRef}
       className="relative min-h-screen flex flex-col items-center justify-center hex-bg overflow-hidden px-6 py-24"
     >
-      {/* Radial glow behind content */}
+      {/* Full-page logo background */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/HYVEComIcon.png"
+          alt=""
+          className="w-[700px] h-[700px] md:w-[900px] md:h-[900px] object-contain opacity-[0.04]"
+          aria-hidden="true"
+        />
+      </div>
+
+      {/* Radial glow on top of logo */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="w-[600px] h-[600px] rounded-full bg-gold/5 blur-[120px]" />
+        <div className="w-[500px] h-[500px] rounded-full bg-gold/6 blur-[100px]" />
       </div>
 
       {/* Decorative orbit rings */}
@@ -71,12 +80,11 @@ export default function HeroSection() {
       {/* CTAs */}
       <div className="reveal flex flex-col sm:flex-row gap-4">
         <a
-          href={apkUrl}
-          download
+          href="#pricing"
           className="btn-primary px-8 py-4 rounded-2xl text-base font-bold flex items-center gap-2 justify-center"
         >
           <AndroidIcon />
-          Download Beta APK
+          Get HYVE — $5.99/mo
         </a>
         <a
           href="#technology"

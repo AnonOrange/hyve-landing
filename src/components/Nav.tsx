@@ -35,18 +35,17 @@ export default function Nav() {
         {/* Nav links */}
         <div className="hidden md:flex items-center gap-8 text-sm text-white/60 font-medium">
           <a href="#technology" className="hover:text-gold transition-colors">Technology</a>
-          <a href="#download" className="hover:text-gold transition-colors">Download</a>
+          <a href="#location" className="hover:text-gold transition-colors">Location</a>
+          <a href="#pricing" className="hover:text-gold transition-colors">Pricing</a>
           <a href="#disclaimer" className="hover:text-gold transition-colors">Beta Info</a>
-          <a href="#report" className="hover:text-gold transition-colors">Report a Problem</a>
         </div>
 
         {/* CTA */}
         <a
-          href={apkUrl}
-          download
+          href="#pricing"
           className="btn-primary px-5 py-2 rounded-xl text-sm font-bold"
         >
-          Download Beta
+          Get HYVE
         </a>
       </div>
     </nav>
