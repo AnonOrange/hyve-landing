@@ -80,11 +80,11 @@ export default function HeroSection() {
       {/* CTAs */}
       <div className="reveal flex flex-col sm:flex-row gap-4">
         <a
-          href="#pricing"
+          href="#download"
           className="btn-primary px-8 py-4 rounded-2xl text-base font-bold flex items-center gap-2 justify-center"
         >
           <AndroidIcon />
-          Get HYVE — $5.99/mo
+          Download Free
         </a>
         <a
           href="#technology"
