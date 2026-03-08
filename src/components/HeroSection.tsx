@@ -59,7 +59,7 @@ export default function HeroSection() {
       <div className="reveal mb-5">
         <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-neon/30 bg-neon/5 text-neon text-xs font-semibold tracking-wider uppercase">
           <span className="w-1.5 h-1.5 rounded-full bg-neon animate-pulse-slow" />
-          Beta Now Available — Android
+          Beta Now Available — Android &amp; Web
         </span>
       </div>
 
@@ -85,6 +85,13 @@ export default function HeroSection() {
         >
           <AndroidIcon />
           Download Free
+        </a>
+        <a
+          href="/app"
+          className="px-8 py-4 rounded-2xl text-base font-bold flex items-center gap-2 justify-center border-2 border-neon/50 text-neon hover:bg-neon/10 hover:border-neon transition-all"
+        >
+          <MonitorIcon />
+          Try Web App — Free
         </a>
         <a
           href="#technology"
@@ -115,6 +122,15 @@ function AndroidIcon() {
   return (
     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
       <path d="M17.523 15.341A.5.5 0 0 1 17 15.5H7a.5.5 0 0 1-.523-.159L4.5 13V8.5A5.5 5.5 0 0 1 10 3h4a5.5 5.5 0 0 1 5.5 5.5V13l-1.977 2.341zM8.5 18a1 1 0 0 0 1 1h5a1 1 0 0 0 0-2h-5a1 1 0 0 0-1 1zM7 11.5a1 1 0 1 0 2 0 1 1 0 0 0-2 0zm8 0a1 1 0 1 0 2 0 1 1 0 0 0-2 0z" />
+    </svg>
+  )
+}
+
+function MonitorIcon() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="3" width="20" height="14" rx="2" />
+      <path d="M8 21h8M12 17v4" />
     </svg>
   )
 }

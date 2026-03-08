@@ -40,13 +40,25 @@ export default function Nav() {
           <a href="#disclaimer" className="hover:text-gold transition-colors">Beta Info</a>
         </div>
 
-        {/* CTA */}
-        <a
-          href="#pricing"
-          className="btn-primary px-5 py-2 rounded-xl text-sm font-bold"
-        >
-          Get HYVE
-        </a>
+        {/* CTAs */}
+        <div className="flex items-center gap-3">
+          <a
+            href="/app"
+            className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border border-neon/40 text-neon hover:bg-neon/10 transition-all"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" />
+              <path d="M8 21h8M12 17v4" />
+            </svg>
+            Open Web App
+          </a>
+          <a
+            href="#pricing"
+            className="btn-primary px-5 py-2 rounded-xl text-sm font-bold"
+          >
+            Get HYVE
+          </a>
+        </div>
       </div>
     </nav>
   )
