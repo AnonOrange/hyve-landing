@@ -72,7 +72,7 @@ export function ratchetSend(state: RatchetState): { result: SendResult; nextStat
 
   const result: SendResult = {
     messageKey,
-    chainKey: nextChainKey,
+    chainKey: state.sendChainKey,  // pre-advance — matches Android chainKeySeed
     dhPub: state.sendDhPair.publicKey,
     epoch: state.epoch,
   }

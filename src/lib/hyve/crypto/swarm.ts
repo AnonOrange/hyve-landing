@@ -4,6 +4,7 @@
  */
 
 import { chacha20poly1305 } from '@noble/ciphers/chacha.js'
+import { gcm } from '@noble/ciphers/aes.js'
 import { hkdf, concat, uint32BE, uint16BE } from './hkdf'
 import { randomBytes } from './keys'
 import { shamirSplit, shamirReconstruct, ShamirShare } from './shamir'
@@ -30,7 +31,7 @@ function encryptPayload(json: object): { ciphertext: Uint8Array; messageKey: Uin
   const plain = new Uint8Array(JSON_BUDGET)
   plain.set(raw.slice(0, JSON_BUDGET))
 
-  const cipher = chacha20poly1305(messageKey, nonce)
+  const cipher = gcm(messageKey, nonce)
   const encrypted = cipher.encrypt(plain) // 359 + 16 = 375 bytes
 
   // Pack as nonce(12) + ciphertext+tag(375) = 387 bytes
@@ -56,7 +57,7 @@ export function decryptPayloadWithKey(payload: Uint8Array, messageKey: Uint8Arra
   try {
     const nonce = payload.slice(0, 12)
     const ciphertext = payload.slice(12)
-    const cipher = chacha20poly1305(messageKey, nonce)
+    const cipher = gcm(messageKey, nonce)
     const plain = cipher.decrypt(ciphertext)
     // Trim null padding
     let end = plain.length

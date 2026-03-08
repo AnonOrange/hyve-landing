@@ -1,6 +1,6 @@
 /** HYVE-ID HTTP client — mirrors hyve_id_client.dart */
 
-const BASE_URL = process.env.NEXT_PUBLIC_ID_URL || 'https://id.hyveapp.co'
+const BASE_URL = process.env.NEXT_PUBLIC_ID_URL || 'https://genuine-wisdom-production.up.railway.app'
 
 export interface PeerBundle {
   hyveId: string
@@ -32,7 +32,7 @@ export async function lookupBundle(hyveId: string): Promise<PeerBundle | null> {
 export async function publishBundle(bundle: PublicBundle): Promise<boolean> {
   try {
     const res = await fetch(`${BASE_URL}/v1/bundle`, {
-      method: 'POST',
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(bundle),
     })
