@@ -68,3 +68,14 @@ export async function unlockVault(pin: string): Promise<object | null> {
 export async function updateVault(identity: object, pin: string): Promise<void> {
   await createVault(identity, pin)
 }
+
+/**
+ * Import an identity from an Android link code (base64 JSON).
+ * Stores it as the vault identity without publishing a new bundle.
+ * The existing bundle on the HYVE-ID server (from the phone) remains valid.
+ */
+export async function importIdentityBundle(exportCode: string, pin: string): Promise<void> {
+  const rawBytes = Uint8Array.from(atob(exportCode), c => c.charCodeAt(0))
+  const data = JSON.parse(new TextDecoder().decode(rawBytes))
+  await createVault(data, pin)
+}

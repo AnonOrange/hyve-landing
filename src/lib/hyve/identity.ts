@@ -84,6 +84,33 @@ export function buildPublicBundle(identity: Identity): PublicBundle {
   }
 }
 
+/** Reconstruct a web Identity from an Android export bundle (base64 JSON). */
+export function identityFromExport(exportCode: string): Identity {
+  const rawBytes = Uint8Array.from(atob(exportCode), c => c.charCodeAt(0))
+  const data = JSON.parse(new TextDecoder().decode(rawBytes)) as Record<string, unknown>
+
+  const ikPub  = fromHex(data.ikPub  as string)
+  const spkPub = fromHex(data.spkPub as string)
+
+  const inboxPrefix  = toHex(hkdf(ikPub,  'HYVE Inbox v1.0',      8))
+  const bootstrapKey = toHex(hkdf(spkPub, 'HYVE Bootstrap v1.0', 32))
+
+  return {
+    hyveId:       (data.hyveId as string).replace(/^@/, ''),
+    ikPub:        data.ikPub  as string,
+    ikPriv:       data.ikPriv as string,
+    skPub:        data.skPub  as string,
+    skPriv:       data.skPriv as string,
+    spkPub:       data.spkPub  as string,
+    spkPriv:      data.spkPriv as string,
+    spkSig:       data.spkSig  as string,
+    opkPool:      data.opkPool as OPKEntry[],
+    inboxPrefix,
+    bootstrapKey,
+    createdAt:    Date.now(),
+  }
+}
+
 export function getInboxPrefix(identity: Identity): Uint8Array {
   return fromHex(identity.inboxPrefix)
 }
