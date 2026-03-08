@@ -29,7 +29,7 @@ export default function DownloadSection() {
               href="/app"
               className="btn-primary rounded-2xl p-5 flex items-center justify-center gap-3 max-w-xl mx-auto w-full mb-4 group"
             >
-              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{flexShrink:0}}>
                 <circle cx="12" cy="12" r="10" />
                 <path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20" />
               </svg>
