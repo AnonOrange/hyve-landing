@@ -24,6 +24,21 @@ export default function DownloadSection() {
               Subscribe and download the Android APK. Setup takes under 60 seconds.
             </p>
 
+            {/* Web App */}
+            <a
+              href="/app"
+              className="btn-primary rounded-2xl p-5 flex items-center justify-center gap-3 max-w-xl mx-auto w-full mb-4 group"
+            >
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20" />
+              </svg>
+              <div className="text-left">
+                <div className="font-bold text-sm">Try HYVE Web — Free</div>
+                <div className="text-xs opacity-70">Text messaging in your browser · No install</div>
+              </div>
+            </a>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto mb-10">
               {/* Android */}
               <a
