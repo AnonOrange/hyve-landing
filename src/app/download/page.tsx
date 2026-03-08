@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import ActivateForm from './ActivateForm'
 
 interface PageProps {
   searchParams: Promise<{ session_id?: string }>
@@ -17,11 +18,13 @@ export default async function DownloadPage({ searchParams }: PageProps) {
 
   // Verify session is paid
   let paid = false
+  let hyveIdFromSession: string | null = null
   try {
     const Stripe = (await import('stripe')).default
     const stripe = new Stripe(stripeKey)
     const session = await stripe.checkout.sessions.retrieve(session_id)
     paid = session.payment_status === 'paid' || session.status === 'complete'
+    hyveIdFromSession = session.client_reference_id || null
   } catch {
     redirect('/#pricing')
   }
@@ -42,13 +45,14 @@ export default async function DownloadPage({ searchParams }: PageProps) {
 
         <h1 className="text-3xl font-black text-white mb-3">You&apos;re In.</h1>
         <p className="text-white/50 mb-10">
-          Payment confirmed. Download HYVE and start messaging securely.
+          Payment confirmed. Download HYVE and activate your Pro subscription below.
         </p>
 
+        {/* APK download */}
         <a
           href={apkUrl}
           download
-          className="btn-primary px-8 py-4 rounded-2xl text-base font-bold flex items-center gap-2 justify-center mb-6"
+          className="btn-primary px-8 py-4 rounded-2xl text-base font-bold flex items-center gap-2 justify-center mb-8"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 16l-4-4h3V4h2v8h3l-4 4zm-7 4v-2h14v2H5z" />
@@ -56,7 +60,11 @@ export default async function DownloadPage({ searchParams }: PageProps) {
           Download HYVE APK
         </a>
 
-        <div className="bg-white/5 rounded-xl p-5 border border-white/10 text-left">
+        {/* Activate Pro */}
+        <ActivateForm sessionId={session_id} prefillHyveId={hyveIdFromSession} />
+
+        {/* Install instructions */}
+        <div className="bg-white/5 rounded-xl p-5 border border-white/10 text-left mt-8">
           <p className="text-xs font-semibold text-gold uppercase tracking-wider mb-3">
             Installation Steps
           </p>
@@ -66,6 +74,7 @@ export default async function DownloadPage({ searchParams }: PageProps) {
             <li>Enable <strong className="text-white/80">Install unknown apps</strong></li>
             <li>Open the APK and tap <strong className="text-white/80">Install</strong></li>
             <li>Launch HYVE and create your encrypted identity</li>
+            <li>Activate Pro using the form above</li>
           </ol>
         </div>
 

@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   }
 
   const stripe = new Stripe(stripeKey)
-  const { plan } = await req.json() as { plan: 'monthly' | 'annual' }
+  const { plan, hyveId } = await req.json() as { plan: 'monthly' | 'annual'; hyveId?: string }
   const priceId = plan === 'annual' ? annualPriceId : monthlyPriceId
 
   if (!priceId) {
@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
   }
 
   const origin = req.headers.get('origin') || 'https://hyveapp.co'
+  const cleanHyveId = hyveId?.trim().replace(/^@/, '') || ''
 
   try {
     const session = await stripe.checkout.sessions.create({
@@ -28,8 +29,10 @@ export async function POST(req: NextRequest) {
       cancel_url: `${origin}/#pricing`,
       allow_promotion_codes: true,
       billing_address_collection: 'auto',
+      // Store HYVE ID so we can activate Pro after payment
+      client_reference_id: cleanHyveId || undefined,
       subscription_data: {
-        metadata: { product: 'hyve_app' },
+        metadata: { product: 'hyve_app', hyve_id: cleanHyveId },
       },
     })
     return NextResponse.json({ url: session.url })

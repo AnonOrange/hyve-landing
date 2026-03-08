@@ -4,20 +4,31 @@ import { useState } from 'react'
 
 export default function PricingSection() {
   const [loading, setLoading] = useState<'monthly' | 'annual' | null>(null)
+  const [monthlyHyveId, setMonthlyHyveId] = useState('')
+  const [annualHyveId, setAnnualHyveId] = useState('')
+  const [idError, setIdError] = useState('')
   const stripeEnabled = !!process.env.NEXT_PUBLIC_STRIPE_ENABLED
-  const apkUrl = process.env.NEXT_PUBLIC_APK_URL || '#'
+
+  function validateHyveId(id: string): boolean {
+    const clean = id.trim().replace(/^@/, '')
+    if (!clean || !/^[a-z0-9_]{3,32}$/i.test(clean)) {
+      setIdError('Enter a valid HYVE ID (e.g. @username)')
+      return false
+    }
+    setIdError('')
+    return true
+  }
 
   async function handleCheckout(plan: 'monthly' | 'annual') {
-    if (!stripeEnabled) {
-      window.location.href = apkUrl
-      return
-    }
+    const id = plan === 'monthly' ? monthlyHyveId : annualHyveId
+    if (!validateHyveId(id)) return
+    if (!stripeEnabled) return
     setLoading(plan)
     try {
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, hyveId: id.trim() }),
       })
       const data = await res.json() as { url?: string; error?: string }
       if (data.url) window.location.href = data.url
@@ -39,68 +50,86 @@ export default function PricingSection() {
             Own Your Privacy
           </h2>
           <p className="text-white/50 text-lg max-w-xl mx-auto">
-            One price. Full access. No ads, no data harvesting — ever.
+            Text messaging is free. Subscribe for calls, media &amp; location sharing — no ads, no data harvesting.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Monthly */}
-          <div className="hyve-card rounded-3xl p-8 flex flex-col gap-6 relative">
-            <div>
-              <p className="text-white/50 text-sm font-medium mb-1">Monthly</p>
-              <div className="flex items-end gap-1">
-                <span className="text-5xl font-black gradient-gold">$5.99</span>
-                <span className="text-white/40 mb-2">/month</span>
-              </div>
+          <div className="hyve-card rounded-3xl p-10 md:p-14 flex flex-col">
+            <p className="text-white/50 text-sm font-medium mb-3">Monthly</p>
+            <div className="flex items-end gap-1 mb-6">
+              <span className="text-6xl font-black gradient-gold">$5.99</span>
+              <span className="text-white/40 mb-2 text-lg">/month</span>
             </div>
-            <ul className="space-y-3 flex-1">
-              {planFeatures.map((f) => (
-                <li key={f} className="flex items-center gap-2 text-sm text-white/70">
-                  <CheckIcon />
+            <ul className="space-y-3 flex-1 mb-8">
+              {proFeatures.map((f) => (
+                <li key={f} className="flex items-start gap-3 text-sm text-white/70">
+                  <span className="text-gold mt-0.5 flex-shrink-0">✓</span>
                   {f}
                 </li>
               ))}
             </ul>
+            <div className="mb-4">
+              <input
+                type="text"
+                value={monthlyHyveId}
+                onChange={(e) => setMonthlyHyveId(e.target.value)}
+                placeholder="Your HYVE ID (e.g. @username)"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-gold/50 transition-colors"
+              />
+              {idError && loading === null && <p className="text-xs text-red-400 mt-1">{idError}</p>}
+              <p className="text-xs text-white/30 mt-1">Required to activate Pro in the app</p>
+            </div>
             <button
               onClick={() => handleCheckout('monthly')}
-              disabled={loading !== null}
-              className="btn-outline px-6 py-3.5 rounded-2xl font-bold text-sm w-full disabled:opacity-50"
+              disabled={loading !== null || !stripeEnabled}
+              className="btn-outline px-6 py-4 rounded-2xl font-bold text-base w-full disabled:opacity-50"
             >
               {loading === 'monthly' ? 'Redirecting…' : 'Subscribe Monthly'}
             </button>
           </div>
 
-          {/* Annual — recommended */}
-          <div className="hyve-card rounded-3xl p-8 flex flex-col gap-6 relative gold-glow border border-gold/20">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-              <span className="px-4 py-1 rounded-full bg-gold text-black text-xs font-black tracking-wider uppercase">
+          {/* Annual */}
+          <div className="hyve-card rounded-3xl p-10 md:p-14 flex flex-col relative gold-glow border border-gold/20">
+            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+              <span className="px-5 py-1.5 rounded-full bg-gold text-black text-xs font-black tracking-wider uppercase">
                 Best Value
               </span>
             </div>
-            <div>
-              <p className="text-white/50 text-sm font-medium mb-1">Annual</p>
-              <div className="flex items-end gap-1">
-                <span className="text-5xl font-black gradient-gold">$4.99</span>
-                <span className="text-white/40 mb-2">/month</span>
-              </div>
-              <p className="text-xs text-white/40 mt-1">Billed $59.88/year — save $12</p>
+            <p className="text-white/50 text-sm font-medium mb-3">Annual</p>
+            <div className="flex items-end gap-1 mb-1">
+              <span className="text-6xl font-black gradient-gold">$4.99</span>
+              <span className="text-white/40 mb-2 text-lg">/month</span>
             </div>
-            <ul className="space-y-3 flex-1">
-              {planFeatures.map((f) => (
-                <li key={f} className="flex items-center gap-2 text-sm text-white/70">
-                  <CheckIcon />
+            <p className="text-xs text-white/40 mb-6">Billed $59.88/year — save $12</p>
+            <ul className="space-y-3 flex-1 mb-8">
+              {proFeatures.map((f) => (
+                <li key={f} className="flex items-start gap-3 text-sm text-white/70">
+                  <span className="text-gold mt-0.5 flex-shrink-0">✓</span>
                   {f}
                 </li>
               ))}
-              <li className="flex items-center gap-2 text-sm text-gold font-semibold">
-                <CheckIcon gold />
+              <li className="flex items-start gap-3 text-sm text-gold font-semibold">
+                <span className="mt-0.5 flex-shrink-0">✓</span>
                 2 months free
               </li>
             </ul>
+            <div className="mb-4">
+              <input
+                type="text"
+                value={annualHyveId}
+                onChange={(e) => setAnnualHyveId(e.target.value)}
+                placeholder="Your HYVE ID (e.g. @username)"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-gold/50 transition-colors"
+              />
+              {idError && loading === null && <p className="text-xs text-red-400 mt-1">{idError}</p>}
+              <p className="text-xs text-white/30 mt-1">Required to activate Pro in the app</p>
+            </div>
             <button
               onClick={() => handleCheckout('annual')}
-              disabled={loading !== null}
-              className="btn-primary px-6 py-3.5 rounded-2xl font-bold text-sm w-full disabled:opacity-50"
+              disabled={loading !== null || !stripeEnabled}
+              className="btn-primary px-6 py-4 rounded-2xl font-bold text-base w-full disabled:opacity-50"
             >
               {loading === 'annual' ? 'Redirecting…' : 'Subscribe Annually'}
             </button>
@@ -115,24 +144,10 @@ export default function PricingSection() {
   )
 }
 
-const planFeatures = [
+const proFeatures = [
   'Full access to HYVE encrypted messaging',
   'End-to-end encrypted calls',
   'Live encrypted location sharing',
   'All future updates included',
   'No data collection, no ads',
 ]
-
-function CheckIcon({ gold }: { gold?: boolean }) {
-  return (
-    <svg
-      className={`w-4 h-4 flex-shrink-0 ${gold ? 'text-gold' : 'text-neon'}`}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2.5}
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-    </svg>
-  )
-}
