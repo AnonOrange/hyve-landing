@@ -88,6 +88,13 @@ export default function PricingSection() {
             >
               {loading === 'monthly' ? 'Redirecting…' : 'Subscribe Monthly'}
             </button>
+            <a
+              href={process.env.NEXT_PUBLIC_APK_URL || '#download'}
+              download
+              className="block text-center text-xs text-white/30 hover:text-white/60 mt-3 transition-colors"
+            >
+              or download free (text messaging only) ↓
+            </a>
           </div>
 
           {/* Annual */}
@@ -133,6 +140,13 @@ export default function PricingSection() {
             >
               {loading === 'annual' ? 'Redirecting…' : 'Subscribe Annually'}
             </button>
+            <a
+              href={process.env.NEXT_PUBLIC_APK_URL || '#download'}
+              download
+              className="block text-center text-xs text-white/30 hover:text-white/60 mt-3 transition-colors"
+            >
+              or download free (text messaging only) ↓
+            </a>
           </div>
         </div>
 
