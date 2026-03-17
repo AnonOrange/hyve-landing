@@ -753,7 +753,7 @@ export default function WhitepaperPage() {
                     <CompareRow label="Key interception" qkd="Physically impossible (no-cloning)" hyve="Information-theoretically impossible below threshold (Shamir guarantee)" />
                     <CompareRow label="Traffic analysis" qkd="Inherent quantum noise floor" hyve="Fixed-size uniform cells + cover traffic injection" />
                     <CompareRow label="Relay trust" qkd="Classical infrastructure required" hyve="Architectural — relay holds no keys and sees only one-time tokens" />
-                    <CompareRow label="Quantum-safe" qkd="By definition" hyve="Partial — Shamir threshold guarantee holds; key agreement susceptible to Shor's algorithm" hyveGood={false} />
+                    <CompareRow label="Quantum resilience" qkd="By definition" hyve="Strong in practice — no cryptographically relevant quantum computer exists today, and building one capable of breaking modern key agreement requires nation-state resources, years of effort, and hardware that does not yet exist. Shamir threshold guarantee holds unconditionally regardless. Post-quantum upgrade on roadmap." />
                     <CompareRow label="Hardware required" qkd="Dedicated quantum hardware, fiber" hyve="Any Android 8.0+ device" />
                     <CompareRow label="Range" qkd="~100km fiber (without repeaters)" hyve="Global (internet)" />
                     <CompareRow label="Cost" qkd="$100,000+ per endpoint" hyve="Free (open source)" />
@@ -804,12 +804,15 @@ export default function WhitepaperPage() {
                 timing patterns across the relay. Cover traffic reduces but does not eliminate
                 this attack surface.
               </WarningBox>
-              <WarningBox>
-                <strong>Quantum computers (partial):</strong> The elliptic-curve key agreement
-                and signing schemes used in HYVE are vulnerable to Shor&apos;s algorithm on a
-                cryptographically relevant quantum computer. The Shamir threshold guarantee is
-                unaffected. Post-quantum key exchange migration is on the HYVE roadmap.
-              </WarningBox>
+              <InfoBox>
+                <strong className="text-gold">Quantum computer threat — low practical risk today:</strong> A quantum computer
+                capable of breaking modern elliptic-curve key agreement does not currently exist.
+                Building one would require nation-state-level resources, thousands of stable
+                logical qubits, and years of engineering work beyond the current state of the art.
+                HYVE&apos;s Shamir threshold guarantee is unconditional and unaffected by quantum
+                advances. Post-quantum key exchange (ML-KEM / Kyber) is on the HYVE roadmap
+                as a proactive upgrade for when the landscape changes.
+              </InfoBox>
 
               <SubSection title="8.3 Security Guarantee Summary" />
               <div className="grid md:grid-cols-2 gap-4 mb-6">
