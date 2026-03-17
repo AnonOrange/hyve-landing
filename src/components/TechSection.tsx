@@ -114,6 +114,7 @@ export default function TechSection() {
       {/* Cards grid — 2 cols + 1 centered on last row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {innovations.map((item, i) => (
+
           <div
             key={item.id}
             className={`hyve-card rounded-2xl p-7 reveal ${
@@ -151,6 +152,57 @@ export default function TechSection() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* White Paper CTA */}
+      <div className="mt-16 reveal">
+        <div className="relative rounded-3xl overflow-hidden border border-gold/20 bg-gradient-to-br from-gold/5 via-transparent to-neon/5 p-10 text-center">
+          {/* Subtle glow backdrop */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-32 bg-gold/10 blur-3xl rounded-full" />
+          </div>
+
+          <div className="relative z-10">
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-gold/30 bg-gold/10 text-gold text-[11px] font-bold tracking-widest uppercase mb-5">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+              </svg>
+              Full Technical Specification
+            </span>
+
+            <h3 className="text-2xl md:text-3xl font-black text-white mb-3">
+              Read the{' '}
+              <span className="gradient-gold-green">Technical White Paper</span>
+            </h3>
+            <p className="text-white/50 text-base max-w-xl mx-auto mb-8">
+              Complete cryptographic specification — cell format, key derivation hierarchy,
+              five protocol innovations, quantum-analogous property proofs, and HYVEGuard VPN architecture.
+              Two information-theoretic security guarantees. Written for engineers and investors.
+            </p>
+
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <a
+                href="/whitepaper"
+                className="btn-primary px-8 py-3.5 rounded-xl font-bold text-sm inline-flex items-center gap-2.5 group"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                </svg>
+                View White Paper
+                <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
+              </a>
+              <div className="flex items-center gap-4 text-[11px] font-mono text-white/30">
+                <span>5 Innovations</span>
+                <span>·</span>
+                <span>2 ITT Guarantees</span>
+                <span>·</span>
+                <span>Full Spec</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   )
