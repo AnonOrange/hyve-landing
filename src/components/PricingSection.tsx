@@ -98,18 +98,18 @@ export default function PricingSection() {
           </div>
 
           {/* Annual */}
-          <div className="hyve-card rounded-3xl p-10 md:p-14 flex flex-col relative gold-glow border border-gold/20">
-            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-              <span className="px-5 py-1.5 rounded-full bg-gold text-black text-xs font-black tracking-wider uppercase">
-                Best Value
+          <div className="hyve-card rounded-3xl p-10 md:p-14 flex flex-col relative gold-glow border border-gold/30">
+            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap">
+              <span className="px-5 py-1.5 rounded-full bg-gold text-black text-xs font-black tracking-wider uppercase shadow-[0_0_16px_rgba(255,184,0,0.6)]">
+                Founders Deal — Lifetime Access
               </span>
             </div>
-            <p className="text-white/50 text-sm font-medium mb-3">Annual</p>
+            <p className="text-white/50 text-sm font-medium mb-3 mt-2">Annual · Limited Offer</p>
             <div className="flex items-end gap-1 mb-1">
               <span className="text-6xl font-black gradient-gold">$4.99</span>
               <span className="text-white/40 mb-2 text-lg">/month</span>
             </div>
-            <p className="text-xs text-white/40 mb-6">Billed $59.88/year — save $12</p>
+            <p className="text-xs text-white/40 mb-6">Billed $59.88/year — Pro access never expires while offer lasts</p>
             <ul className="space-y-3 flex-1 mb-8">
               {proFeatures.map((f) => (
                 <li key={f} className="flex items-start gap-3 text-sm text-white/70">
@@ -117,9 +117,13 @@ export default function PricingSection() {
                   {f}
                 </li>
               ))}
-              <li className="flex items-start gap-3 text-sm text-gold font-semibold">
-                <span className="mt-0.5 flex-shrink-0">✓</span>
-                2 months free
+              <li className="flex items-start gap-3 text-sm text-gold font-bold">
+                <span className="mt-0.5 flex-shrink-0">✦</span>
+                Lifetime Pro — never pay again
+              </li>
+              <li className="flex items-start gap-3 text-sm text-gold font-bold">
+                <span className="mt-0.5 flex-shrink-0">✦</span>
+                All future features, free forever
               </li>
             </ul>
             <div className="mb-4">
@@ -136,9 +140,9 @@ export default function PricingSection() {
             <button
               onClick={() => handleCheckout('annual')}
               disabled={loading !== null || !stripeEnabled}
-              className="btn-primary px-6 py-4 rounded-2xl font-bold text-base w-full disabled:opacity-50"
+              className="btn-primary px-6 py-4 rounded-2xl font-bold text-base w-full disabled:opacity-50 shadow-[0_0_20px_rgba(255,184,0,0.25)]"
             >
-              {loading === 'annual' ? 'Redirecting…' : 'Subscribe Annually'}
+              {loading === 'annual' ? 'Redirecting…' : 'Claim Lifetime Access'}
             </button>
             <a
               href={process.env.NEXT_PUBLIC_APK_URL || '#download'}

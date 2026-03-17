@@ -1,6 +1,7 @@
 import BetaBanner from '@/components/BetaBanner'
 import Nav from '@/components/Nav'
 import HeroSection from '@/components/HeroSection'
+import FoundersDeal from '@/components/FoundersDeal'
 import TechSection from '@/components/TechSection'
 import LocationSection from '@/components/LocationSection'
 import PricingSection from '@/components/PricingSection'
@@ -16,6 +17,7 @@ export default function HomePage() {
       <Nav />
       <main>
         <HeroSection />
+        <FoundersDeal />
         <TechSection />
         <LocationSection />
         <PricingSection />

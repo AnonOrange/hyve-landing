@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-const stripeKey = process.env.STRIPE_SECRET_KEY
+const stripeKey  = process.env.STRIPE_SECRET_KEY
 const hyveIdBase = process.env.HYVE_ID_BASE_URL || 'https://genuine-wisdom-production.up.railway.app'
 const adminKey   = process.env.HYVE_ADMIN_KEY
+const annualPriceId = process.env.STRIPE_ANNUAL_PRICE_ID
+
+// Founders Lifetime Deal: annual subscribers before this date get permanent Pro
+const FOUNDERS_DEADLINE = new Date('2026-06-16T23:59:59Z')
 
 export async function POST(req: NextRequest) {
   if (!stripeKey || !adminKey) {
@@ -23,9 +27,16 @@ export async function POST(req: NextRequest) {
   // Verify the Stripe session is actually paid
   const stripe = new Stripe(stripeKey)
   let paid = false
+  let isAnnual = false
   try {
-    const session = await stripe.checkout.sessions.retrieve(session_id)
+    const session = await stripe.checkout.sessions.retrieve(session_id, {
+      expand: ['line_items'],
+    })
     paid = session.payment_status === 'paid' || session.status === 'complete'
+    // Check if any line item matches the annual price
+    isAnnual = session.line_items?.data.some(
+      (item) => item.price?.id === annualPriceId
+    ) ?? false
   } catch {
     return NextResponse.json({ error: 'Invalid session' }, { status: 400 })
   }
@@ -34,9 +45,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Payment not complete' }, { status: 402 })
   }
 
-  // Activate Pro on the HYVE-ID server
+  // Founders Deal: annual payments before the deadline get lifetime Pro
+  const isFoundersDeal = isAnnual && Date.now() < FOUNDERS_DEADLINE.getTime()
+  const activateUrl = isFoundersDeal
+    ? `${hyveIdBase}/v1/premium/${encodeURIComponent(clean)}?lifetime=1`
+    : `${hyveIdBase}/v1/premium/${encodeURIComponent(clean)}`
+
+  // Activate Pro (or Lifetime) on the HYVE-ID server
   try {
-    const res = await fetch(`${hyveIdBase}/v1/premium/${encodeURIComponent(clean)}`, {
+    const res = await fetch(activateUrl, {
       method: 'POST',
       headers: { 'x-hyve-admin-key': adminKey },
     })
@@ -50,5 +67,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Could not reach HYVE-ID server' }, { status: 503 })
   }
 
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, lifetime: isFoundersDeal })
 }
