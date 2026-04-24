@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
 const stripeKey  = process.env.STRIPE_SECRET_KEY
-const hyveIdBase = process.env.HYVE_ID_BASE_URL || 'https://genuine-wisdom-production.up.railway.app'
+const hyveIdBase = process.env.HYVE_ID_BASE_URL || 'https://hyve-id-production.up.railway.app'
 const adminKey   = process.env.HYVE_ADMIN_KEY
 const annualPriceId = process.env.STRIPE_ANNUAL_PRICE_ID
 

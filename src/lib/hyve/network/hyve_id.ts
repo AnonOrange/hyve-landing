@@ -1,6 +1,6 @@
 /** HYVE-ID HTTP client — mirrors hyve_id_client.dart */
 
-const BASE_URL = process.env.NEXT_PUBLIC_ID_URL || 'https://genuine-wisdom-production.up.railway.app'
+const BASE_URL = process.env.NEXT_PUBLIC_ID_URL || 'https://hyve-id-production.up.railway.app'
 
 export interface PeerBundle {
   hyveId: string

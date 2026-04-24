@@ -6,7 +6,7 @@
  *   Receive: binary frames of 512 bytes
  */
 
-const RELAY_URL = process.env.NEXT_PUBLIC_RELAY_URL || 'wss://hivecomms-production.up.railway.app'
+const RELAY_URL = process.env.NEXT_PUBLIC_RELAY_URL || 'wss://hyve-relay-production.up.railway.app'
 
 export class RelayClient {
   private ws: WebSocket | null = null
