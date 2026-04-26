@@ -59,15 +59,18 @@ export default function MapView() {
   type CrimePoint = { feedId: string; lat: number; lng: number; intensity: number; count: number; source: string; baselineCity?: string };
   const [feeds, setFeeds] = useState<Feed[]>([]);
   const [cameras, setCameras] = useState<Camera[]>([]);
-  const [alpr, setAlpr] = useState<Camera[]>([]);
-  const [crime, setCrime] = useState<CrimePoint[]>([]);
-  const [offenders, setOffenders] = useState<Camera[]>([]);
-  const [selectedAlpr, setSelectedAlpr] = useState<Camera | null>(null);
-  const [selectedOffender, setSelectedOffender] = useState<Camera | null>(null);
+  // Stubs for dead-code blocks below (other layers moved to dedicated tabs).
+  // TS doesn't dead-code-eliminate `false && ...` so these need to exist as types.
+  const alpr: any[] = [];
+  const offenders: any[] = [];
+  const selectedAlpr: any = null;
+  const selectedOffender: any = null;
+  const setSelectedAlpr = (_: any) => {};
+  const setSelectedOffender = (_: any) => {};
   const [loading, setLoading] = useState(true);
   const [flyTo, setFlyTo] = useState<[number, number] | null>(null);
   const [selectedCam, setSelectedCam] = useState<Camera | null>(null);
-  const [counts, setCounts] = useState<{ feeds: number; cameras: number; alpr: number }>({ feeds: 0, cameras: 0, alpr: 0 });
+  const [counts, setCounts] = useState<{ feeds: number; cameras: number }>({ feeds: 0, cameras: 0 });
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -77,17 +80,11 @@ export default function MapView() {
     ems: true,
     aviation: true,
     cameras: true,
-    alpr: false,  // off by default — adds ~50k markers, opt-in
-    crime: false,  // crime intensity heatmap, opt-in
-    offenders: false,  // sex offender registry, opt-in
   });
 
-  // Track which lazy layers have already been loaded so we never re-fetch.
-  const [loadedLayers, setLoadedLayers] = useState<Set<string>>(new Set());
-
-  // Initial load: only what's visible by default (feeds + cameras).
-  // The other 3 layers (alpr/crime/offenders) lazy-load when the user enables them.
-  // This drops first-paint payload from ~250k records to ~55k.
+  // Lean operations map: feeds + cameras only. Surveillance, offenders, crime,
+  // ALPR each have their own dedicated tab now — see /spy/app/{surveillance,
+  // offenders,crime}. This keeps the operations map fast and focused.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -105,7 +102,7 @@ export default function MapView() {
 
         setFeeds(fArr.filter((f) => normalizeLat(f) != null && normalizeLng(f) != null));
         setCameras(cArr.filter((c) => normalizeLat(c) != null && normalizeLng(c) != null));
-        setCounts({ feeds: fArr.length, cameras: cArr.length, alpr: 0 });
+        setCounts({ feeds: fArr.length, cameras: cArr.length });
       } catch (e) {
         console.error('Failed to load map data', e);
       } finally {
@@ -114,42 +111,6 @@ export default function MapView() {
     })();
     return () => { cancelled = true; };
   }, []);
-
-  // Lazy loaders for opt-in layers. Each runs at most once per session because
-  // of the loadedLayers guard — re-toggling shows the cached state instantly.
-  const loadAlpr = async () => {
-    if (loadedLayers.has('alpr')) return;
-    setLoadedLayers((s) => new Set(s).add('alpr'));
-    try {
-      const r = await fetch(`${API_BASE}/cameras/alpr`);
-      const j = await r.json();
-      const arr: Camera[] = Array.isArray(j) ? j : (j?.cameras ?? j?.data ?? []);
-      setAlpr(arr.filter((c) => normalizeLat(c) != null && normalizeLng(c) != null));
-      setCounts((c) => ({ ...c, alpr: arr.length }));
-    } catch (e) { console.error('alpr load failed', e); }
-  };
-  const loadCrime = async () => {
-    if (loadedLayers.has('crime')) return;
-    setLoadedLayers((s) => new Set(s).add('crime'));
-    try {
-      const r = await fetch(`${API_BASE}/crime/heatmap`);
-      const j = await r.json();
-      const arr: CrimePoint[] = (Array.isArray(j) ? j : []).filter(
-        (p: any) => Number.isFinite(p?.lat) && Number.isFinite(p?.lng) && (p?.intensity ?? 0) > 0,
-      );
-      setCrime(arr);
-    } catch (e) { console.error('crime load failed', e); }
-  };
-  const loadOffenders = async () => {
-    if (loadedLayers.has('offenders')) return;
-    setLoadedLayers((s) => new Set(s).add('offenders'));
-    try {
-      const r = await fetch(`${API_BASE}/cameras/offenders`);
-      const j = await r.json();
-      const arr: Camera[] = Array.isArray(j) ? j : (j?.cameras ?? []);
-      setOffenders(arr.filter((c) => normalizeLat(c) != null && normalizeLng(c) != null));
-    } catch (e) { console.error('offenders load failed', e); }
-  };
 
   const usBounds = useMemo<L.LatLngBoundsExpression>(
     () => [[15, -170], [72, -50]],
@@ -200,18 +161,8 @@ export default function MapView() {
     }
   };
 
-  const toggleType = (t: string) => {
-    setTypeVisibility((v) => {
-      const next = { ...v, [t]: !v[t] };
-      // Lazy-load on first activation. Each loader is idempotent (loadedLayers guard).
-      if (!v[t]) {
-        if (t === 'alpr') void loadAlpr();
-        if (t === 'crime') void loadCrime();
-        if (t === 'offenders') void loadOffenders();
-      }
-      return next;
-    });
-  };
+  const toggleType = (t: string) =>
+    setTypeVisibility((v) => ({ ...v, [t]: !v[t] }));
 
   const visibleFeeds = useMemo(() => {
     return feeds.filter((f) => {
@@ -346,9 +297,9 @@ export default function MapView() {
           </MarkerClusterGroup>
         )}
 
-        {/* Flock ALPR markers — locations only, no live feed (Flock data is law-enforcement-only).
-            Clicking opens an info card explaining what these are + linking to consumer rights wiki. */}
-        {typeVisibility.alpr && (
+        {/* ALPR / Surveillance / Offenders / Crime now live on dedicated tabs.
+            See /spy/app/{surveillance,offenders,crime}. */}
+        {false && typeVisibility.alpr && (
           <MarkerClusterGroup
             chunkedLoading
             chunkInterval={50}
@@ -396,8 +347,8 @@ export default function MapView() {
           </MarkerClusterGroup>
         )}
 
-        {/* Sex offender registry — purple dots, clickable for details */}
-        {typeVisibility.offenders && (
+        {/* Offenders moved to /spy/app/offenders */}
+        {false && typeVisibility.offenders && (
           <MarkerClusterGroup
             chunkedLoading
             chunkInterval={50}
@@ -432,8 +383,8 @@ export default function MapView() {
           </MarkerClusterGroup>
         )}
 
-        {/* Crime intensity heatmap-style overlay — graduated red circles per feed location */}
-        {typeVisibility.crime && crime.map((p, i) => {
+        {/* Crime moved to /spy/app/crime */}
+        {false && typeVisibility.crime && [].map((p: any, i: number) => {
           const r = Math.max(8, p.intensity * 32);
           const opacity = Math.max(0.15, p.intensity * 0.55);
           return (
@@ -539,9 +490,6 @@ export default function MapView() {
             { key: 'ems', label: 'EMS', color: FEED_COLORS.ems },
             { key: 'aviation', label: 'Aviation', color: FEED_COLORS.aviation },
             { key: 'cameras', label: 'Cameras', color: '#22C55E' },
-            { key: 'alpr', label: 'Flock ALPR', color: '#F59E0B' },
-            { key: 'crime', label: 'Crime', color: '#EF4444' },
-            { key: 'offenders', label: 'Offenders', color: '#A855F7' },
           ].map((c) => {
             const on = typeVisibility[c.key];
             return (
@@ -597,8 +545,8 @@ export default function MapView() {
         <CameraOverlay cam={selectedCam} onClose={() => setSelectedCam(null)} />
       )}
 
-      {/* Sex offender info card — full registry details + photo lookup links */}
-      {selectedOffender && (() => {
+      {/* These cards moved to /spy/app/{offenders,surveillance}. Below kept disabled. */}
+      {false && selectedOffender && (() => {
         const o = selectedOffender as any;
         const d = (o.details || {}) as Record<string, string | undefined>;
         const row = (label: string, value?: string | null) =>
@@ -670,8 +618,8 @@ export default function MapView() {
                 {row('DOB', d.dob)}
                 {row('Sex', d.sex)}
                 {row('Race', d.race)}
-                {row('Height', d.height ? `${d.height}${/^\d+$/.test(d.height) ? '"' : ''}` : null)}
-                {row('Weight', d.weight ? `${d.weight}${/^\d+$/.test(d.weight) ? ' lb' : ''}` : null)}
+                {row('Height', d.height ? `${d.height}${/^\d+$/.test(d.height || '') ? '"' : ''}` : null)}
+                {row('Weight', d.weight ? `${d.weight}${/^\d+$/.test(d.weight || '') ? ' lb' : ''}` : null)}
                 {row('Eye color', d.eye)}
                 {row('Hair color', d.hair)}
                 {row('Aliases', d.aliases)}
@@ -707,8 +655,8 @@ export default function MapView() {
         );
       })()}
 
-      {/* ALPR info modal — these aren't watchable cameras, just locations of surveillance infrastructure */}
-      {selectedAlpr && (
+      {/* ALPR info modal moved to /spy/app/surveillance */}
+      {false && selectedAlpr && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/80 p-4 backdrop-blur" onClick={() => setSelectedAlpr(null)}>
           <div className="w-full max-w-md rounded-lg border border-[#F59E0B] bg-[#020D14] p-5" onClick={(e) => e.stopPropagation()}>
             <div className="mb-2 flex items-center justify-between">

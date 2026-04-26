@@ -40,6 +40,17 @@ const NAV = [
     ),
   },
   {
+    href: '/spy/app/intel',
+    label: 'Intel',
+    match: (p: string) => p.startsWith('/spy/app/intel') || p.startsWith('/spy/app/surveillance') || p.startsWith('/spy/app/offenders') || p.startsWith('/spy/app/crime'),
+    icon: (active: boolean) => (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#F59E0B' : '#64748B'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <path d="M9 12l2 2 4-4" />
+      </svg>
+    ),
+  },
+  {
     href: '/spy/app/world',
     label: 'World',
     match: (p: string) => p.startsWith('/spy/app/world'),
@@ -84,7 +95,7 @@ export default function SpyBottomNav() {
       className="fixed inset-x-0 bottom-0 z-[3000] border-t border-[#0D2235] bg-[#020D14]/95 backdrop-blur"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <ul className="mx-auto grid max-w-3xl grid-cols-6">
+      <ul className="mx-auto grid max-w-3xl grid-cols-7">
         {NAV.map((item) => {
           const active = item.match(pathname);
           return (
