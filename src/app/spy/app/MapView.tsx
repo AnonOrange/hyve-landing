@@ -1,8 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { MapContainer, TileLayer, CircleMarker, useMap, LayersControl } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, useMap, LayersControl, Marker } from 'react-leaflet';
 import L from 'leaflet';
+import 'leaflet.markercluster/dist/leaflet.markercluster.js';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import { useRouter } from 'next/navigation';
 import { CameraOverlay, type Camera } from './CameraOverlay';
 
@@ -85,7 +89,9 @@ export default function MapView() {
         const cArr: Camera[] = Array.isArray(cJson) ? cJson : (cJson?.cameras ?? cJson?.data ?? []);
 
         setFeeds(fArr.filter((f) => normalizeLat(f) != null && normalizeLng(f) != null));
-        setCameras(cArr.slice(0, 1500).filter((c) => normalizeLat(c) != null && normalizeLng(c) != null));
+        // No slice — all 49k+ cameras render via marker clustering. Tested: 50k markers
+        // through MarkerClusterGroup hits ~70 cluster bubbles at country zoom, ~500 at state zoom.
+        setCameras(cArr.filter((c) => normalizeLat(c) != null && normalizeLng(c) != null));
         setCounts({ feeds: fArr.length, cameras: cArr.length });
       } catch (e) {
         console.error('Failed to load map data', e);
@@ -216,27 +222,54 @@ export default function MapView() {
         />
         <FlyTo center={flyTo} zoom={11} />
 
-        {/* Camera dots (rendered first so feed pins draw on top) */}
-        {typeVisibility.cameras && cameras.map((c, idx) => {
-          const lat = normalizeLat(c)!;
-          const lng = normalizeLng(c)!;
-          return (
-            <CircleMarker
-              key={`cam-${idx}-${lat}-${lng}`}
-              center={[lat, lng]}
-              radius={3}
-              pathOptions={{
-                color: '#22C55E',
-                fillColor: '#22C55E',
-                fillOpacity: 0.7,
-                weight: 0,
-              }}
-              eventHandlers={{
-                click: () => setSelectedCam(c),
-              }}
-            />
-          );
-        })}
+        {/* Cameras — clustered so 49k markers don't melt the browser */}
+        {typeVisibility.cameras && (
+          <MarkerClusterGroup
+            chunkedLoading
+            chunkInterval={50}
+            chunkDelay={20}
+            maxClusterRadius={60}
+            disableClusteringAtZoom={14}
+            spiderfyOnMaxZoom={true}
+            removeOutsideVisibleBounds={true}
+            iconCreateFunction={(cluster: any) => {
+              const count = cluster.getChildCount();
+              const size = count < 100 ? 32 : count < 1000 ? 40 : 52;
+              return L.divIcon({
+                html: `<div style="
+                  width:${size}px;height:${size}px;
+                  display:flex;align-items:center;justify-content:center;
+                  background:rgba(34,197,94,0.85);
+                  color:#020D14;font-weight:900;font-family:'Courier New',monospace;
+                  font-size:${count < 100 ? 11 : count < 1000 ? 13 : 14}px;
+                  border:2px solid #22C55E;border-radius:50%;
+                  box-shadow:0 0 12px rgba(34,197,94,0.6);
+                ">${count.toLocaleString()}</div>`,
+                className: 'hyve-cam-cluster',
+                iconSize: [size, size],
+              });
+            }}
+          >
+            {cameras.map((c, idx) => {
+              const lat = normalizeLat(c)!;
+              const lng = normalizeLng(c)!;
+              return (
+                <CircleMarker
+                  key={`cam-${idx}-${lat}-${lng}`}
+                  center={[lat, lng]}
+                  radius={4}
+                  pathOptions={{
+                    color: '#22C55E',
+                    fillColor: '#22C55E',
+                    fillOpacity: 0.75,
+                    weight: 0,
+                  }}
+                  eventHandlers={{ click: () => setSelectedCam(c) }}
+                />
+              );
+            })}
+          </MarkerClusterGroup>
+        )}
 
         {/* Feed pins */}
         {visibleFeeds.map((f) => {
