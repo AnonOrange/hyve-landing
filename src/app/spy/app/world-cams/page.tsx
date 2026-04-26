@@ -11,7 +11,7 @@ import FreshnessBadge from '../FreshnessBadge'
 const API_BASE = 'https://hyve-api.vercel.app'
 const PAGE_SIZE = 60
 
-const TYPES = ['all', 'cruise-cam', 'snapshot', 'youtube', 'hls', 'webview'] as const
+const TYPES = ['all', 'ptz', 'cruise-cam', 'snapshot', 'youtube', 'hls', 'webview'] as const
 type Filter = (typeof TYPES)[number]
 
 export default function WorldCamerasPage() {
@@ -41,7 +41,8 @@ export default function WorldCamerasPage() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     return all.filter((c) => {
-      if (filter !== 'all' && (c.feedType || '').toLowerCase() !== filter) return false
+      if (filter === 'ptz' && !c.isPtzControllable) return false
+      if (filter !== 'all' && filter !== 'ptz' && (c.feedType || '').toLowerCase() !== filter) return false
       if (q && !camName(c).toLowerCase().includes(q) && !(c.agency || '').toLowerCase().includes(q)) return false
       return true
     })
@@ -91,19 +92,26 @@ export default function WorldCamerasPage() {
           />
         </div>
         <div className="mx-auto flex max-w-5xl gap-2 overflow-x-auto px-4 pb-3">
-          {TYPES.map((t) => (
-            <button
-              key={t}
-              onClick={() => setFilter(t)}
-              className={`shrink-0 rounded border px-3 py-1 text-[10px] font-bold tracking-widest transition ${
-                filter === t
-                  ? 'border-[#22C55E] bg-[#22C55E]/10 text-[#22C55E]'
-                  : 'border-[#0D2235] text-[#64748B] hover:text-[#E2E8F0]'
-              }`}
-            >
-              {t === 'cruise-cam' ? '🚢 CRUISE' : t.toUpperCase()}
-            </button>
-          ))}
+          {TYPES.map((t) => {
+            const isPtz = t === 'ptz'
+            const isCruise = t === 'cruise-cam'
+            const activeClr = isPtz ? '#A855F7' : '#22C55E'
+            const active = filter === t
+            return (
+              <button
+                key={t}
+                onClick={() => setFilter(t)}
+                className="shrink-0 rounded border px-3 py-1 text-[10px] font-bold tracking-widest transition"
+                style={{
+                  borderColor: active ? activeClr : '#0D2235',
+                  background: active ? `${activeClr}1F` : 'transparent',
+                  color: active ? activeClr : '#64748B',
+                }}
+              >
+                {isPtz ? '🎮 PTZ' : isCruise ? '🚢 CRUISE' : t.toUpperCase()}
+              </button>
+            )
+          })}
         </div>
       </div>
 

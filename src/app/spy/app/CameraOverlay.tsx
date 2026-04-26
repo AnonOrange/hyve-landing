@@ -89,8 +89,15 @@ export function CameraThumb({ cam, onOpen }: { cam: Camera; onOpen: () => void }
         <div className="truncate text-[11px] font-bold text-white">{name}</div>
         {cam.agency && <div className="truncate font-mono text-[9px] text-[#94A3B8]">{cam.agency}</div>}
       </div>
-      <div className="absolute right-1.5 top-1.5 rounded bg-black/70 px-1.5 py-0.5 font-mono text-[9px] tracking-widest text-[#00D4FF]">
-        {isWebview ? '↗ OPEN' : (type || 'snap').toUpperCase()}
+      <div className="absolute right-1.5 top-1.5 flex gap-1">
+        {cam.isPtzControllable && (
+          <div className="rounded bg-[#A855F7]/90 px-1.5 py-0.5 font-mono text-[9px] tracking-widest text-white" title="Pan/Tilt/Zoom — controls available on source page">
+            🎮 PTZ
+          </div>
+        )}
+        <div className="rounded bg-black/70 px-1.5 py-0.5 font-mono text-[9px] tracking-widest text-[#00D4FF]">
+          {isWebview ? '↗ OPEN' : (type || 'snap').toUpperCase()}
+        </div>
       </div>
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition group-hover:opacity-100">
         <div className="rounded-full bg-black/70 p-3 text-[#00D4FF]">
@@ -120,6 +127,7 @@ export type Camera = {
   snapshotUrl?: string
   feedUrl?: string
   thumbnailUrl?: string
+  isPtzControllable?: boolean
 }
 
 export function youtubeId(url: string): string | null {
