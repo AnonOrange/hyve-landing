@@ -706,6 +706,23 @@ function CameraTile({ cam }: { cam: Camera }) {
   }
 
   if (type === 'youtube' || /youtube\.com|youtu\.be/.test(url)) {
+    const m =
+      url.match(/[?&]v=([a-zA-Z0-9_-]{11})/) ||
+      url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/) ||
+      url.match(/youtube\.com\/(?:embed|live|shorts)\/([a-zA-Z0-9_-]{11})/);
+    if (m) {
+      return (
+        <div className="overflow-hidden rounded border border-[#0D2235] bg-black">
+          <iframe
+            src={`https://www.youtube.com/embed/${m[1]}?autoplay=1&mute=1&playsinline=1&rel=0`}
+            className="aspect-video w-full"
+            allow="autoplay; encrypted-media; picture-in-picture"
+            allowFullScreen
+          />
+          {camName && <div className="truncate px-2 py-1 text-[10px] text-[#64748B]">{camName}</div>}
+        </div>
+      );
+    }
     return (
       <a
         href={url}
@@ -713,9 +730,7 @@ function CameraTile({ cam }: { cam: Camera }) {
         rel="noreferrer"
         className="flex aspect-video items-center justify-center rounded border border-[#0D2235] bg-black p-2 text-center text-[11px] text-[#FF2D2D] hover:border-[#FF2D2D]/60"
       >
-        ▶ YouTube
-        <br />
-        {camName.slice(0, 30)}
+        ▶ YouTube<br />{camName.slice(0, 30)}
       </a>
     );
   }

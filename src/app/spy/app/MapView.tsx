@@ -395,50 +395,118 @@ export default function MapView() {
   );
 }
 
+// Pull the 11-char video id out of any common YouTube URL form (watch?v=, youtu.be/,
+// embed/, live/, shorts/). Returns null if the URL doesn't look like a YouTube link.
+function youtubeId(url: string): string | null {
+  const patterns = [
+    /[?&]v=([a-zA-Z0-9_-]{11})/,
+    /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/live\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
+
 function CameraOverlay({ cam, onClose }: { cam: Camera; onClose: () => void }) {
   const url = cam.snapshotUrl || cam.streamUrl || cam.feedUrl || cam.url || '';
   const camName = cam.name || cam.label || cam.agency || 'Live Camera';
   const type = (cam.feedType || '').toLowerCase();
   const [tick, setTick] = useState(0);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const hlsRef = useRef<any>(null);
 
+  // Snapshot auto-refresh every 2s
   useEffect(() => {
-    if (type === 'snapshot' || (!type && /\.(jpg|jpeg|png|gif)(\?|$)/i.test(url))) {
-      const i = setInterval(() => setTick((t) => t + 1), 2000);
-      return () => clearInterval(i);
-    }
+    const isSnap = type === 'snapshot' || (!type && /\.(jpg|jpeg|png|gif)(\?|$)/i.test(url));
+    if (!isSnap) return;
+    const i = setInterval(() => setTick((t) => t + 1), 2000);
+    return () => clearInterval(i);
   }, [type, url]);
+
+  // HLS playback (with iOS native fallback)
+  useEffect(() => {
+    if (type !== 'hls' || !url || !videoRef.current) return;
+    const v = videoRef.current;
+    if (v.canPlayType('application/vnd.apple.mpegurl')) {
+      v.src = url;
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const Hls = (await import('hls.js')).default;
+      if (cancelled) return;
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hlsRef.current = hls;
+        hls.loadSource(url);
+        hls.attachMedia(v);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      try { hlsRef.current?.destroy(); } catch {}
+    };
+  }, [type, url]);
+
+  const ytId = type === 'youtube' || /youtube\.com|youtu\.be/.test(url) ? youtubeId(url) : null;
 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/80 p-4 backdrop-blur" onClick={onClose}>
       <div className="relative w-full max-w-2xl rounded-lg border border-[#0D2235] bg-[#020D14] p-3" onClick={(e) => e.stopPropagation()}>
         <div className="mb-2 flex items-center justify-between">
-          <div className="truncate text-sm font-bold text-[#E2E8F0]">
-            {camName}
-          </div>
+          <div className="truncate text-sm font-bold text-[#E2E8F0]">{camName}</div>
           <button onClick={onClose} className="rounded border border-[#0D2235] px-2 py-0.5 text-xs text-[#64748B] hover:text-[#E2E8F0]">
             ✕
           </button>
         </div>
         <div className="overflow-hidden rounded bg-black">
-          {url ? (
-            type === 'youtube' || /youtube\.com|youtu\.be/.test(url) ? (
-              <a href={url} target="_blank" rel="noreferrer" className="flex aspect-video items-center justify-center text-sm text-[#00D4FF]">
-                Open YouTube stream ↗
-              </a>
-            ) : type === 'webview' ? (
-              <iframe src={url} className="aspect-video w-full" sandbox="allow-scripts allow-same-origin" />
-            ) : (
-              <img
-                src={`${url}${url.includes('?') ? '&' : '?'}_t=${tick}`}
-                alt={camName}
-                className="aspect-video w-full object-contain"
-                onError={(e) => ((e.target as HTMLImageElement).style.opacity = '0.3')}
-              />
-            )
-          ) : (
+          {!url ? (
             <div className="flex aspect-video items-center justify-center text-xs text-[#64748B]">No stream URL</div>
+          ) : ytId ? (
+            <iframe
+              src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&playsinline=1&rel=0`}
+              className="aspect-video w-full"
+              allow="autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+            />
+          ) : type === 'hls' ? (
+            <video
+              ref={videoRef}
+              className="aspect-video w-full"
+              controls
+              autoPlay
+              muted
+              playsInline
+            />
+          ) : type === 'webview' ? (
+            <iframe
+              src={url}
+              className="aspect-video w-full"
+              sandbox="allow-scripts allow-same-origin allow-popups"
+              allow="autoplay; encrypted-media"
+            />
+          ) : (
+            <img
+              src={`${url}${url.includes('?') ? '&' : '?'}_t=${tick}`}
+              alt={camName}
+              className="aspect-video w-full object-contain"
+              onError={(e) => ((e.target as HTMLImageElement).style.opacity = '0.3')}
+            />
           )}
         </div>
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-2 block truncate text-[10px] text-[#475569] hover:text-[#00D4FF]"
+        >
+          Open source ↗ {url}
+        </a>
       </div>
     </div>
   );
