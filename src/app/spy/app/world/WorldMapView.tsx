@@ -78,7 +78,8 @@ export default function WorldMapView() {
       >
         <MapInvalidator />
         <TileLayer
-          url="https://basemaps.cartocdn.com/dark_matter/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          subdomains={['a', 'b', 'c', 'd']}
           attribution="© CARTO © OpenStreetMap"
           maxZoom={20}
         />
