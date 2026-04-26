@@ -69,7 +69,7 @@ const SEV_COLOR: Record<string, string> = {
 const FAQ = [
   {
     q: 'Is this legal?',
-    a: 'Yes. You authorize us to scan only the specific assets you list — same legal model professional pen-testing firms use under CFAA. We capture your typed name, IP address, and timestamp as the legal record of authorization. Scope is locked to your assets only; we never touch anyone else’s.',
+    a: 'Yes. You authorize us to scan only the specific assets you list — the same authorization-based legal model professional pen-testing relies on under CFAA. We capture your typed name, IP, timestamp, and user agent as the legal record. We also enforce scope at the orchestrator: registration is rejected for .gov/.mil domains, IANA-reserved address space, cloud control planes, and major SaaS infrastructure you couldn’t plausibly own. Both your attestation AND our orchestrator blocklist must pass before a scan runs.',
   },
   {
     q: 'How does the scan know what’s mine?',
@@ -93,7 +93,7 @@ const FAQ = [
   },
   {
     q: 'Will this disrupt my services?',
-    a: 'No. Every probe is a single non-disruptive request — DNS lookups, one TLS handshake, one HTTP GET, one TCP connect (no SYN scan, no flood). Indistinguishable from any normal user hitting your site.',
+    a: 'No. Each probe is a single non-disruptive request. Per-asset totals are 13-22 connections depending on scope (DNS lookups, 1-3 TLS handshakes, 1-6 HTTP GETs, 7 TCP connect-only port checks). All run within ~30 seconds. No SYN scans, no fuzzing, no payload injection, no flood. Indistinguishable from a small handful of normal users hitting your site briefly.',
   },
   {
     q: 'Do you store my data?',
@@ -338,23 +338,25 @@ export default function SentinelLanding() {
 
           {/* Scope safety */}
           <div className="rounded-lg border bg-black/30 p-6" style={{ borderColor: '#0D2235' }}>
-            <div className="mb-3 font-mono text-[10px] tracking-widest text-[#94A3B8]">SCOPE LOCKED</div>
-            <div className="mb-2 text-base font-bold text-white">We only scan what you list. Nothing else.</div>
+            <div className="mb-3 font-mono text-[10px] tracking-widest text-[#94A3B8]">SCOPE LOCKED — TWO LAYERS</div>
+            <div className="mb-2 text-base font-bold text-white">Legal attestation + active orchestrator blocklist.</div>
             <p className="text-sm leading-relaxed text-[#94A3B8]">
-              Your authorization is captured with typed name + IP + timestamp + user agent — same legal record professional
-              pen-testing firms use. Scope is enforced at the orchestrator: probes refuse to run against any target not on your
-              registered list. We don't scan adjacent infrastructure, neighbors, or anyone else.
+              Layer 1: your authorization is captured with typed name + IP + timestamp + user agent — same legal record
+              authorization-based pen-testing uses. Layer 2: the orchestrator actively rejects asset registration for
+              well-known third-party targets — government TLDs (.gov / .mil), IANA-reserved address space (10/8, 192.168/16,
+              etc.), cloud control planes (AWS/GCP/Azure consoles), and major SaaS infrastructure you couldn't possibly own.
+              Both layers must pass before a scan runs.
             </p>
           </div>
 
           {/* Non-disruptive */}
           <div className="rounded-lg border bg-black/30 p-6" style={{ borderColor: '#0D2235' }}>
             <div className="mb-3 font-mono text-[10px] tracking-widest text-[#94A3B8]">NON-DISRUPTIVE</div>
-            <div className="mb-2 text-base font-bold text-white">Looks identical to normal user traffic.</div>
+            <div className="mb-2 text-base font-bold text-white">Minimal, indistinguishable from normal traffic.</div>
             <p className="text-sm leading-relaxed text-[#94A3B8]">
-              Every probe is a single non-disruptive request: DNS lookup, one TLS handshake, one HTTP GET, TCP connect-only
-              for ports. No SYN scans, no fuzzing, no flood. Indistinguishable from any normal user hitting your site —
-              your services keep running and your IDS doesn't fire.
+              Each probe is a single non-disruptive request — total per asset is 13-22 connections (DNS lookups, 1-3 TLS
+              handshakes, 1-6 HTTP GETs, 7 TCP connect-only port checks depending on scope). No SYN scans, no fuzzing,
+              no payload injection, no flood. Indistinguishable from a few normal users hitting your site within 30 seconds.
             </p>
           </div>
         </div>
@@ -369,6 +371,38 @@ export default function SentinelLanding() {
             <div>✗ Screenshots of your admin panels or dashboards</div>
             <div>✗ Any payload that could re-enable an attack</div>
             <div>✗ Plaintext copies of asset identifiers in any logs</div>
+          </div>
+        </div>
+
+        {/* Encrypted vs plaintext — full transparency about what's encrypted */}
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
+          <div className="rounded-lg border border-[#22C55E]/40 bg-[#22C55E]/5 p-5">
+            <div className="mb-3 font-mono text-[10px] tracking-widest text-[#22C55E]">🔒 ENCRYPTED AT REST</div>
+            <ul className="space-y-1.5 text-xs text-[#E2E8F0]">
+              <li>▸ Asset identifiers (your IP / domain / CIDR / camera serial)</li>
+              <li>▸ Display labels (whatever you named the asset)</li>
+              <li>▸ Vendor name on each finding (Hikvision, Dahua, etc.)</li>
+              <li>▸ Exposure type (the specific issue category)</li>
+              <li>▸ Port number on each finding</li>
+              <li>▸ Endpoint path that exposed the issue</li>
+              <li>▸ Vendor signature line we matched</li>
+              <li>▸ Remediation title + every step of the remediation</li>
+            </ul>
+          </div>
+          <div className="rounded-lg border border-[#0D2235] bg-black/30 p-5">
+            <div className="mb-3 font-mono text-[10px] tracking-widest text-[#94A3B8]">UNENCRYPTED METADATA</div>
+            <ul className="space-y-1.5 text-xs text-[#94A3B8]">
+              <li>▸ Severity counts (how many critical/high/medium/low)</li>
+              <li>▸ Audit ID, scope (cameras/pentest), tier purchased</li>
+              <li>▸ Timestamps (created, scan started, scan completed, purged)</li>
+              <li>▸ Your typed signature name, IP, user agent — legal record</li>
+              <li>▸ Email address — for audit recovery + receipt</li>
+              <li>▸ Stripe session/payment IDs — for refund processing</li>
+            </ul>
+            <div className="mt-3 font-mono text-[10px] text-[#475569]">
+              These fields can&apos;t re-enable an attack on you alone. Severity counts are required to render audit history
+              after the 7-day purge wipes the encrypted detail.
+            </div>
           </div>
         </div>
       </section>
@@ -468,9 +502,9 @@ export default function SentinelLanding() {
           <li>Scope is locked to those assets only — enforced at the orchestrator. We do not scan adjacent infrastructure, neighbors, or anyone else.</li>
           <li>Domain assets require DNS TXT verification before scanning.</li>
           <li>All probes are non-disruptive (DNS lookups, single TLS handshake, single HTTP GET, TCP connect-only).</li>
-          <li><strong>Sensitive findings are encrypted at rest with AES-256-GCM</strong> using per-audit derived keys, never plaintext in our database.</li>
+          <li><strong>Sensitive findings are encrypted at rest with AES-256-GCM</strong> using per-audit HKDF-derived keys (asset identifiers, vendors, ports, endpoints, signatures, remediation steps — all ciphertext in our DB).</li>
           <li><strong>Sensitive details auto-purge 7 days after the scan completes</strong> — we don't retain a long-term map of any user's exposed systems.</li>
-          <li>Same legal model used by Bishop Fox, Mandiant, NCC Group, and other professional security firms.</li>
+          <li>Same authorization-based legal framework professional pen-testing uses (your written consent + scope limitation + non-disruptive testing).</li>
         </ul>
       </section>
 

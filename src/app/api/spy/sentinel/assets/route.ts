@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
 import { encrypt, decrypt } from '@/lib/hyveCrypt'
+import { checkScopeAllowed } from '@/lib/sentinelScopeGuard'
 
 const SUPA_URL = process.env.SUPABASE_URL!
 const SUPA_KEY = process.env.SUPABASE_SERVICE_KEY!
@@ -21,9 +22,13 @@ export async function GET(req: NextRequest) {
     { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } },
   )
   if (!r.ok) return NextResponse.json({ error: await r.text() }, { status: 502 })
-  // Decrypt identifier for display
+  // Decrypt identifier + display_label for display
   const rows = (await r.json()) as Array<any>
-  const decrypted = rows.map((a) => ({ ...a, identifier: decrypt(auditId, a.identifier) }))
+  const decrypted = rows.map((a) => ({
+    ...a,
+    identifier: decrypt(auditId, a.identifier),
+    display_label: decrypt(auditId, a.display_label),
+  }))
   return NextResponse.json({ assets: decrypted })
 }
 
@@ -31,6 +36,14 @@ export async function POST(req: NextRequest) {
   const { auditId, assetType, identifier, displayLabel } = await req.json().catch(() => ({}))
   if (!auditId || !assetType || !identifier) {
     return NextResponse.json({ error: 'auditId, assetType, identifier required' }, { status: 400 })
+  }
+
+  // Real scope enforcement — refuse obviously-not-yours targets BEFORE we
+  // accept the legal authorization. Better to reject at registration than to
+  // scan + later realize the user lied on their attestation.
+  const scopeError = checkScopeAllowed(assetType, identifier)
+  if (scopeError) {
+    return NextResponse.json({ error: 'scope_blocked', detail: scopeError }, { status: 403 })
   }
 
   // Quota check — fetch audit + count existing assets, reject if at quota
@@ -54,14 +67,15 @@ export async function POST(req: NextRequest) {
 
   const isDomain = assetType === 'domain'
   const token = isDomain ? `hyve-sentinel-${randomBytes(8).toString('hex')}` : null
-  // Encrypt the asset identifier so it's not sitting in DB rows in plaintext.
-  // The display_label stays plaintext since it's user-chosen and harmless.
+  // Encrypt BOTH identifier and display_label. Users sometimes name labels
+  // like "office-router-admin" which leaks target purpose — encrypt to be safe.
   const cleanIdentifier = String(identifier).trim().toLowerCase().slice(0, 200)
+  const cleanLabel = displayLabel ? String(displayLabel).trim().slice(0, 200) : null
   const row = {
     audit_id: auditId,
     asset_type: assetType,
     identifier: encrypt(auditId, cleanIdentifier),
-    display_label: displayLabel || null,
+    display_label: cleanLabel ? encrypt(auditId, cleanLabel) : null,
     verification_status: isDomain ? 'pending' : 'verified',
     verification_token: token,
     verified_at: isDomain ? null : new Date().toISOString(),
@@ -78,8 +92,11 @@ export async function POST(req: NextRequest) {
   })
   if (!r.ok) return NextResponse.json({ error: await r.text() }, { status: 502 })
   const [asset] = await r.json()
-  // Return decrypted identifier so the wizard can display what was added
-  if (asset) asset.identifier = decrypt(auditId, asset.identifier)
+  // Return decrypted fields so the wizard can display what was added
+  if (asset) {
+    asset.identifier = decrypt(auditId, asset.identifier)
+    asset.display_label = decrypt(auditId, asset.display_label)
+  }
   return NextResponse.json({ asset })
 }
 

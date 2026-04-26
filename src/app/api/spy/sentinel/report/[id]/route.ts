@@ -39,14 +39,24 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   // Decrypt sensitive fields server-side before sending to the client browser.
   // The plaintext NEVER lives in the DB — only in this single request's response.
-  const assets = rawAssets.map((a: any) => ({ ...a, identifier: decrypt(id, a.identifier) }))
-  const findings = rawFindings.map((f: any) => ({
-    ...f,
-    endpoint_path: decrypt(id, f.endpoint_path),
-    signature: decrypt(id, f.signature),
-    remediation_title: decrypt(id, f.remediation_title),
-    remediation_steps: decryptDeep(id, f.remediation_steps),
+  const assets = rawAssets.map((a: any) => ({
+    ...a,
+    identifier: decrypt(id, a.identifier),
+    display_label: decrypt(id, a.display_label),
   }))
+  const findings = rawFindings.map((f: any) => {
+    const portStr = decrypt(id, f.port)
+    return {
+      ...f,
+      vendor: decrypt(id, f.vendor),
+      exposure_type: decrypt(id, f.exposure_type),
+      port: portStr ? parseInt(portStr) || portStr : f.port,
+      endpoint_path: decrypt(id, f.endpoint_path),
+      signature: decrypt(id, f.signature),
+      remediation_title: decrypt(id, f.remediation_title),
+      remediation_steps: decryptDeep(id, f.remediation_steps),
+    }
+  })
 
   return NextResponse.json({ audit, assets, findings, purged: false })
 }

@@ -91,16 +91,19 @@ export async function POST(req: NextRequest) {
     }
 
     for (const f of findings) {
-      // Hyve Encryption: sensitive fields go through AES-256-GCM with a key
-      // derived from the audit ID + master env key. Severity stays plaintext
-      // so the report can show counts without decrypting.
+      // Hyve Encryption: every sensitive finding field goes through AES-256-GCM
+      // with a per-audit derived key. The ONLY plaintext field is `severity`
+      // (4 enum values: critical/high/medium/low) because we count them in the
+      // severity_summary which must survive the post-retention purge.
+      // port + vendor + exposure_type are encrypted because in combination they
+      // reveal what was found and where — the same data that re-enables attack.
       allFindings.push({
         audit_id: auditId,
         asset_id: asset.id,
         severity: f.severity,
-        vendor: f.vendor,
-        exposure_type: f.exposure_type,
-        port: f.port,
+        vendor: encrypt(auditId, f.vendor),
+        exposure_type: encrypt(auditId, f.exposure_type),
+        port: encrypt(auditId, String(f.port)),
         endpoint_path: encrypt(auditId, f.endpoint_path),
         signature: encrypt(auditId, f.signature),
         remediation_title: encrypt(auditId, f.remediation_title),
