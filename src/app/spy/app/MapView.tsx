@@ -56,10 +56,14 @@ function FlyTo({ center, zoom }: { center: [number, number] | null; zoom?: numbe
 
 export default function MapView() {
   const router = useRouter();
+  type CrimePoint = { feedId: string; lat: number; lng: number; intensity: number; count: number; source: string; baselineCity?: string };
   const [feeds, setFeeds] = useState<Feed[]>([]);
   const [cameras, setCameras] = useState<Camera[]>([]);
   const [alpr, setAlpr] = useState<Camera[]>([]);
+  const [crime, setCrime] = useState<CrimePoint[]>([]);
+  const [offenders, setOffenders] = useState<Camera[]>([]);
   const [selectedAlpr, setSelectedAlpr] = useState<Camera | null>(null);
+  const [selectedOffender, setSelectedOffender] = useState<Camera | null>(null);
   const [loading, setLoading] = useState(true);
   const [flyTo, setFlyTo] = useState<[number, number] | null>(null);
   const [selectedCam, setSelectedCam] = useState<Camera | null>(null);
@@ -74,6 +78,8 @@ export default function MapView() {
     aviation: true,
     cameras: true,
     alpr: false,  // off by default — adds ~50k markers, opt-in
+    crime: false,  // crime intensity heatmap, opt-in
+    offenders: false,  // sex offender registry, opt-in
   });
 
   // Load feeds + cameras
@@ -81,14 +87,18 @@ export default function MapView() {
     let cancelled = false;
     (async () => {
       try {
-        const [fRes, cRes, aRes] = await Promise.all([
+        const [fRes, cRes, aRes, crimeRes, oRes] = await Promise.all([
           fetch(`${API_BASE}/feeds/trending?limit=2000`),
           fetch(`${API_BASE}/cameras/nearby?lat=39.8&lng=-98.5&radius=5000`),
           fetch(`${API_BASE}/cameras/alpr`),
+          fetch(`${API_BASE}/crime/heatmap`),
+          fetch(`${API_BASE}/cameras/offenders`),
         ]);
         const fJson = await fRes.json();
         const cJson = await cRes.json();
         const aJson = await aRes.json();
+        const crimeJson = await crimeRes.json();
+        const oJson = await oRes.json();
         if (cancelled) return;
 
         const fArr: Feed[] = Array.isArray(fJson) ? fJson : (fJson?.feeds ?? fJson?.data ?? []);
@@ -98,6 +108,12 @@ export default function MapView() {
         setFeeds(fArr.filter((f) => normalizeLat(f) != null && normalizeLng(f) != null));
         setCameras(cArr.filter((c) => normalizeLat(c) != null && normalizeLng(c) != null));
         setAlpr(aArr.filter((c) => normalizeLat(c) != null && normalizeLng(c) != null));
+        const crimeArr: CrimePoint[] = (Array.isArray(crimeJson) ? crimeJson : []).filter(
+          (p: any) => Number.isFinite(p?.lat) && Number.isFinite(p?.lng) && (p?.intensity ?? 0) > 0,
+        );
+        setCrime(crimeArr);
+        const oArr: Camera[] = Array.isArray(oJson) ? oJson : (oJson?.cameras ?? []);
+        setOffenders(oArr.filter((c) => normalizeLat(c) != null && normalizeLng(c) != null));
         setCounts({ feeds: fArr.length, cameras: cArr.length, alpr: aArr.length });
       } catch (e) {
         console.error('Failed to load map data', e);
@@ -343,6 +359,62 @@ export default function MapView() {
           </MarkerClusterGroup>
         )}
 
+        {/* Sex offender registry — purple dots, clickable for details */}
+        {typeVisibility.offenders && (
+          <MarkerClusterGroup
+            chunkedLoading
+            chunkInterval={50}
+            chunkDelay={20}
+            maxClusterRadius={50}
+            disableClusteringAtZoom={15}
+            spiderfyOnMaxZoom
+            removeOutsideVisibleBounds
+            iconCreateFunction={(cluster: any) => {
+              const c = cluster.getChildCount();
+              const size = c < 100 ? 28 : c < 1000 ? 36 : 46;
+              return L.divIcon({
+                html: `<div style="width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;background:rgba(168,85,247,0.85);color:#020D14;font-weight:900;font-family:'Courier New',monospace;font-size:${c < 100 ? 11 : 13}px;border:2px solid #A855F7;border-radius:4px;box-shadow:0 0 12px rgba(168,85,247,0.6)">${c.toLocaleString()}</div>`,
+                className: 'hyve-off-cluster',
+                iconSize: [size, size],
+              });
+            }}
+          >
+            {offenders.map((o, i) => {
+              const lat = normalizeLat(o)!;
+              const lng = normalizeLng(o)!;
+              return (
+                <CircleMarker
+                  key={`off-${i}`}
+                  center={[lat, lng]}
+                  radius={3}
+                  pathOptions={{ color: '#A855F7', fillColor: '#A855F7', fillOpacity: 0.85, weight: 0 }}
+                  eventHandlers={{ click: () => setSelectedOffender(o) }}
+                />
+              );
+            })}
+          </MarkerClusterGroup>
+        )}
+
+        {/* Crime intensity heatmap-style overlay — graduated red circles per feed location */}
+        {typeVisibility.crime && crime.map((p, i) => {
+          const r = Math.max(8, p.intensity * 32);
+          const opacity = Math.max(0.15, p.intensity * 0.55);
+          return (
+            <CircleMarker
+              key={`crime-${i}-${p.feedId}`}
+              center={[p.lat, p.lng]}
+              radius={r}
+              pathOptions={{
+                color: '#EF4444',
+                fillColor: '#EF4444',
+                fillOpacity: opacity,
+                weight: 0,
+                interactive: false,
+              }}
+            />
+          );
+        })}
+
         {/* Feed pins */}
         {visibleFeeds.map((f) => {
           const lat = normalizeLat(f)!;
@@ -431,6 +503,8 @@ export default function MapView() {
             { key: 'aviation', label: 'Aviation', color: FEED_COLORS.aviation },
             { key: 'cameras', label: 'Cameras', color: '#22C55E' },
             { key: 'alpr', label: 'Flock ALPR', color: '#F59E0B' },
+            { key: 'crime', label: 'Crime', color: '#EF4444' },
+            { key: 'offenders', label: 'Offenders', color: '#A855F7' },
           ].map((c) => {
             const on = typeVisibility[c.key];
             return (
@@ -484,6 +558,28 @@ export default function MapView() {
       {/* Camera overlay */}
       {selectedCam && (
         <CameraOverlay cam={selectedCam} onClose={() => setSelectedCam(null)} />
+      )}
+
+      {/* Sex offender info modal */}
+      {selectedOffender && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/80 p-4 backdrop-blur" onClick={() => setSelectedOffender(null)}>
+          <div className="w-full max-w-md rounded-lg border border-[#A855F7] bg-[#020D14] p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-2 flex items-center justify-between">
+              <div className="text-[10px] font-black tracking-[0.4em] text-[#A855F7]">REGISTERED OFFENDER</div>
+              <button onClick={() => setSelectedOffender(null)} className="rounded border border-[#0D2235] px-2 py-0.5 text-xs text-[#64748B] hover:text-[#E2E8F0]">✕</button>
+            </div>
+            <div className="mb-4 text-base font-bold text-white">{selectedOffender.label || 'Registered offender'}</div>
+            <div className="mb-4 space-y-1 font-mono text-xs text-[#94A3B8]">
+              <div>Lat/Lng: <span className="text-white">{selectedOffender.lat?.toFixed(5)}, {selectedOffender.lng?.toFixed(5)}</span></div>
+              {(selectedOffender as any).county && <div>City: <span className="text-white">{(selectedOffender as any).county}</span></div>}
+              <div>Source: <span className="text-white">{selectedOffender.agency || 'state registry'}</span></div>
+            </div>
+            <p className="mb-3 text-xs text-[#64748B]">
+              Data sourced from public state and county registries. Offender locations are public record under federal Adam Walsh Act.
+              Verify details at the official registry: <a href="https://www.nsopw.gov" target="_blank" rel="noreferrer" className="text-[#A855F7] hover:underline">nsopw.gov</a>
+            </p>
+          </div>
+        </div>
       )}
 
       {/* ALPR info modal — these aren't watchable cameras, just locations of surveillance infrastructure */}

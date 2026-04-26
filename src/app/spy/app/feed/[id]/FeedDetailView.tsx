@@ -170,6 +170,19 @@ export default function FeedDetailView() {
     } catch {}
   };
 
+  // Auto-generate the summary as soon as the feed page opens (if a key is configured).
+  // Re-runs every time the user opens a different feed.
+  useEffect(() => {
+    if (!feedId) return;
+    let key = '';
+    try { key = localStorage.getItem('hyve_spy_anthropic_key') || '' } catch {}
+    if (key) {
+      // Tiny delay so the audio + cameras load first, then summary slides in
+      const t = setTimeout(() => generateSummary(), 800);
+      return () => clearTimeout(t);
+    }
+  }, [feedId]);
+
   const generateSummary = async () => {
     if (!feedId) return;
     let key = '';
