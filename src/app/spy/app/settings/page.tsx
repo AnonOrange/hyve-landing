@@ -4,9 +4,24 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import AlertsCard from './AlertsCard';
 
-const KEY_STORAGE = 'hyve_spy_anthropic_key';
+// Generic LLM key storage. Backward-compat: legacy hyve_spy_anthropic_key still
+// read by the FeedDetailView fallback path so existing users don't lose access.
+const KEY_STORAGE = 'hyve_spy_llm_key';
+const PROVIDER_STORAGE = 'hyve_spy_llm_provider';
+const OLLAMA_URL_STORAGE = 'hyve_spy_ollama_url';
+const MODEL_STORAGE = 'hyve_spy_llm_model';
+const LEGACY_ANTHROPIC_STORAGE = 'hyve_spy_anthropic_key';
 const NOTIFY_STORAGE = 'hyve_spy_notify_prefs';
 const ACCOUNTS_BASE = 'https://hyve-spy-accounts.vercel.app';
+
+const PROVIDERS: { value: string; label: string; placeholder: string; signupUrl: string }[] = [
+  { value: 'anthropic', label: 'Anthropic (Claude)',  placeholder: 'sk-ant-…',  signupUrl: 'https://console.anthropic.com/settings/keys' },
+  { value: 'openai',    label: 'OpenAI (GPT)',        placeholder: 'sk-…',      signupUrl: 'https://platform.openai.com/api-keys' },
+  { value: 'gemini',    label: 'Google Gemini',       placeholder: 'AIza…',     signupUrl: 'https://aistudio.google.com/apikey' },
+  { value: 'openrouter',label: 'OpenRouter (any model)', placeholder: 'sk-or-…', signupUrl: 'https://openrouter.ai/keys' },
+  { value: 'groq',      label: 'Groq (fast Llama)',   placeholder: 'gsk_…',     signupUrl: 'https://console.groq.com/keys' },
+  { value: 'ollama',    label: 'Ollama (self-hosted, no key)', placeholder: 'http://localhost:11434', signupUrl: 'https://ollama.com' },
+];
 
 type Subscription = {
   active: boolean;
@@ -44,9 +59,12 @@ function readPrefs(): NotifyPrefs {
 }
 
 export default function SettingsPage() {
-  // Anthropic key
+  // LLM API key (any provider)
   const [apiKey, setApiKey] = useState('');
   const [savedKey, setSavedKey] = useState<string | null>(null);
+  const [provider, setProvider] = useState('anthropic');
+  const [ollamaUrl, setOllamaUrl] = useState('');
+  const [model, setModel] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [keySaved, setKeySaved] = useState(false);
 
@@ -64,8 +82,16 @@ export default function SettingsPage() {
 
   useEffect(() => {
     try {
-      const k = localStorage.getItem(KEY_STORAGE);
+      // Prefer new generic key; fall back to legacy Anthropic key for migration
+      const k = localStorage.getItem(KEY_STORAGE) || localStorage.getItem(LEGACY_ANTHROPIC_STORAGE);
       setSavedKey(k);
+      const p = localStorage.getItem(PROVIDER_STORAGE);
+      if (p) setProvider(p);
+      else if (localStorage.getItem(LEGACY_ANTHROPIC_STORAGE)) setProvider('anthropic');
+      const u = localStorage.getItem(OLLAMA_URL_STORAGE);
+      if (u) setOllamaUrl(u);
+      const m = localStorage.getItem(MODEL_STORAGE);
+      if (m) setModel(m);
     } catch {}
     setPrefs(readPrefs());
     if (typeof Notification !== 'undefined') {
@@ -153,10 +179,21 @@ export default function SettingsPage() {
 
   const saveKey = () => {
     const trimmed = apiKey.trim();
-    if (!trimmed) return;
+    const ollamaTrim = ollamaUrl.trim();
+    // Ollama is the one provider that doesn't require an API key — just a URL.
+    if (provider !== 'ollama' && !trimmed) return;
+    if (provider === 'ollama' && !ollamaTrim) return;
     try {
-      localStorage.setItem(KEY_STORAGE, trimmed);
-      setSavedKey(trimmed);
+      localStorage.setItem(PROVIDER_STORAGE, provider);
+      if (trimmed) {
+        localStorage.setItem(KEY_STORAGE, trimmed);
+        setSavedKey(trimmed);
+      }
+      if (ollamaTrim) localStorage.setItem(OLLAMA_URL_STORAGE, ollamaTrim);
+      if (model.trim()) localStorage.setItem(MODEL_STORAGE, model.trim());
+      else localStorage.removeItem(MODEL_STORAGE);
+      // Migrate off the legacy Anthropic-only key — once user saves new style, retire the old slot
+      if (provider !== 'anthropic') localStorage.removeItem(LEGACY_ANTHROPIC_STORAGE);
       setApiKey('');
       setKeySaved(true);
       setTimeout(() => setKeySaved(false), 1800);
@@ -166,7 +203,14 @@ export default function SettingsPage() {
   const clearKey = () => {
     try {
       localStorage.removeItem(KEY_STORAGE);
+      localStorage.removeItem(PROVIDER_STORAGE);
+      localStorage.removeItem(OLLAMA_URL_STORAGE);
+      localStorage.removeItem(MODEL_STORAGE);
+      localStorage.removeItem(LEGACY_ANTHROPIC_STORAGE);
       setSavedKey(null);
+      setOllamaUrl('');
+      setModel('');
+      setProvider('anthropic');
     } catch {}
   };
 
@@ -248,11 +292,10 @@ export default function SettingsPage() {
           )}
         </Section>
 
-        {/* API Keys */}
-        <Section title="API Keys" accent="#00D4FF">
+        {/* API Keys — multi-provider BYOK */}
+        <Section title="AI Provider (BYOK)" accent="#00D4FF">
           <p className="mb-3 text-xs text-[#64748B]">
-            Bring your own Anthropic key to enable AI summaries on feeds. Stored locally on this
-            device only.
+            Bring your own API key from any provider. Used to summarize scanner feeds. Stored locally on this device only.
           </p>
 
           {savedKey && (
@@ -260,7 +303,7 @@ export default function SettingsPage() {
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-[#22C55E]" />
                 <span className="font-mono text-[11px] text-[#E2E8F0]">
-                  Active: …{savedKey.slice(-6)}
+                  Active ({provider}): …{savedKey.slice(-6)}{model ? ` · ${model}` : ''}
                 </span>
               </div>
               <button
@@ -272,38 +315,75 @@ export default function SettingsPage() {
             </div>
           )}
 
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <div className="relative flex-1">
-              <input
-                type={showKey ? 'text' : 'password'}
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="sk-ant-…"
-                className="w-full rounded border border-[#0D2235] bg-black/60 px-3 py-2 pr-16 font-mono text-xs text-[#E2E8F0] placeholder-[#334155] outline-none focus:border-[#00D4FF]"
-              />
+          <label className="mb-1 block font-mono text-[10px] tracking-widest text-[#64748B]">PROVIDER</label>
+          <select
+            value={provider}
+            onChange={(e) => setProvider(e.target.value)}
+            className="mb-3 w-full rounded border border-[#0D2235] bg-black/60 px-3 py-2 font-mono text-xs text-[#E2E8F0] outline-none focus:border-[#00D4FF]"
+          >
+            {PROVIDERS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+          </select>
+
+          {provider !== 'ollama' ? (
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <div className="relative flex-1">
+                <input
+                  type={showKey ? 'text' : 'password'}
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder={PROVIDERS.find((p) => p.value === provider)?.placeholder}
+                  className="w-full rounded border border-[#0D2235] bg-black/60 px-3 py-2 pr-16 font-mono text-xs text-[#E2E8F0] placeholder-[#334155] outline-none focus:border-[#00D4FF]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowKey((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-0.5 text-[10px] font-bold text-[#64748B] hover:text-[#00D4FF]"
+                >
+                  {showKey ? 'HIDE' : 'SHOW'}
+                </button>
+              </div>
               <button
-                type="button"
-                onClick={() => setShowKey((v) => !v)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-0.5 text-[10px] font-bold text-[#64748B] hover:text-[#00D4FF]"
+                onClick={saveKey}
+                disabled={!apiKey.trim()}
+                className="rounded bg-[#00D4FF] px-4 py-2 text-xs font-black tracking-widest text-[#020D14] transition hover:bg-white disabled:opacity-30"
               >
-                {showKey ? 'HIDE' : 'SHOW'}
+                {keySaved ? 'SAVED ✓' : 'SAVE'}
               </button>
             </div>
-            <button
-              onClick={saveKey}
-              disabled={!apiKey.trim()}
-              className="rounded bg-[#00D4FF] px-4 py-2 text-xs font-black tracking-widest text-[#020D14] transition hover:bg-white disabled:opacity-30"
-            >
-              {keySaved ? 'SAVED ✓' : 'SAVE KEY'}
-            </button>
-          </div>
+          ) : (
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                type="text"
+                value={ollamaUrl}
+                onChange={(e) => setOllamaUrl(e.target.value)}
+                placeholder="http://localhost:11434"
+                className="w-full flex-1 rounded border border-[#0D2235] bg-black/60 px-3 py-2 font-mono text-xs text-[#E2E8F0] placeholder-[#334155] outline-none focus:border-[#00D4FF]"
+              />
+              <button
+                onClick={saveKey}
+                disabled={!ollamaUrl.trim()}
+                className="rounded bg-[#00D4FF] px-4 py-2 text-xs font-black tracking-widest text-[#020D14] transition hover:bg-white disabled:opacity-30"
+              >
+                {keySaved ? 'SAVED ✓' : 'SAVE'}
+              </button>
+            </div>
+          )}
+
+          <input
+            type="text"
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            placeholder="Model (optional override) — e.g. gpt-4o, llama-3.3-70b-versatile, gemini-2.0-flash"
+            className="mt-2 w-full rounded border border-[#0D2235] bg-black/60 px-3 py-2 font-mono text-[10px] text-[#E2E8F0] placeholder-[#334155] outline-none focus:border-[#00D4FF]"
+          />
+
           <a
-            href="https://console.anthropic.com/settings/keys"
+            href={PROVIDERS.find((p) => p.value === provider)?.signupUrl}
             target="_blank"
             rel="noreferrer"
             className="mt-2 inline-block text-[10px] text-[#64748B] hover:text-[#00D4FF]"
           >
-            Get an Anthropic API key →
+            Get a {PROVIDERS.find((p) => p.value === provider)?.label} key →
           </a>
         </Section>
 

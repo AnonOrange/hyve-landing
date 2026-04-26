@@ -149,7 +149,8 @@ export default function FeedDetailView() {
       setWatched(Array.isArray(arr) && arr.includes(feedId));
     } catch {}
     try {
-      setHasKey(!!localStorage.getItem('hyve_spy_anthropic_key'));
+      // Multi-provider: legacy key OR new generic key both count as "has key"
+      setHasKey(!!localStorage.getItem('hyve_spy_anthropic_key') || !!localStorage.getItem('hyve_spy_llm_key'));
     } catch {}
   }, [feedId]);
 
@@ -170,14 +171,28 @@ export default function FeedDetailView() {
     } catch {}
   };
 
+  // Read whichever LLM key the user has configured (any provider).
+  // Returns { key, provider, ollamaUrl, model } or null if no key set.
+  const getLlmConfig = (): { key: string; provider?: string; ollamaUrl?: string; model?: string } | null => {
+    try {
+      const newKey = localStorage.getItem('hyve_spy_llm_key') || '';
+      const provider = localStorage.getItem('hyve_spy_llm_provider') || '';
+      const ollamaUrl = localStorage.getItem('hyve_spy_ollama_url') || '';
+      const model = localStorage.getItem('hyve_spy_llm_model') || '';
+      if (newKey || (provider === 'ollama' && ollamaUrl)) {
+        return { key: newKey, provider: provider || undefined, ollamaUrl: ollamaUrl || undefined, model: model || undefined };
+      }
+      // Legacy fallback — old code only saved Anthropic key
+      const legacy = localStorage.getItem('hyve_spy_anthropic_key') || '';
+      if (legacy) return { key: legacy, provider: 'anthropic' };
+    } catch {}
+    return null;
+  };
+
   // Auto-generate the summary as soon as the feed page opens (if a key is configured).
-  // Re-runs every time the user opens a different feed.
   useEffect(() => {
     if (!feedId) return;
-    let key = '';
-    try { key = localStorage.getItem('hyve_spy_anthropic_key') || '' } catch {}
-    if (key) {
-      // Tiny delay so the audio + cameras load first, then summary slides in
+    if (getLlmConfig()) {
       const t = setTimeout(() => generateSummary(), 800);
       return () => clearTimeout(t);
     }
@@ -185,22 +200,22 @@ export default function FeedDetailView() {
 
   const generateSummary = async () => {
     if (!feedId) return;
-    let key = '';
-    try {
-      key = localStorage.getItem('hyve_spy_anthropic_key') || '';
-    } catch {}
-    if (!key) {
+    const cfg = getLlmConfig();
+    if (!cfg) {
       setHasKey(false);
-      setSummaryError('Add your Anthropic API key in Settings to enable AI summaries.');
+      setSummaryError('Add an LLM API key in Settings to enable AI summaries (any provider — Anthropic, OpenAI, Gemini, OpenRouter, Groq, or Ollama).');
       return;
     }
     if (Date.now() - summaryAt < 60_000 && summary) return;
     setSummaryLoading(true);
     setSummaryError(null);
     try {
-      const r = await fetch(`${API_BASE}/summarize/${feedId}`, {
-        headers: { 'X-Anthropic-Api-Key': key },
-      });
+      const headers: Record<string, string> = {};
+      if (cfg.key) headers['X-LLM-Api-Key'] = cfg.key;
+      if (cfg.provider) headers['X-LLM-Provider'] = cfg.provider;
+      if (cfg.ollamaUrl) headers['X-Ollama-Url'] = cfg.ollamaUrl;
+      if (cfg.model) headers['X-LLM-Model'] = cfg.model;
+      const r = await fetch(`${API_BASE}/summarize/${feedId}`, { headers });
       if (!r.ok) {
         const txt = await r.text().catch(() => '');
         throw new Error(`HTTP ${r.status}: ${txt.slice(0, 140)}`);
@@ -295,6 +310,12 @@ export default function FeedDetailView() {
         if (!prev.length) return arr;
         const seen = new Set(prev.map(callKey));
         const newOnes = arr.filter((c) => !seen.has(callKey(c)));
+        // CRITICAL: keep the same array reference when nothing new arrived.
+        // Otherwise React sees `calls` as "changed" every 15 s, the play useEffect
+        // re-fires, and the audio src gets re-set to the same URL — which the
+        // browser interprets as restarting the transmission. That's the
+        // "recycling the last communication" bug.
+        if (newOnes.length === 0) return prev;
         return [...newOnes, ...prev].slice(0, 200);
       });
     } catch (e) {
@@ -311,13 +332,20 @@ export default function FeedDetailView() {
     }
   }, [nowPlaying, fetchCalls]);
 
-  // Play current call
+  // Play current call. We track the call's stable ID (callKey) instead of the
+  // array position so that when new transmissions prepend to `calls`, the
+  // currently-playing transmission isn't interrupted by the index shifting.
+  const playingCallKey = useRef<string | null>(null);
   useEffect(() => {
     if (currentIdx == null || nowPlaying?.source !== 'openmhz') return;
     const c = calls[currentIdx];
     if (!c) return;
+    const k = callKey(c);
+    // Already playing this exact call? Don't restart it.
+    if (playingCallKey.current === k && !audioRef.current?.paused) return;
     const url = callUrl(c);
     if (!url || !audioRef.current) return;
+    playingCallKey.current = k;
     audioRef.current.src = url;
     audioRef.current.play().then(() => setPlaying(true)).catch((e) => {
       console.warn('audio play failed', e);
