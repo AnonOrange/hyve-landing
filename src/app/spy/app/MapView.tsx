@@ -497,7 +497,7 @@ export default function MapView() {
             <div className="mb-4 text-lg font-bold text-white">License-plate reader detected</div>
             <div className="mb-4 space-y-1 font-mono text-xs text-[#94A3B8]">
               <div>Lat/Lng: <span className="text-white">{selectedAlpr.lat?.toFixed(5)}, {selectedAlpr.lng?.toFixed(5)}</span></div>
-              {selectedAlpr.county && <div>Direction: <span className="text-white">{selectedAlpr.county}</span></div>}
+              {(selectedAlpr as any).county && <div>Direction: <span className="text-white">{(selectedAlpr as any).county}</span></div>}
               <div>Operator: <span className="text-white">{selectedAlpr.agency || 'Flock Safety'}</span></div>
               <div>Source: <span className="text-white">DeFlock community DB</span></div>
             </div>
