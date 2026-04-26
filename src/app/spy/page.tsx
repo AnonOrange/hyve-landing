@@ -20,8 +20,8 @@ const STATS = [
   { value: '73,898', label: 'Live cameras' },
   { value: '164,733', label: 'Surveillance markers' },
   { value: '97,061', label: 'Offender pins' },
-  { value: '48,242', label: 'Live crime reports' },
-  { value: '13', label: 'Cities w/ daily crime' },
+  { value: '53,519', label: 'Live crime reports' },
+  { value: '15', label: 'Cities w/ daily crime' },
 ];
 
 const FEATURES = [
@@ -54,9 +54,9 @@ const FEATURES = [
     tag: 'OFFENDERS',
   },
   {
-    title: '48,242 live crime reports — 13 cities, refreshed daily',
+    title: '53,519 live crime reports — 15 cities, refreshed daily',
     body:
-      'Real incident pins (not heatmaps) sourced daily at 9am UTC from city open-data portals: Chicago, NYC, LA, San Francisco, Seattle, DC, Buffalo, Dallas, Philadelphia, Raleigh, Tucson, Montgomery County MD, Gainesville FL. 12 category icons (🔫 shooting, 💀 homicide, 👊 assault, 💰 robbery, 🏚 burglary, 🚗 vehicle theft, 🛒 theft, 💊 drug, 🎨 vandalism, 🔥 arson, 💳 fraud, ⚠ sex offense). Filter chips per category. Click pin → offense, time-ago, source.',
+      'Real incident pins (not heatmaps) refreshed daily at 9am UTC from city open-data portals: Chicago, NYC, LA, Philadelphia, San Francisco, Seattle, Minneapolis, Raleigh, Dallas, Washington DC, Tucson, Montgomery County MD, Gainesville FL, Buffalo, Marin County CA. 12 category icons (🔫 shooting, 💀 homicide, 👊 assault, 💰 robbery, 🏚 burglary, 🚗 vehicle theft, 🛒 theft, 💊 drug, 🎨 vandalism, 🔥 arson, 💳 fraud, ⚠ sex offense). Click any pin → 🎙 SCANNER AUDIO section with the 3 closest live scanner feeds + Broadcastify Premium archive deep-link + OpenMHz public calls.',
     accent: '#EF4444',
     tag: 'CRIME',
   },
@@ -379,8 +379,8 @@ export default function SpyPage() {
             all plans include
           </div>
           <p className="mb-6 text-center text-xs text-[#64748B]">
-            Pro tier unlocks the <span className="text-[#22C55E]">Global view</span> (24,410 worldwide cams) +
-            the <span className="text-[#F59E0B]">Intel suite</span> (164k surveillance · 97k offenders · 48k live crime reports).
+            Pro tier unlocks the <span className="text-[#22C55E]">Global view</span> (24,491 worldwide cams) +
+            the <span className="text-[#F59E0B]">Intel suite</span> (164k surveillance · 97k offenders · 53k live crime reports).
           </p>
           <ul className="grid gap-3 md:grid-cols-2">
             {[
