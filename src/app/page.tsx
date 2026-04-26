@@ -30,6 +30,8 @@ type App = {
   badge?: string
 }
 
+// Products we run + ship from THIS site (hyveapp.co). Each opens an internal
+// route inside the same Next deployment.
 const APPS: App[] = [
   {
     name: 'Hyve Spy',
@@ -78,25 +80,144 @@ const APPS: App[] = [
     blurb:
       'Pay once — $9.99–$299.99. List your assets, sign authorization, get a real DNS/TLS/HTTP/port-probed report with severity-color-coded remediation steps. Same legal model as professional pen-testing.',
   },
+]
+
+// The wider Hyve ecosystem hosted on Vibe Software Solutions
+// (vibesoftwaresolutions.com). Each links out to the VSS product page,
+// surfacing the full Hyve catalog without duplicating their pages here.
+// Ordered roughly by how flagship each is in VSS's own product navigation.
+const VSS_BASE = 'https://www.vibesoftwaresolutions.com'
+
+const ECOSYSTEM: App[] = [
   {
     name: 'Hyve Alpha',
-    tagline: 'AI agent platform — chat, memory, art studio, live agents',
+    tagline: "World's first artificial synthetic intelligence",
     href: 'https://www.hyvealpha.com',
     external: true,
     icon: '🧠',
     accent: '#E8C456',
     blurb:
-      'A flexible-themed AI workspace with persistent memory, multi-agent chat, an art studio, and a live-map of agents. Bring-your-own-key for any LLM provider.',
+      'Locally-hosted AI workspace with persistent memory, multi-agent chat, art studio, and live agent map. Bring-your-own-key for any LLM provider.',
   },
   {
     name: 'Hyve Cares',
-    tagline: 'Hyve Foundation — community + support',
+    tagline: 'Free K-12 curriculum + AI tutoring',
     href: 'https://www.hyvecares.org',
     external: true,
     icon: '❤️',
     accent: '#EF4444',
     blurb:
-      'The Hyve Foundation. Community programs, support resources, and giving-back initiatives across the Hyve ecosystem.',
+      'Complete K-12 educational curriculum delivered free, with AI tutors, certifications, and community support. The Hyve Foundation.',
+  },
+  {
+    name: 'HYVE Overlord',
+    tagline: 'Government-grade unified cybersecurity',
+    href: `${VSS_BASE}/hyve-overlord`,
+    external: true,
+    icon: '🛡',
+    accent: '#A855F7',
+    blurb:
+      '"Government-Grade Unified Cybersecurity Platform with Post-Quantum AI Agent Defense." 59 integrated security modules + AI threat prediction + automated response + compliance automation.',
+  },
+  {
+    name: 'HYVE Raptor',
+    tagline: 'Post-quantum AI agent defense',
+    href: `${VSS_BASE}/hyve-raptor`,
+    external: true,
+    icon: '🦅',
+    accent: '#FF2D2D',
+    blurb:
+      'Post-quantum AI agent defense platform with operator desktop, active defense commands, six-framework compliance engine, and embedded offline AI advisor. Monitors AI agents for behavioral anomalies on your own infrastructure.',
+  },
+  {
+    name: 'HYVE OS',
+    tagline: 'Quantum · Neural · AI operating system',
+    href: `${VSS_BASE}/hyve-os`,
+    external: true,
+    icon: '⚛️',
+    accent: '#22D3EE',
+    blurb:
+      "World's first hybrid Quantum · Neural · AI operating system. Native Windows desktop integrating quantum circuit simulation, persistent neural memory, and 69 AI providers — locally, encrypted, sovereign.",
+  },
+  {
+    name: 'HYVE Suite',
+    tagline: 'Twelve products. One standard.',
+    href: `${VSS_BASE}/hyve-suite`,
+    external: true,
+    icon: '📦',
+    accent: '#06B6D4',
+    blurb:
+      'Twelve integrated security + AI products unified by a single engineering standard. Encrypted communications, AI capabilities, cybersecurity, compliance, and monitoring — all built to the same rigorous spec.',
+  },
+  {
+    name: 'HYVE Scope',
+    tagline: 'Encrypted operational intelligence',
+    href: `${VSS_BASE}/hyve-scope`,
+    external: true,
+    icon: '🎯',
+    accent: '#3B82F6',
+    blurb:
+      'Encrypted operational-intelligence platform for public safety, justice, medical, fire, and military professionals. "Your data is readable only by you — not by servers, not by cloud providers, not by anyone."',
+  },
+  {
+    name: 'HYVE Social',
+    tagline: 'AI-powered social media automation',
+    href: `${VSS_BASE}/hyve-social`,
+    external: true,
+    icon: '📣',
+    accent: '#EC4899',
+    blurb:
+      'Free Windows desktop app for social media automation. Schedule posts across 9 platforms, generate branded captions with AI, manage your full content queue from one app — no monthly fees.',
+  },
+  {
+    name: 'HYVE VUE',
+    tagline: 'Self-hosted AI operations platform',
+    href: `${VSS_BASE}/hyve-vue`,
+    external: true,
+    icon: '👁',
+    accent: '#10B981',
+    blurb:
+      'Intelligence Infrastructure Platform — visibility, control, and accountability from day one for teams running AI at scale, all self-hosted.',
+  },
+  {
+    name: 'HYVE-CUI',
+    tagline: 'DoD contractor compliance automation',
+    href: `${VSS_BASE}/hyve-cui`,
+    external: true,
+    icon: '📋',
+    accent: '#8B5CF6',
+    blurb:
+      '"Encrypted Communications + Compliance Automation for DoD Contractors." Automates CMMC Level 2 and NIST SP 800-171 compliance tracking for orgs handling Controlled Unclassified Information.',
+  },
+  {
+    name: 'HYVE Shield',
+    tagline: 'Cybersecurity (revamping)',
+    href: `${VSS_BASE}/hyve-shield`,
+    external: true,
+    icon: '🛡',
+    accent: '#64748B',
+    blurb:
+      'Currently being rebuilt from the ground up. Check the VSS product page for return-to-service updates.',
+  },
+  {
+    name: 'MaXXiE',
+    tagline: 'Offline AI tutoring system',
+    href: `${VSS_BASE}/maxxie`,
+    external: true,
+    icon: '🤖',
+    accent: '#F472B6',
+    blurb:
+      'Offline AI tutor powering Hyve Cares. Student-grade conversational AI that runs locally — no cloud round-trips, no data leaving the device.',
+  },
+  {
+    name: 'TradingMajixx',
+    tagline: 'AI-augmented trading toolkit',
+    href: `${VSS_BASE}/tradingmajixx`,
+    external: true,
+    icon: '📈',
+    accent: '#22C55E',
+    blurb:
+      'Trading platform integrated with the Hyve / Vibe stack. Visit the VSS page for current capabilities and signup.',
   },
 ]
 
@@ -148,10 +269,10 @@ export default function HomePage() {
       {/* Hero — animated logo */}
       <HyveHubHero />
 
-      {/* Apps grid */}
-      <section id="apps" className="relative z-10 mx-auto max-w-7xl px-6 pb-24 pt-12">
+      {/* OUR products — apps that live on this site */}
+      <section id="apps" className="relative z-10 mx-auto max-w-7xl px-6 pb-16 pt-12">
         <div className="mb-10 text-center">
-          <div className="font-mono text-[10px] tracking-[0.4em] text-[#C8A227]">THE HYVE ECOSYSTEM</div>
+          <div className="font-mono text-[10px] tracking-[0.4em] text-[#C8A227]">LIVE NOW · HYVEAPP.CO</div>
           <h2 className="mt-2 text-3xl font-black md:text-4xl">Pick an app. They all share one identity.</h2>
           <p className="mt-3 text-sm text-[#9e8a55]">
             Sign in once on any Hyve product — your account works across all of them.
@@ -159,76 +280,121 @@ export default function HomePage() {
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {APPS.map((a) => (
+            <AppCard key={a.name} a={a} />
+          ))}
+        </div>
+      </section>
+
+      {/* The wider Hyve ecosystem — products from Vibe Software Solutions */}
+      <section id="ecosystem" className="relative z-10 mx-auto max-w-7xl px-6 pb-24 pt-8">
+        <div className="mb-10 text-center">
+          <div className="font-mono text-[10px] tracking-[0.4em] text-[#C8A227]">FROM THE WIDER HYVE ECOSYSTEM</div>
+          <h2 className="mt-2 text-3xl font-black md:text-4xl">More Hyve products from Vibe Software Solutions.</h2>
+          <p className="mt-3 text-sm text-[#9e8a55]">
+            13 sister products built to the same engineering standard — security, AI, compliance, and operational
+            intelligence.{' '}
             <a
-              key={a.name}
-              href={a.href}
-              {...(a.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-              className="group relative flex flex-col rounded-xl border-2 p-6 transition hover:scale-[1.01] active:scale-[0.99]"
-              style={{ borderColor: `${a.accent}55`, background: `${a.accent}08` }}
+              href="https://www.vibesoftwaresolutions.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#E8C456] underline-offset-4 hover:underline"
             >
-              {a.badge && (
-                <span
-                  className="absolute right-4 top-4 rounded border px-1.5 py-0.5 text-[8px] font-bold tracking-[0.2em]"
-                  style={{ borderColor: a.accent, color: a.accent, background: 'rgba(0,0,0,0.4)' }}
-                >
-                  {a.badge}
-                </span>
-              )}
-              {a.external && (
-                <span
-                  className="absolute right-4 top-4 rounded border border-[#2a2135] px-1.5 py-0.5 text-[8px] font-bold tracking-[0.2em] text-[#9e8a55]"
-                >
-                  EXTERNAL ↗
-                </span>
-              )}
-              <div className="flex h-16 items-center">
-                {a.logo ? (
-                  <Image
-                    src={a.logo}
-                    alt={a.name}
-                    width={1536}
-                    height={1024}
-                    className="h-full w-auto object-contain"
-                  />
-                ) : (
-                  <div className="text-4xl">{a.icon}</div>
-                )}
-              </div>
-              <div className="mt-4">
-                <h3 className="text-lg font-black text-[#ede8d8]">{a.name}</h3>
-                <div className="font-mono text-[10px] tracking-widest" style={{ color: a.accent }}>
-                  {a.tagline.toUpperCase()}
-                </div>
-              </div>
-              <p className="mt-3 flex-1 text-sm leading-relaxed text-[#9e8a55]">{a.blurb}</p>
-              <div className="mt-4 flex items-center justify-between text-[10px] font-mono tracking-widest text-[#6b5e3a]">
-                <span>{a.external ? 'OPEN SITE →' : 'LAUNCH APP →'}</span>
-                <span style={{ color: a.accent }}>↗</span>
-              </div>
+              Browse the full Vibe Software Solutions catalog ↗
             </a>
+          </p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {ECOSYSTEM.map((a) => (
+            <AppCard key={a.name} a={a} compact />
           ))}
         </div>
       </section>
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-[#2a2135] bg-black/40">
-        <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-6 py-10 text-center sm:flex-row sm:justify-between sm:text-left">
-          <div className="flex items-center gap-2">
-            <Image src="/hyve-logo/hyve-messenger-emblem.png" alt="Hyve" width={32} height={32} className="h-7 w-7" />
-            <span className="font-mono text-[10px] tracking-[0.3em] text-[#9e8a55]">© 2026 HYVE</span>
+        <div className="mx-auto max-w-7xl px-6 py-10">
+          {/* VSS backlink — credits the parent / publisher of the wider Hyve catalog */}
+          <div className="mb-8 flex flex-col items-center gap-2 border-b border-[#2a2135] pb-6 text-center">
+            <div className="font-mono text-[9px] tracking-[0.4em] text-[#6b5e3a]">PUBLISHER</div>
+            <a
+              href="https://www.vibesoftwaresolutions.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-bold tracking-[0.2em] text-[#9e8a55] transition hover:text-[#E8C456]"
+            >
+              Built by VIBE SOFTWARE SOLUTIONS ↗
+            </a>
+            <p className="max-w-xl text-[11px] text-[#6b5e3a]">
+              Hyve apps are part of a larger product portfolio at vibesoftwaresolutions.com — including
+              Overlord, Raptor, Shield, OS, Suite, Scope, Social, VUE, CUI, MaXXiE, and TradingMajixx.
+            </p>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-5 font-mono text-[10px] tracking-[0.2em] text-[#6b5e3a]">
-            <a href="/spy" className="hover:text-[#E8C456]">SPY</a>
-            <a href="/messenger" className="hover:text-[#E8C456]">MESSENGER</a>
-            <a href="/spy/app/sleuth" className="hover:text-[#E8C456]">SLEUTH</a>
-            <a href="/spy/app/residential" className="hover:text-[#E8C456]">RESIDENTIAL</a>
-            <a href="/spy/app/sentinel" className="hover:text-[#E8C456]">SENTINEL</a>
-            <a href="https://www.hyvealpha.com" target="_blank" rel="noopener" className="hover:text-[#E8C456]">ALPHA ↗</a>
-            <a href="https://www.hyvecares.org" target="_blank" rel="noopener" className="hover:text-[#E8C456]">CARES ↗</a>
-            <a href="/privacy" className="hover:text-[#E8C456]">PRIVACY</a>
+
+          <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:justify-between sm:text-left">
+            <div className="flex items-center gap-2">
+              <Image src="/hyve-logo/hyve-messenger-emblem.png" alt="Hyve" width={32} height={32} className="h-7 w-7" />
+              <span className="font-mono text-[10px] tracking-[0.3em] text-[#9e8a55]">© 2026 HYVE</span>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-mono text-[10px] tracking-[0.2em] text-[#6b5e3a]">
+              <a href="/spy" className="hover:text-[#E8C456]">SPY</a>
+              <a href="/messenger" className="hover:text-[#E8C456]">MESSENGER</a>
+              <a href="/spy/app/sleuth" className="hover:text-[#E8C456]">SLEUTH</a>
+              <a href="/spy/app/residential" className="hover:text-[#E8C456]">RESIDENTIAL</a>
+              <a href="/spy/app/sentinel" className="hover:text-[#E8C456]">SENTINEL</a>
+              <a href="https://www.hyvealpha.com" target="_blank" rel="noopener" className="hover:text-[#E8C456]">ALPHA ↗</a>
+              <a href="https://www.hyvecares.org" target="_blank" rel="noopener" className="hover:text-[#E8C456]">CARES ↗</a>
+              <a href="https://www.vibesoftwaresolutions.com" target="_blank" rel="noopener" className="hover:text-[#E8C456]">VSS ↗</a>
+              <a href="/privacy" className="hover:text-[#E8C456]">PRIVACY</a>
+            </div>
           </div>
         </div>
       </footer>
     </main>
+  )
+}
+
+// Shared card component — used by both the hyveapp.co APPS section and the
+// VSS ECOSYSTEM section. The `compact` flag is for the ecosystem grid where
+// we render 4 columns instead of 3, so the cards need a tighter footprint.
+function AppCard({ a, compact = false }: { a: App; compact?: boolean }) {
+  return (
+    <a
+      href={a.href}
+      {...(a.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+      className="group relative flex flex-col rounded-xl border-2 p-5 transition hover:scale-[1.01] active:scale-[0.99] sm:p-6"
+      style={{ borderColor: `${a.accent}55`, background: `${a.accent}08` }}
+    >
+      {a.badge && (
+        <span
+          className="absolute right-4 top-4 rounded border px-1.5 py-0.5 text-[8px] font-bold tracking-[0.2em]"
+          style={{ borderColor: a.accent, color: a.accent, background: 'rgba(0,0,0,0.4)' }}
+        >
+          {a.badge}
+        </span>
+      )}
+      {a.external && !a.badge && (
+        <span className="absolute right-4 top-4 rounded border border-[#2a2135] px-1.5 py-0.5 text-[8px] font-bold tracking-[0.2em] text-[#9e8a55]">
+          EXTERNAL ↗
+        </span>
+      )}
+      <div className={`flex items-center ${compact ? 'h-12' : 'h-16'}`}>
+        {a.logo ? (
+          <Image src={a.logo} alt={a.name} width={1536} height={1024} className="h-full w-auto object-contain" />
+        ) : (
+          <div className={compact ? 'text-3xl' : 'text-4xl'}>{a.icon}</div>
+        )}
+      </div>
+      <div className="mt-3">
+        <h3 className={compact ? 'text-base font-black text-[#ede8d8]' : 'text-lg font-black text-[#ede8d8]'}>{a.name}</h3>
+        <div className="font-mono text-[10px] tracking-widest" style={{ color: a.accent }}>
+          {a.tagline.toUpperCase()}
+        </div>
+      </div>
+      <p className={`mt-2 flex-1 leading-relaxed text-[#9e8a55] ${compact ? 'text-[12px]' : 'text-sm'}`}>{a.blurb}</p>
+      <div className="mt-3 flex items-center justify-between font-mono text-[10px] tracking-widest text-[#6b5e3a]">
+        <span>{a.external ? 'OPEN SITE →' : 'LAUNCH APP →'}</span>
+        <span style={{ color: a.accent }}>↗</span>
+      </div>
+    </a>
   )
 }

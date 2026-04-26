@@ -50,37 +50,26 @@ export default function HyveHubHero() {
       />
 
       {/*
-        The logo — breathes with a subtle scale + brightness pulse.
-        Clip-path: hexagon shape matching the logo's hex emblem outline.
-        Container is square + object-cover so the 1536×1024 source image
-        crops to its center column (where the emblem lives), then the
-        clip-path trims the leftover corners to a clean hexagon. Net
-        effect: just the gold HYVE hexagon floating on dark, no
-        rectangular background showing through.
+        Hero emblem — pre-isolated on pure black, so no clip-path needed.
+        Just breathe + glow. Sized smaller than the previous cropped logo
+        (max-w 360 vs 560) since the cleaner emblem reads stronger at a
+        more compact size and lets the headline below carry more weight.
       */}
       <div
-        className="relative aspect-square w-full max-w-[560px]"
+        className="relative w-full max-w-[360px]"
         style={{
           animation: 'hyveBreathe 6s ease-in-out infinite',
-          filter: 'drop-shadow(0 0 60px rgba(200,162,39,0.45))',
+          filter: 'drop-shadow(0 0 50px rgba(200,162,39,0.55))',
         }}
       >
         <Image
-          src="/hyve-logo/hyve-main.png"
+          src="/hyve-logo/hyve-emblem-hero.png"
           alt="HYVE"
-          fill
+          width={1536}
+          height={1024}
           priority
-          sizes="(max-width: 768px) 90vw, 560px"
-          className="object-cover"
-          style={{
-            // Pointed-top hexagon clip — points at top/bottom, flat sides.
-            // 50%,0%  92%,25%  92%,75%  50%,100%  8%,75%  8%,25%
-            clipPath:
-              'polygon(50% 0%, 92% 25%, 92% 75%, 50% 100%, 8% 75%, 8% 25%)',
-            // Slight zoom so the clip area lands precisely on the emblem,
-            // not on the dark hex-grid frame around it.
-            transform: 'scale(1.18)',
-          }}
+          sizes="(max-width: 768px) 80vw, 360px"
+          className="h-auto w-full"
         />
       </div>
 
