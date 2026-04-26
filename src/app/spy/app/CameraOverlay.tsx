@@ -4,12 +4,26 @@ import { useEffect, useRef, useState } from 'react'
 
 // CameraThumb is declared *after* its dependencies (camUrl/camName/youtubeId), but TS
 // hoists function declarations so we can keep the export at the top of the file.
+//
+// Thumbnail strategy (best-quality first):
+//   1. Server-enriched thumbnail_url (og:image scraped at seed time)
+//   2. YouTube hqdefault for any YT URL
+//   3. Direct snapshot URL (auto-refreshes every 10s)
+//   4. Type-name placeholder (e.g. "WEBVIEW") with the camera's accent color
+//
+// Click behavior:
+//   - For embeddable types (snapshot/youtube/hls): open the in-app overlay
+//     so users get the full zoomable embed.
+//   - For webview types: 90% of these source pages send X-Frame-Options:DENY
+//     so the iframe is blank — users HAVE to click "open source" anyway.
+//     Skip the broken intermediate step and open the source URL directly.
 export function CameraThumb({ cam, onOpen }: { cam: Camera; onOpen: () => void }) {
   const url = camUrl(cam)
   const name = camName(cam)
   const type = (cam.feedType || '').toLowerCase()
   const [tick, setTick] = useState(0)
   const isSnap = type === 'snapshot' || (!type && /\.(jpg|jpeg|png|gif)(\?|$)/i.test(url))
+  const isWebview = type === 'webview' || type === 'cruise-cam'
 
   useEffect(() => {
     if (!isSnap) return
@@ -18,15 +32,32 @@ export function CameraThumb({ cam, onOpen }: { cam: Camera; onOpen: () => void }
   }, [isSnap])
 
   const ytId = type === 'youtube' || /youtube\.com|youtu\.be/.test(url) ? youtubeId(url) : null
-  const thumbSrc = ytId
-    ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
-    : isSnap
-      ? `${url}${url.includes('?') ? '&' : '?'}_t=${tick}`
-      : null
+
+  // Thumbnail source priority chain
+  const enriched = (cam as any).thumbnailUrl as string | undefined
+  const thumbSrc = enriched
+    ? enriched
+    : ytId
+      ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
+      : isSnap
+        ? `${url}${url.includes('?') ? '&' : '?'}_t=${tick}`
+        : null
+
+  // For webview cams, route the click straight to the source (open in new tab).
+  // X-Frame-Options blocks most external pages from embedding, so the in-app
+  // iframe was just a blank step before users had to click "open source" anyway.
+  const handleClick = (e: React.MouseEvent) => {
+    if (isWebview && url) {
+      e.preventDefault()
+      window.open(url, '_blank', 'noopener,noreferrer')
+      return
+    }
+    onOpen()
+  }
 
   return (
     <button
-      onClick={onOpen}
+      onClick={handleClick}
       className="group relative aspect-video overflow-hidden rounded border border-[#0D2235] bg-black text-left transition hover:border-[#00D4FF]"
     >
       {thumbSrc ? (
@@ -35,24 +66,38 @@ export function CameraThumb({ cam, onOpen }: { cam: Camera; onOpen: () => void }
           alt={name}
           className="h-full w-full object-cover"
           loading="lazy"
-          onError={(e) => ((e.target as HTMLImageElement).style.opacity = '0.2')}
+          onError={(e) => {
+            // Hide and fall through to placeholder
+            const img = e.target as HTMLImageElement
+            img.style.display = 'none'
+            const ph = img.nextElementSibling as HTMLElement | null
+            if (ph) ph.style.display = 'flex'
+          }}
         />
-      ) : (
-        <div className="flex h-full w-full items-center justify-center text-[10px] font-bold tracking-widest text-[#475569]">
-          {(type || 'STREAM').toUpperCase()}
+      ) : null}
+      {/* Placeholder shown when no thumb / image fails to load */}
+      <div
+        className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0D2235] to-black text-[10px] font-bold tracking-widest text-[#475569]"
+        style={{ display: thumbSrc ? 'none' : 'flex' }}
+      >
+        <div className="text-center">
+          <div className="mb-1 text-2xl">📹</div>
+          <div>{(type || 'CAMERA').toUpperCase()}</div>
         </div>
-      )}
+      </div>
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/80 to-transparent p-2">
         <div className="truncate text-[11px] font-bold text-white">{name}</div>
         {cam.agency && <div className="truncate font-mono text-[9px] text-[#94A3B8]">{cam.agency}</div>}
       </div>
       <div className="absolute right-1.5 top-1.5 rounded bg-black/70 px-1.5 py-0.5 font-mono text-[9px] tracking-widest text-[#00D4FF]">
-        {(type || 'snap').toUpperCase()}
+        {isWebview ? '↗ OPEN' : (type || 'snap').toUpperCase()}
       </div>
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition group-hover:opacity-100">
         <div className="rounded-full bg-black/70 p-3 text-[#00D4FF]">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+            {isWebview
+              ? <><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></>
+              : <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />}
           </svg>
         </div>
       </div>
@@ -74,6 +119,7 @@ export type Camera = {
   streamUrl?: string
   snapshotUrl?: string
   feedUrl?: string
+  thumbnailUrl?: string
 }
 
 export function youtubeId(url: string): string | null {
