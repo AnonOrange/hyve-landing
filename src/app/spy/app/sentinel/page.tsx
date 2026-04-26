@@ -291,7 +291,7 @@ export default function SentinelLanding() {
               </div>
               <div className="mb-4 text-sm text-[#94A3B8]">{t.blurb}</div>
               <ul className="mb-6 space-y-2 text-xs text-[#94A3B8]">
-                <li>▸ {t.quota} asset{t.quota === 1 ? '' : 's'} (domain, IP, or CIDR)</li>
+                <li>▸ {t.quota} asset{(t.quota as number) === 1 ? '' : 's'} (domain, IP, or CIDR)</li>
                 <li>▸ Severity-color-coded findings report</li>
                 <li>▸ Vendor-specific remediation steps</li>
                 <li>▸ Email confirmation + 90-day report retention</li>
