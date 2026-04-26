@@ -89,20 +89,22 @@ export default function WorldMapView() {
     return () => { cancelled = true }
   }, [])
 
-  // Surveillance (loaded once; toggles control rendering, not fetching)
-  useEffect(() => {
-    let cancelled = false
-    fetch(`${API_BASE}/cameras/surveillance`, { cache: 'no-store' })
+  // Surveillance is lazy-loaded — only fetched the first time the user opens the
+  // LAYERS panel. 164k records is too much to ship at first paint. Once loaded,
+  // toggling individual sub-types just filters the cached array (instant).
+  const [survLoaded, setSurvLoaded] = useState(false)
+  const ensureSurvLoaded = () => {
+    if (survLoaded) return
+    setSurvLoaded(true)
+    fetch(`${API_BASE}/cameras/surveillance`)
       .then((r) => r.json())
       .then((arr: SurvCam[]) => {
-        if (cancelled) return
         const valid = (Array.isArray(arr) ? arr : []).filter((c) => lat(c) != null && lng(c) != null)
         setSurv(valid)
       })
       .catch(() => {})
-      .finally(() => !cancelled && setLoadingSurv(false))
-    return () => { cancelled = true }
-  }, [])
+      .finally(() => setLoadingSurv(false))
+  }
 
   const survCounts: Record<string, number> = {}
   for (const c of surv) survCounts[c.surveillance_type || 'unknown'] = (survCounts[c.surveillance_type || 'unknown'] || 0) + 1
@@ -144,7 +146,7 @@ export default function WorldMapView() {
               )}
             </div>
             <button
-              onClick={() => setPanelOpen((v) => !v)}
+              onClick={() => { ensureSurvLoaded(); setPanelOpen((v) => !v) }}
               className="rounded border border-[#F59E0B] bg-[#F59E0B]/10 px-3 py-1.5 text-[10px] font-black tracking-widest text-[#F59E0B] hover:bg-[#F59E0B]/20"
             >
               {panelOpen ? '✕' : '☰ LAYERS'}

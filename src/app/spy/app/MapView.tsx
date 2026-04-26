@@ -82,39 +82,30 @@ export default function MapView() {
     offenders: false,  // sex offender registry, opt-in
   });
 
-  // Load feeds + cameras
+  // Track which lazy layers have already been loaded so we never re-fetch.
+  const [loadedLayers, setLoadedLayers] = useState<Set<string>>(new Set());
+
+  // Initial load: only what's visible by default (feeds + cameras).
+  // The other 3 layers (alpr/crime/offenders) lazy-load when the user enables them.
+  // This drops first-paint payload from ~250k records to ~55k.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const [fRes, cRes, aRes, crimeRes, oRes] = await Promise.all([
+        const [fRes, cRes] = await Promise.all([
           fetch(`${API_BASE}/feeds/trending?limit=2000`),
           fetch(`${API_BASE}/cameras/nearby?lat=39.8&lng=-98.5&radius=5000`),
-          fetch(`${API_BASE}/cameras/alpr`),
-          fetch(`${API_BASE}/crime/heatmap`),
-          fetch(`${API_BASE}/cameras/offenders`),
         ]);
         const fJson = await fRes.json();
         const cJson = await cRes.json();
-        const aJson = await aRes.json();
-        const crimeJson = await crimeRes.json();
-        const oJson = await oRes.json();
         if (cancelled) return;
 
         const fArr: Feed[] = Array.isArray(fJson) ? fJson : (fJson?.feeds ?? fJson?.data ?? []);
         const cArr: Camera[] = Array.isArray(cJson) ? cJson : (cJson?.cameras ?? cJson?.data ?? []);
-        const aArr: Camera[] = Array.isArray(aJson) ? aJson : (aJson?.cameras ?? aJson?.data ?? []);
 
         setFeeds(fArr.filter((f) => normalizeLat(f) != null && normalizeLng(f) != null));
         setCameras(cArr.filter((c) => normalizeLat(c) != null && normalizeLng(c) != null));
-        setAlpr(aArr.filter((c) => normalizeLat(c) != null && normalizeLng(c) != null));
-        const crimeArr: CrimePoint[] = (Array.isArray(crimeJson) ? crimeJson : []).filter(
-          (p: any) => Number.isFinite(p?.lat) && Number.isFinite(p?.lng) && (p?.intensity ?? 0) > 0,
-        );
-        setCrime(crimeArr);
-        const oArr: Camera[] = Array.isArray(oJson) ? oJson : (oJson?.cameras ?? []);
-        setOffenders(oArr.filter((c) => normalizeLat(c) != null && normalizeLng(c) != null));
-        setCounts({ feeds: fArr.length, cameras: cArr.length, alpr: aArr.length });
+        setCounts({ feeds: fArr.length, cameras: cArr.length, alpr: 0 });
       } catch (e) {
         console.error('Failed to load map data', e);
       } finally {
@@ -123,6 +114,42 @@ export default function MapView() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // Lazy loaders for opt-in layers. Each runs at most once per session because
+  // of the loadedLayers guard — re-toggling shows the cached state instantly.
+  const loadAlpr = async () => {
+    if (loadedLayers.has('alpr')) return;
+    setLoadedLayers((s) => new Set(s).add('alpr'));
+    try {
+      const r = await fetch(`${API_BASE}/cameras/alpr`);
+      const j = await r.json();
+      const arr: Camera[] = Array.isArray(j) ? j : (j?.cameras ?? j?.data ?? []);
+      setAlpr(arr.filter((c) => normalizeLat(c) != null && normalizeLng(c) != null));
+      setCounts((c) => ({ ...c, alpr: arr.length }));
+    } catch (e) { console.error('alpr load failed', e); }
+  };
+  const loadCrime = async () => {
+    if (loadedLayers.has('crime')) return;
+    setLoadedLayers((s) => new Set(s).add('crime'));
+    try {
+      const r = await fetch(`${API_BASE}/crime/heatmap`);
+      const j = await r.json();
+      const arr: CrimePoint[] = (Array.isArray(j) ? j : []).filter(
+        (p: any) => Number.isFinite(p?.lat) && Number.isFinite(p?.lng) && (p?.intensity ?? 0) > 0,
+      );
+      setCrime(arr);
+    } catch (e) { console.error('crime load failed', e); }
+  };
+  const loadOffenders = async () => {
+    if (loadedLayers.has('offenders')) return;
+    setLoadedLayers((s) => new Set(s).add('offenders'));
+    try {
+      const r = await fetch(`${API_BASE}/cameras/offenders`);
+      const j = await r.json();
+      const arr: Camera[] = Array.isArray(j) ? j : (j?.cameras ?? []);
+      setOffenders(arr.filter((c) => normalizeLat(c) != null && normalizeLng(c) != null));
+    } catch (e) { console.error('offenders load failed', e); }
+  };
 
   const usBounds = useMemo<L.LatLngBoundsExpression>(
     () => [[15, -170], [72, -50]],
@@ -173,8 +200,18 @@ export default function MapView() {
     }
   };
 
-  const toggleType = (t: string) =>
-    setTypeVisibility((v) => ({ ...v, [t]: !v[t] }));
+  const toggleType = (t: string) => {
+    setTypeVisibility((v) => {
+      const next = { ...v, [t]: !v[t] };
+      // Lazy-load on first activation. Each loader is idempotent (loadedLayers guard).
+      if (!v[t]) {
+        if (t === 'alpr') void loadAlpr();
+        if (t === 'crime') void loadCrime();
+        if (t === 'offenders') void loadOffenders();
+      }
+      return next;
+    });
+  };
 
   const visibleFeeds = useMemo(() => {
     return feeds.filter((f) => {
