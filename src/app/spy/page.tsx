@@ -3,44 +3,58 @@ import type { Metadata } from 'next';
 import OpenWebAppButton from './OpenWebAppButton';
 
 export const metadata: Metadata = {
-  title: 'Hyve Spy — Public-safety scanner intelligence in your pocket',
+  title: 'Hyve Spy — Public-safety + surveillance intelligence',
   description:
-    'Live police, fire, EMS scanner audio across all 50 states. 25,000+ live traffic cameras. FOIA request generator. Real-time incident detection. $5.99/month. 72-hour free trial.',
+    'Live police/fire/EMS scanner audio. 49,000+ traffic + city cameras. 24,000+ worldwide cameras. 164,000+ surveillance markers (Flock ALPR, ShotSpotter, drones, face recognition). Real-time incident detection. $5.99/month.',
   openGraph: {
-    title: 'Hyve Spy — Tactical public-safety intelligence',
+    title: 'Hyve Spy — Public-safety + surveillance intelligence',
     description:
-      '4,300+ live scanner feeds. 25,000+ live cameras. Real-time incident detection. $5.99/mo, 72h free trial.',
+      '6,500+ scanner feeds. 73,000+ live cameras. 164,000+ surveillance markers. Real-time incident detection. $5.99/mo, 72h free trial.',
     siteName: 'Hyve Spy',
     images: ['/spy-logo/hyve-spy-logo.png'],
   },
 };
 
 const STATS = [
-  { value: '4,300+', label: 'Live scanner feeds' },
-  { value: '26,000+', label: 'Live cameras' },
-  { value: '50', label: 'States covered' },
-  { value: '24/7', label: 'Always streaming' },
+  { value: '6,500+', label: 'Scanner feeds' },
+  { value: '73,000+', label: 'Live cameras' },
+  { value: '164,000+', label: 'Surveillance markers' },
+  { value: '199', label: 'Countries covered' },
 ];
 
 const FEATURES = [
   {
     title: 'Every police, fire & EMS scanner in America',
     body:
-      "4,300+ verified live audio feeds across every state — direct streams from Broadcastify, OpenMHz trunked systems, and aviation/marine bands. Tap any pin, hear the dispatch live.",
+      '6,500+ verified live audio feeds — direct Broadcastify streams, OpenMHz trunked systems, aviation, marine, weather. Tap any pin, hear the dispatch live. Skip-ahead controls so you go straight to the live edge instead of catching up on backlog.',
     accent: '#00D4FF',
     tag: 'AUDIO',
   },
   {
-    title: '26,000 live cameras, nationwide',
+    title: '49,488 US live cameras + 24,410 worldwide',
     body:
-      "Every state DOT traffic cam, NYC TMC's 950 city cams, USGS volcano monitors (Mt St Helens, Kilauea, all 234), beach cams, marina cams, EarthCam landmarks, Times Square, Bourbon Street, Vegas Strip — one tap, live image refreshing every 2 seconds.",
+      "Every state DOT traffic cam, NYC TMC's 954 city cams, USGS volcano monitors, NPS parks, beach cams, marina cams, EarthCam landmarks, Times Square, Vegas Strip, plus 24,000+ Windy webcams across 199 countries. Pro tier unlocks the global view. Snapshots refresh every 2 seconds.",
     accent: '#22C55E',
     tag: 'VIDEO',
   },
   {
+    title: '164,000 surveillance markers — Pro tier',
+    body:
+      'See where Flock Safety license-plate readers (99,683), ShotSpotter mics, police drones, face recognition deployments, Stingrays, fusion centers, real-time crime centers, body-worn cam programs, and 26,000+ public CCTV cameras live. Sourced from EFF Atlas of Surveillance, DeFlock community DB, and OpenStreetMap. 16 toggleable layers.',
+    accent: '#F59E0B',
+    tag: 'SURVEILLANCE',
+  },
+  {
+    title: 'Per-channel community chat',
+    body:
+      'Listeners on the same scanner feed can chat in real time. Collapsible side panel inside every incident detail. Sign in once, your handle and history sync across all your devices.',
+    accent: '#EC4899',
+    tag: 'CHAT',
+  },
+  {
     title: 'Real-time incident detection',
     body:
-      'On-device Whisper STT listens for keyword bursts. Listener-spike & transmission-burst detection. The map literally shows where incidents are unfolding before the news catches it.',
+      'On-device Whisper STT listens for keyword bursts. Listener-spike + transmission-burst detection surfaces incidents before the news catches them. The map literally shows where things are unfolding right now.',
     accent: '#FF2D2D',
     tag: 'ALERTS',
   },
@@ -52,24 +66,24 @@ const FEATURES = [
     tag: 'RECORDS',
   },
   {
-    title: 'Tactical dark map',
+    title: 'Cross-device account + cloud sync',
     body:
-      'Custom dark CARTO tiles. Color-coded pins by feed type (cyan = police, red = fire, amber = EMS, purple = aviation, green = camera). Pinch-zoom from country-wide down to street level.',
-    accent: '#F59E0B',
-    tag: 'MAP',
+      'Magic-link or password sign-in. Your watchlist, FOIA log, and chat handle sync between web (any browser), Android app, and PWA on iOS. No tracking — Ghost Mode is on by default.',
+    accent: '#E2E8F0',
+    tag: 'ACCOUNT',
   },
   {
-    title: 'No ads, no tracking',
+    title: 'Tactical dark map',
     body:
-      "Ghost mode by default. No accounts required to listen. No ads in your audio feed. We charge $5.99/month so you don't have to be the product.",
-    accent: '#E2E8F0',
-    tag: 'PRIVACY',
+      'Custom dark CARTO tiles. Color-coded pins by feed type (cyan = police, red = fire, amber = EMS/ALPR, purple = aviation, green = camera). Pinch-zoom from country-wide down to street level. 49k+ cameras render via marker clustering — no browser melt.',
+    accent: '#06B6D4',
+    tag: 'MAP',
   },
 ];
 
 const SHOTS = [
-  { src: '/spy-screenshots/1-map.png', alt: 'Map with scanner pins and camera dots', caption: 'Tactical map — color-coded scanner pins + 26K camera dots' },
-  { src: '/spy-screenshots/2-feeds.png', alt: 'Feeds list', caption: '4,300+ feeds, sorted by live listener count' },
+  { src: '/spy-screenshots/1-map.png', alt: 'Map with scanner pins and camera dots', caption: 'Tactical map — 6,500 scanner pins + 49K camera dots' },
+  { src: '/spy-screenshots/2-feeds.png', alt: 'Feeds list', caption: '6,500+ feeds, sorted by live listener count' },
   { src: '/spy-screenshots/3-incident.png', alt: 'Incident detail with audio + camera', caption: 'Tap a feed → audio + live cameras within 30 miles' },
   { src: '/spy-screenshots/4-foia.png', alt: 'FOIA download + cameras', caption: 'Live DOT cameras, auto-refreshing every 2 seconds' },
 ];
@@ -129,7 +143,7 @@ export default function SpyPage() {
               <span className="text-[#E2E8F0]"> right now.</span>
             </h1>
             <p className="mt-6 max-w-xl text-lg text-[#64748B]">
-              Real-time public-safety scanner audio and live cameras across every US state. 4,300+ feeds. 26,000+ cameras. One tap on a map.
+              Real-time public-safety scanner audio + 73,000 live cameras + 164,000 surveillance markers. Police/fire/EMS scanners across all 50 states. Globe view (Pro). One tap on a map.
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <a href="#pricing" className="rounded bg-[#00D4FF] px-6 py-3 text-sm font-black tracking-widest text-[#020D14] transition hover:bg-white" style={{ boxShadow: '0 0 60px -10px rgba(0,212,255,0.4),0 0 140px -40px rgba(0,212,255,0.6)' }}>
@@ -293,14 +307,19 @@ export default function SpyPage() {
           <div className="mb-4 text-center font-mono text-xs uppercase tracking-[0.4em] text-[#00D4FF]">
             all plans include
           </div>
+          <p className="mb-6 text-center text-xs text-[#64748B]">
+            Pro tier adds the <span className="text-[#22C55E]">Global view</span> (24,410 worldwide cams) +
+            the <span className="text-[#F59E0B]">Surveillance overlay</span> (164,733 ALPR/drone/face-rec/ShotSpotter markers).
+          </p>
           <ul className="grid gap-3 md:grid-cols-2">
             {[
-              'All 4,300+ live scanner feeds (police, fire, EMS, aviation, marine)',
-              'All 26,000+ live cameras (DOT, USGS volcanoes, EarthCam, NYC TMC)',
+              'All 6,500+ live scanner feeds (police, fire, EMS, aviation, marine)',
+              'All 49,488 US live cameras (DOT, USGS, EarthCam, NYC TMC, Windy)',
+              'Per-channel community chat (sign-in required)',
               'Real-time incident detection (Whisper STT + listener-spike)',
               'FOIA fillable-PDF generator',
               'Custom keyword alerts with quiet hours',
-              'Push notifications for critical incidents in your area',
+              'Cross-device sync (web + Android + iOS PWA)',
               'Unlimited watchlists',
               'No ads, no tracking',
             ].map((item) => (
