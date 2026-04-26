@@ -84,14 +84,15 @@ export default function ReconMapView({ initial }: { initial: Camera[] }) {
         subtitle="RECON · INTERNAL"
         rightSlot={
           <>
-            <div className="hidden font-mono text-[10px] text-[#94A3B8] sm:block">
-              {cams.length.toLocaleString()} cams · DO NOT SHARE
+            <div className="hidden text-right font-mono text-[10px] leading-tight text-[#94A3B8] sm:block">
+              <div><span className="font-bold text-[#FF2D2D]">{cams.length.toLocaleString()}</span> cams</div>
+              <div className="text-[#475569]">DO NOT SHARE</div>
             </div>
             <button
               onClick={() => setFormOpen((v) => !v)}
               className="rounded border border-[#FF2D2D] px-3 py-1.5 text-[10px] font-black tracking-widest text-[#FF2D2D] hover:bg-[#FF2D2D]/10"
             >
-              {formOpen ? '✕ CLOSE' : '+ ADD CAMERA'}
+              {formOpen ? '✕ CLOSE' : '+ ADD'}
             </button>
           </>
         }

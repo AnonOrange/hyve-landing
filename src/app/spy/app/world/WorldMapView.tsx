@@ -56,8 +56,15 @@ export default function WorldMapView() {
         accent="#22C55E"
         subtitle="GLOBAL · PRO"
         rightSlot={
-          <div className="font-mono text-[10px] text-[#94A3B8]">
-            {loading ? 'loading…' : `${count.toLocaleString()} cameras worldwide`}
+          <div className="text-right font-mono text-[10px] leading-tight text-[#94A3B8] sm:text-xs">
+            {loading ? (
+              'loading…'
+            ) : (
+              <>
+                <div><span className="font-bold text-[#22C55E]">{count.toLocaleString()}</span> cams</div>
+                <div className="text-[#475569]">worldwide</div>
+              </>
+            )}
           </div>
         }
       />

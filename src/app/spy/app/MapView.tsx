@@ -207,8 +207,15 @@ export default function MapView() {
       <MapHeader
         subtitle="LIVE NATIONWIDE"
         rightSlot={
-          <div className="font-mono text-[10px] text-[#94A3B8]">
-            {loading ? 'loading…' : `${counts.feeds.toLocaleString()} feeds · ${counts.cameras.toLocaleString()} cams`}
+          <div className="text-right font-mono text-[10px] leading-tight text-[#94A3B8] sm:text-xs">
+            {loading ? (
+              'loading…'
+            ) : (
+              <>
+                <div><span className="font-bold text-[#00D4FF]">{counts.cameras.toLocaleString()}</span> cams</div>
+                <div><span className="font-bold text-[#00D4FF]">{counts.feeds.toLocaleString()}</span> feeds</div>
+              </>
+            )}
           </div>
         }
       />
