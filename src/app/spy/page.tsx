@@ -169,6 +169,7 @@ export default function SpyPage() {
         <div className="text-sm font-black tracking-[0.3em] text-[#64748B]">HYVE SPY</div>
         <nav className="hidden gap-8 text-sm font-medium text-[#64748B] md:flex">
           <a href="#features" className="transition hover:text-[#00D4FF]">Features</a>
+          <a href="#sentinel" className="transition hover:text-[#A855F7]">Sentinel · Scout</a>
           <a href="#screenshots" className="transition hover:text-[#00D4FF]">Screenshots</a>
           <a href="#pricing" className="transition hover:text-[#00D4FF]">Pricing</a>
         </nav>
@@ -283,6 +284,78 @@ export default function SpyPage() {
               <p className="text-sm leading-relaxed text-[#64748B]">{f.body}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Sentinel · Scout — flagship paid product line, separate from the main Pro subscription. */}
+      <section id="sentinel" className="relative z-10 mx-auto max-w-7xl px-6 py-20">
+        <div className="rounded-2xl border-2 bg-gradient-to-br from-[#A855F7]/5 via-transparent to-[#FF2D2D]/5 p-10 md:p-14"
+             style={{ borderColor: '#A855F7' }}>
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#A855F7]/40 bg-[#A855F7]/10 px-3 py-1 font-mono text-[10px] tracking-[0.3em] text-[#A855F7]">
+            🔒 ONE-SHOT SECURITY AUDITS · NEW
+          </div>
+          <h2 className="text-4xl font-black leading-[1.05] tracking-tight md:text-5xl">
+            <span className="text-white">Find what's exposed. </span>
+            <span style={{ background: 'linear-gradient(90deg,#A855F7,#FF2D2D)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              Fix it in plain English.
+            </span>
+          </h2>
+          <p className="mt-6 max-w-3xl text-base leading-relaxed text-[#94A3B8] md:text-lg">
+            Pay once, list the assets you own, sign the authorization, and we deliver a real security audit with click-by-click
+            remediation. No subscription. AES-256 encrypted with per-audit keys. Sensitive details auto-purge in 7 days so we
+            never retain a long-term map of your exposed systems.
+          </p>
+
+          {/* Two products in one frame */}
+          <div className="mt-10 grid gap-5 md:grid-cols-2">
+            <div className="rounded-lg border border-[#A855F7]/40 bg-black/30 p-6">
+              <div className="mb-2 flex items-center gap-2 font-mono text-[10px] tracking-widest text-[#A855F7]">
+                <span>📹</span><span>SENTINEL · CAMERA EXPOSURE AUDIT</span>
+              </div>
+              <div className="mb-2 text-xl font-black text-white">From $9.99 · one-time</div>
+              <p className="mb-3 text-sm text-[#94A3B8]">
+                Find every camera you own that's exposed to the internet. Hikvision, Dahua, Foscam, Axis, generic RTSP.
+                Vendor-specific remediation per finding.
+              </p>
+              <div className="font-mono text-[10px] text-[#64748B]">5 / 20 / 100 asset tiers</div>
+            </div>
+            <div className="rounded-lg border border-[#FF2D2D]/40 bg-black/30 p-6">
+              <div className="mb-2 flex items-center gap-2 font-mono text-[10px] tracking-widest text-[#FF2D2D]">
+                <span>🛡</span><span>SCOUT · INFRASTRUCTURE PEN TEST</span>
+              </div>
+              <div className="mb-2 text-xl font-black text-white">From $49.99 · one-time</div>
+              <p className="mb-3 text-sm text-[#94A3B8]">
+                DNS misconfig, expired/weak TLS, missing security headers, exposed admin panels, public database ports,
+                subdomain takeover risk. Plain-English fixes.
+              </p>
+              <div className="font-mono text-[10px] text-[#64748B]">3 / 10 / 50 asset tiers</div>
+            </div>
+          </div>
+
+          {/* Trust strip */}
+          <div className="mt-10 grid gap-4 border-t border-[#A855F7]/20 pt-8 text-xs text-[#64748B] md:grid-cols-4">
+            <div>
+              <div className="mb-1 flex items-center gap-1.5 text-xl font-black text-white">
+                <span style={{ color: '#22C55E' }}>🔒</span><span>AES-256</span>
+              </div>
+              Hyve Encryption per audit
+            </div>
+            <div><div className="mb-1 text-xl font-black text-white">7-day</div>Auto-purge of details</div>
+            <div><div className="mb-1 text-xl font-black text-white">~30s</div>Typical scan time</div>
+            <div><div className="mb-1 text-xl font-black text-white">2-layer</div>Scope enforcement</div>
+          </div>
+
+          <div className="mt-10 flex flex-wrap items-center gap-4">
+            <a href="/spy/app/sentinel"
+               className="rounded-lg px-6 py-3 text-sm font-black tracking-widest transition hover:scale-[1.02]"
+               style={{ background: '#A855F7', color: '#020D14', boxShadow: '0 0 60px -10px rgba(168,85,247,0.5)' }}>
+              SEE PRICING + START AUDIT
+            </a>
+            <a href="/spy/app/sentinel#how" className="rounded-lg border border-[#A855F7]/40 px-6 py-3 text-sm font-bold tracking-widest text-[#E2E8F0] transition hover:border-[#A855F7]">
+              HOW IT WORKS
+            </a>
+            <span className="font-mono text-[10px] text-[#475569]">No subscription · pay once · 24h refund window</span>
+          </div>
         </div>
       </section>
 
