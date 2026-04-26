@@ -86,6 +86,32 @@ const NAV = [
     ),
   },
   {
+    href: '/spy/app/tv',
+    label: 'TV',
+    match: (p: string) => p.startsWith('/spy/app/tv'),
+    // CRT/television icon — red "ON AIR" tint when active.
+    icon: (active: boolean) => (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#EF4444' : '#64748B'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="7" width="20" height="13" rx="2" ry="2" />
+        <polyline points="17 2 12 7 7 2" />
+        {active && <circle cx="18.5" cy="10.5" r="0.8" fill="#EF4444" stroke="none" />}
+      </svg>
+    ),
+  },
+  {
+    href: '/spy/app/radio',
+    label: 'Radio',
+    match: (p: string) => p.startsWith('/spy/app/radio'),
+    // Radio tower with broadcast waves.
+    icon: (active: boolean) => (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#22C55E' : '#64748B'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="2" />
+        <path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49" />
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14" />
+      </svg>
+    ),
+  },
+  {
     href: '/spy/app/watchlist',
     label: 'Watch',
     match: (p: string) => p.startsWith('/spy/app/watchlist'),
@@ -118,14 +144,18 @@ export default function SpyBottomNav() {
       className="fixed inset-x-0 bottom-0 z-[3000] border-t border-[#0D2235] bg-[#020D14]/95 backdrop-blur"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <ul className="mx-auto grid max-w-3xl grid-cols-9">
+      {/*
+        11 tabs split across 2 rows (6 + 5). Keeps tap targets large + full
+        icon/label size, no horizontal scrolling required.
+      */}
+      <ul className="mx-auto grid max-w-3xl grid-cols-6">
         {NAV.map((item) => {
           const active = item.match(pathname);
           return (
             <li key={item.href}>
               <Link
                 href={item.href}
-                className="flex flex-col items-center gap-1 py-2.5 transition"
+                className="flex flex-col items-center gap-1 py-2 transition"
               >
                 {item.icon(active)}
                 <span
