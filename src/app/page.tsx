@@ -200,24 +200,14 @@ const ECOSYSTEM: App[] = [
       'Currently being rebuilt from the ground up. Check the VSS product page for return-to-service updates.',
   },
   {
-    name: 'MaXXiE',
-    tagline: 'Offline AI tutoring system',
-    href: `${VSS_BASE}/maxxie`,
+    name: 'Hyve Tribe',
+    tagline: 'Hyve community network',
+    href: 'https://www.hyvetribe.com',
     external: true,
-    icon: '🤖',
-    accent: '#F472B6',
-    blurb:
-      'Offline AI tutor powering Hyve Cares. Student-grade conversational AI that runs locally — no cloud round-trips, no data leaving the device.',
-  },
-  {
-    name: 'TradingMajixx',
-    tagline: 'AI-augmented trading toolkit',
-    href: `${VSS_BASE}/tradingmajixx`,
-    external: true,
-    icon: '📈',
+    icon: '🤝',
     accent: '#22C55E',
     blurb:
-      'Trading platform integrated with the Hyve / Vibe stack. Visit the VSS page for current capabilities and signup.',
+      'The Hyve community hub — connect with other Hyve users, share resources, and stay in the loop on launches across the ecosystem.',
   },
 ]
 
@@ -257,12 +247,13 @@ export default function HomePage() {
             HYVE
           </span>
         </a>
-        <nav className="hidden gap-6 text-xs font-bold tracking-[0.2em] text-[#9e8a55] md:flex">
+        <nav className="hidden gap-5 text-xs font-bold tracking-[0.2em] text-[#9e8a55] md:flex">
           <a href="#apps" className="transition hover:text-[#E8C456]">APPS</a>
           <a href="/spy" className="transition hover:text-[#E8C456]">SPY</a>
           <a href="/messenger" className="transition hover:text-[#E8C456]">MESSENGER</a>
           <a href="https://www.hyvealpha.com" className="transition hover:text-[#E8C456]" target="_blank" rel="noopener">ALPHA ↗</a>
           <a href="https://www.hyvecares.org" className="transition hover:text-[#E8C456]" target="_blank" rel="noopener">CARES ↗</a>
+          <a href="https://www.hyvetribe.com" className="transition hover:text-[#E8C456]" target="_blank" rel="noopener">TRIBE ↗</a>
         </nav>
       </header>
 
@@ -313,20 +304,27 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="relative z-10 border-t border-[#2a2135] bg-black/40">
         <div className="mx-auto max-w-7xl px-6 py-10">
-          {/* VSS backlink — credits the parent / publisher of the wider Hyve catalog */}
+          {/* Creator + publisher attribution — required across every page */}
           <div className="mb-8 flex flex-col items-center gap-2 border-b border-[#2a2135] pb-6 text-center">
-            <div className="font-mono text-[9px] tracking-[0.4em] text-[#6b5e3a]">PUBLISHER</div>
-            <a
-              href="https://www.vibesoftwaresolutions.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-bold tracking-[0.2em] text-[#9e8a55] transition hover:text-[#E8C456]"
-            >
-              Built by VIBE SOFTWARE SOLUTIONS ↗
-            </a>
-            <p className="max-w-xl text-[11px] text-[#6b5e3a]">
+            <div className="font-mono text-[9px] tracking-[0.4em] text-[#6b5e3a]">CREATED BY</div>
+            <p className="text-base font-bold tracking-[0.15em] text-[#ede8d8]">
+              ANTHONY S. OWENS
+            </p>
+            <p className="text-[11px] text-[#9e8a55]">
+              c/o{' '}
+              <a
+                href="https://www.vibesoftwaresolutions.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#E8C456] underline-offset-4 hover:underline"
+              >
+                Vibe Software Solutions
+              </a>
+            </p>
+            <p className="mt-2 max-w-2xl text-[11px] text-[#6b5e3a]">
               Hyve apps are part of a larger product portfolio at vibesoftwaresolutions.com — including
-              Overlord, Raptor, Shield, OS, Suite, Scope, Social, VUE, CUI, MaXXiE, and TradingMajixx.
+              Overlord, Raptor, Shield, OS, Suite, Scope, Social, VUE, and CUI. Plus the
+              community network at <a href="https://www.hyvetribe.com" target="_blank" rel="noopener" className="text-[#E8C456] underline-offset-4 hover:underline">hyvetribe.com</a>.
             </p>
           </div>
 
@@ -343,10 +341,18 @@ export default function HomePage() {
               <a href="/spy/app/sentinel" className="hover:text-[#E8C456]">SENTINEL</a>
               <a href="https://www.hyvealpha.com" target="_blank" rel="noopener" className="hover:text-[#E8C456]">ALPHA ↗</a>
               <a href="https://www.hyvecares.org" target="_blank" rel="noopener" className="hover:text-[#E8C456]">CARES ↗</a>
+              <a href="https://www.hyvetribe.com" target="_blank" rel="noopener" className="hover:text-[#E8C456]">TRIBE ↗</a>
               <a href="https://www.vibesoftwaresolutions.com" target="_blank" rel="noopener" className="hover:text-[#E8C456]">VSS ↗</a>
               <a href="/privacy" className="hover:text-[#E8C456]">PRIVACY</a>
             </div>
           </div>
+
+          <p className="mx-auto mt-6 max-w-3xl text-center text-[10px] leading-relaxed text-[#475569]">
+            © {new Date().getFullYear()} Anthony S. Owens / Vibe Software Solutions. All rights reserved.
+            HYVE™, Hyve Spy, Hyve Messenger, Hyve Sleuth, Hyve Residential, Hyve Sentinel, Hyve Alpha,
+            Hyve Cares, Hyve Tribe, Hyve Overlord, Hyve Raptor, Hyve Shield, Hyve OS, Hyve Suite, Hyve Scope,
+            Hyve Social, Hyve VUE, and Hyve-CUI are trademarks of Vibe Software Solutions.
+          </p>
         </div>
       </footer>
     </main>

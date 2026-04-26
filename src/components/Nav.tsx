@@ -55,6 +55,9 @@ export default function Nav() {
           <a href="https://www.hyvecares.org" target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors">
             Cares ↗
           </a>
+          <a href="https://www.hyvetribe.com" target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors">
+            Tribe ↗
+          </a>
         </div>
 
         {/* CTAs */}
