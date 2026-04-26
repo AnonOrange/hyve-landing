@@ -1,5 +1,47 @@
-/* Hyve Spy PWA — minimal app-shell cache */
-const CACHE = 'hyve-spy-shell-v6';
+/* Hyve Spy PWA — app-shell cache + push notifications */
+const CACHE = 'hyve-spy-shell-v7';
+
+// Push event: render an OS-level notification when the backend sends an alert.
+// Payload shape: { title, body, icon, badge, feedId, lat, lng, severity }
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  let data;
+  try { data = event.data.json(); }
+  catch { data = { title: 'Hyve Spy alert', body: event.data.text() }; }
+
+  const url = data.feedId
+    ? `/spy/app/feed/${encodeURIComponent(data.feedId)}`
+    : '/spy/app';
+
+  const options = {
+    body: data.body || 'New incident detected nearby',
+    icon: data.icon || '/spy-logo/hyve-spy-logo.png',
+    badge: data.badge || '/spy-logo/hyve-spy-logo.png',
+    tag: data.feedId || 'hyve-spy',
+    data: { url, ...data },
+    requireInteraction: data.severity === 'critical',
+    vibrate: data.severity === 'critical' ? [200, 100, 200, 100, 200] : [120],
+  };
+  event.waitUntil(self.registration.showNotification(data.title || '🚨 Hyve Spy', options));
+});
+
+// Click → open or focus the corresponding feed page
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || '/spy/app';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => {
+      const existing = wins.find((w) => w.url.includes('/spy/app'));
+      if (existing) {
+        existing.focus();
+        existing.navigate?.(targetUrl);
+        return existing;
+      }
+      return self.clients.openWindow(targetUrl);
+    }),
+  );
+});
+
 const SHELL = [
   '/spy/app/manifest.json',
   '/spy-logo/hyve-spy-logo.png',

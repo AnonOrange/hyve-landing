@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import AlertsCard from './AlertsCard';
 
 const KEY_STORAGE = 'hyve_spy_anthropic_key';
 const NOTIFY_STORAGE = 'hyve_spy_notify_prefs';
@@ -306,8 +307,11 @@ export default function SettingsPage() {
           </a>
         </Section>
 
-        {/* Notifications */}
-        <Section title="Notifications" accent="#F59E0B">
+        {/* Alerts near me — push notifications gated to user-set radius */}
+        <AlertsCard />
+
+        {/* In-tab notification preferences (legacy) */}
+        <Section title="In-tab Notifications" accent="#F59E0B">
           <button
             onClick={requestNotify}
             className="mb-3 rounded border border-[#F59E0B] bg-[#F59E0B]/10 px-3 py-2 text-[10px] font-black tracking-widest text-[#F59E0B] transition hover:bg-[#F59E0B]/20"
