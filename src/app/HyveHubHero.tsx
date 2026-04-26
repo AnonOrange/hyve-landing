@@ -49,15 +49,38 @@ export default function HyveHubHero() {
         }}
       />
 
-      {/* The logo — breathes with a subtle scale + brightness pulse */}
-      <div className="relative" style={{ animation: 'hyveBreathe 6s ease-in-out infinite' }}>
+      {/*
+        The logo — breathes with a subtle scale + brightness pulse.
+        Clip-path: hexagon shape matching the logo's hex emblem outline.
+        Container is square + object-cover so the 1536×1024 source image
+        crops to its center column (where the emblem lives), then the
+        clip-path trims the leftover corners to a clean hexagon. Net
+        effect: just the gold HYVE hexagon floating on dark, no
+        rectangular background showing through.
+      */}
+      <div
+        className="relative aspect-square w-full max-w-[560px]"
+        style={{
+          animation: 'hyveBreathe 6s ease-in-out infinite',
+          filter: 'drop-shadow(0 0 60px rgba(200,162,39,0.45))',
+        }}
+      >
         <Image
           src="/hyve-logo/hyve-main.png"
           alt="HYVE"
-          width={1536}
-          height={1024}
+          fill
           priority
-          className="relative h-auto w-full max-w-[640px] drop-shadow-[0_0_60px_rgba(200,162,39,0.45)]"
+          sizes="(max-width: 768px) 90vw, 560px"
+          className="object-cover"
+          style={{
+            // Pointed-top hexagon clip — points at top/bottom, flat sides.
+            // 50%,0%  92%,25%  92%,75%  50%,100%  8%,75%  8%,25%
+            clipPath:
+              'polygon(50% 0%, 92% 25%, 92% 75%, 50% 100%, 8% 75%, 8% 25%)',
+            // Slight zoom so the clip area lands precisely on the emblem,
+            // not on the dark hex-grid frame around it.
+            transform: 'scale(1.18)',
+          }}
         />
       </div>
 
