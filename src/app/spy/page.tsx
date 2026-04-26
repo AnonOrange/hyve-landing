@@ -68,6 +68,20 @@ const FEATURES = [
     tag: 'OFFENDERS',
   },
   {
+    title: 'HYVE SLEUTH — OSINT smart-launcher (Pro Intel tool)',
+    body:
+      "Sleuth indexes 100+ public OSINT resources — CourtListener, PACER, Justia, UniCourt, BOP federal inmate locator, VINELink, NSOPW national sex-offender registry, Family Watchdog, OpenCorporates, BBB, Zillow, Redfin, voter rolls, property tax, military records, professional licensing, bankruptcy, news archives. Enter a subject's name + optional location, hit Launch All, and 30+ tabs open with the search pre-executed across every relevant database. PIN-protected profiles, hit/miss tracking per resource, free-form notes, JSON export. Lives inside the Intel tab as an inline web tool. The same workflow PIs charge $500/case for, automated.",
+    accent: '#C8A227',
+    tag: 'SLEUTH',
+  },
+  {
+    title: 'HYVE RESIDENTIAL — distressed-property intel (Pro Intel tool)',
+    body:
+      "A self-hosted Windows desktop app that auto-scrapes county property records and surfaces every distress signal real-estate investors care about: foreclosure pipeline (filed → notice → hearing → sale → sold/dismissed), tax-delinquent properties (years owed, amount due, penalties), HOA / mechanic / contractor / judgment liens, and combined property-profile cards (parcel + owner + tax + lien history). Auto-generates Word docs (cash-offer letter, lien-negotiation memo, owner-finance proposal) pre-filled with owner + property data. Same data PropStream / DealMachine / BatchLeads charge $200-$1,000/mo for — yours, $0/mo, running locally. Wake + Mecklenburg + more NC counties on launch.",
+    accent: '#F59E0B',
+    tag: 'RESIDENTIAL',
+  },
+  {
     title: '57,260 live crime reports — 20 cities, refreshed daily',
     body:
       'Real incident pins (not heatmaps) refreshed daily at 9am UTC from city open-data portals: NYC · LA · Chicago · Philadelphia · Minneapolis · SF · Seattle · Raleigh · Dallas · Lewisville TX · DC · Tucson · Houston · Montgomery County MD · Valdosta GA · Gainesville FL · Buffalo · Boulder CO · Marin County CA · Halifax NS. 12 category icons (🔫 shooting, 💀 homicide, 👊 assault, 💰 robbery, 🏚 burglary, 🚗 vehicle theft, 🛒 theft, 💊 drug, 🎨 vandalism, 🔥 arson, 💳 fraud, ⚠ sex offense). Click any pin → 🎙 SCANNER AUDIO with 3 closest live feeds + Broadcastify Premium archive deep-link + OpenMHz public calls.',
@@ -520,8 +534,10 @@ export default function SpyPage() {
               '🆕 53,719 free radio stations worldwide on a real map (6,969 US)',
               '🆕 PULSE — live national activity heatmap (scanner + crime + STT fusion)',
               '🆕 ROULETTE — one-button random teleport into live reality',
-              '🆕 TICKER — national 911 ticker (scrolling dispatch events nationwide)',
+              '🆕 TICKER — hyperlocal scrolling event ticker (geo-radius selectable)',
               '🆕 PANOPTICON — drop a pin, get a 0-100 surveillance density score',
+              '🆕 HYVE SLEUTH — Pro OSINT smart-launcher (100+ public databases)',
+              '🆕 HYVE RESIDENTIAL — Pro real-estate distress-property desktop app',
               'AI summaries on any LLM key (Anthropic, OpenAI, Gemini, Groq, Ollama)',
               'Cameras auto-refresh every 4 hours (dead URLs culled, new cams added)',
               'Push alerts for incidents within your radius (1-50 mi)',

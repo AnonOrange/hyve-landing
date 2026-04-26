@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Hyve Sleuth — National OSINT Smart Launcher</title>
+<style>
+:root{--bg:#08070a;--surface:#100e13;--s2:#16121c;--s3:#1c1724;--border:#2a2135;--b2:#362849;--accent:#c8a227;--teal:#e8c456;--text:#ede8d8;--muted:#6b5e3a;--muted2:#9e8a55;--red:#ef4444;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+#hdr{position:sticky;top:0;z-index:200;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;padding:11px 18px;}
+.logo{display:flex;align-items:center;white-space:nowrap}
+.logo-img{height:40px;border-radius:6px;cursor:default;display:block;}
+.disc-logo-img{height:90px;border-radius:10px;margin-bottom:8px;display:block;}
+.logo em{color:var(--muted2);font-style:normal;font-weight:400;font-size:13px}
+#subj-status{font-size:12px;color:var(--muted2);border-left:1px solid var(--border);padding-left:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+#subj-status strong{color:var(--text)}
+.hdr-space{flex:1}
+#smart-count{font-size:11px;color:var(--teal);white-space:nowrap;background:rgba(200,162,39,.12);border:1px solid rgba(200,162,39,.35);padding:4px 10px;border-radius:20px}
+#btn-launch-all{background:linear-gradient(135deg,#c8a227,#e8c456);color:#1a1200;border:none;border-radius:6px;padding:8px 16px;font-size:12px;font-weight:800;letter-spacing:0.5px;cursor:pointer;white-space:nowrap;transition:opacity .15s}
+#btn-launch-all:hover{opacity:.85}
+#btn-launch-all:disabled{opacity:.35;cursor:not-allowed}
+.app{display:grid;grid-template-columns:272px 1fr;min-height:calc(100vh - 53px)}
+aside{background:var(--surface);border-right:1px solid var(--border);padding:14px 12px;overflow-y:auto;display:flex;flex-direction:column;}
+.sec-label{font-size:10px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.field{margin-bottom:9px}
+label{display:block;font-size:11px;font-weight:600;color:var(--muted2);margin-bottom:3px}
+input,select{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:5px;font-size:12px;font-family:inherit;transition:border-color .15s}
+input::placeholder{color:var(--muted)}
+input:focus,select:focus{outline:none;border-color:var(--accent)}
+select option{background:var(--surface)}
+.btn-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px}
+.btn{padding:6px 11px;border-radius:5px;border:1px solid transparent;cursor:pointer;font-size:12px;font-weight:700;font-family:inherit;transition:all .12s}
+.btn-p{background:var(--accent);color:#1a1200;border-color:var(--accent)}.btn-p:hover{background:#a88415;color:#fff;}
+.btn-g{background:transparent;color:var(--text);border-color:var(--border)}.btn-g:hover{border-color:var(--accent);color:var(--accent)}
+.btn-d{background:transparent;color:var(--red);border-color:transparent;padding:3px 7px;font-size:11px}.btn-d:hover{border-color:var(--red)}
+hr.div{border:none;border-top:1px solid var(--border);margin:12px 0}
+.sc{background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:7px}
+.sc .sn{font-weight:700;color:var(--accent);font-size:13px}.sc .sm{font-size:11px;color:var(--muted2);margin-top:2px}
+.sc .sa{display:flex;gap:4px;margin-top:6px}
+.empty{color:var(--muted);font-size:12px;text-align:center;padding:14px 0}
+.empty small{display:block;margin-top:3px;font-size:11px}
+main{display:flex;flex-direction:column;overflow:hidden}
+#tab-bar{display:flex;gap:2px;padding:8px 14px 0;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+#tab-bar::-webkit-scrollbar{height:3px}#tab-bar::-webkit-scrollbar-thumb{background:var(--border)}
+.tab{padding:6px 11px;border-radius:5px 5px 0 0;border:1px solid transparent;border-bottom:none;cursor:pointer;font-size:12px;font-weight:700;color:var(--muted2);background:transparent;font-family:inherit;transition:all .12s;white-space:nowrap;flex-shrink:0}
+.tab:hover{color:var(--text)}.tab.active{background:var(--bg);border-color:var(--border);color:var(--accent);margin-bottom:-1px;padding-bottom:7px}
+.tab .tc{font-size:10px;background:var(--s3);color:var(--muted2);padding:1px 5px;border-radius:10px;margin-left:4px;font-weight:600}
+.tab.active .tc{background:rgba(14,165,233,.15);color:var(--accent)}
+#tab-content{flex:1;overflow-y:auto;padding:14px}
+.rsec{margin-bottom:20px}
+.rsec-hdr{display:flex;align-items:center;gap:8px;margin-bottom:9px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.rsec-hdr .rl{font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted)}
+.badge{font-size:9px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:2px 7px;border-radius:20px;border:1px solid;}
+.badge-st{border-color:#1d4ed8;color:#93c5fd}.badge-nat{border-color:#78350f;color:#fcd34d}.badge-fed{border-color:#5b21b6;color:#c4b5fd}
+.rlaunch{margin-left:auto;font-size:10px;font-weight:700;color:var(--muted2);background:transparent;border:1px solid var(--border);border-radius:4px;padding:3px 8px;cursor:pointer;font-family:inherit;transition:all .12s}
+.rlaunch:hover{border-color:var(--teal);color:var(--teal)}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:6px}
+.rb{background:var(--s2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px;font-family:inherit;width:100%;transition:all .12s}
+.rb:hover{border-color:var(--accent);background:var(--s3)}.rb:hover .rl2{color:var(--accent)}
+.rb.smart-active{border-left:2px solid var(--teal)}
+.rb.dim{opacity:.4}.rb.dim:hover{opacity:.6;border-color:var(--border)}
+.rb .ri{font-size:15px;flex-shrink:0}.rb .rb-body{flex:1;min-width:0}
+.rb .rl2{font-size:12px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rb .rs{font-size:10px;color:var(--muted2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spill{font-size:8px;font-weight:800;background:linear-gradient(135deg,#c8a227,#e8c456);color:#1a1200;padding:2px 5px;border-radius:3px;flex-shrink:0;letter-spacing:.5px}
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;height:58vh;color:var(--muted);text-align:center;gap:10px}
+.welcome .wi{font-size:42px}.welcome .wt{font-size:18px;font-weight:800;color:var(--text)}.welcome .ws{font-size:13px;max-width:300px;line-height:1.6}
+#subj-banner{background:var(--s2);border:1px solid var(--accent);border-radius:7px;padding:11px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:11px}
+#subj-banner img{width:44px;height:44px;border-radius:5px;object-fit:cover;border:1px solid var(--border);flex-shrink:0}
+#subj-banner .sbd{flex:1}.sbn{font-size:17px;font-weight:800;color:var(--accent)}
+.sbr{font-size:11px;color:var(--muted2);margin-top:3px;display:flex;align-items:center;gap:5px}.sbr span{color:var(--text)}
+.disc{background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:10px 13px;font-size:11px;color:var(--muted);line-height:1.6;margin-top:4px}
+@media(max-width:768px){.app{grid-template-columns:1fr}aside{border-right:none;border-bottom:1px solid var(--border)}}
+
+/* ── PROFILE SYSTEM ───────────────────────────────── */
+#prof-overlay{position:fixed;inset:0;z-index:9998;background:rgba(6,11,18,.97);display:none;align-items:center;justify-content:center;padding:20px;}
+#prof-overlay.show{display:flex;}
+#prof-box{background:var(--surface);border:1px solid var(--b2);border-radius:12px;max-width:520px;width:100%;padding:30px 34px;display:flex;flex-direction:column;gap:18px;}
+.prof-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;}
+.prof-card{background:var(--bg);border:2px solid var(--border);border-radius:9px;padding:14px 10px;cursor:pointer;text-align:center;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;}
+.prof-card:hover{border-color:var(--accent);}.prof-card .pc-em{font-size:28px;}.prof-card .pc-name{font-size:12px;font-weight:700;color:var(--text);}.prof-card .pc-del{position:absolute;top:4px;right:6px;font-size:10px;color:var(--muted);background:transparent;border:none;cursor:pointer;padding:2px 4px;border-radius:3px;opacity:0;transition:opacity .15s;}
+.prof-card:hover .pc-del{opacity:1;}.prof-card .pc-del:hover{background:var(--red);color:#fff;}
+.prof-or{text-align:center;font-size:11px;color:var(--muted);letter-spacing:1px;}
+.prof-new{display:flex;gap:7px;flex-wrap:wrap;}
+.prof-new input{flex:1;min-width:130px;}
+.prof-new select{width:70px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px;border-radius:5px;font-size:18px;cursor:pointer;}
+#prof-pin-row{display:none;gap:7px;align-items:center;}
+#prof-pin-row.show{display:flex;}
+#prof-pin-in{letter-spacing:6px;font-size:18px;font-weight:700;width:120px;text-align:center;}
+/* PIN entry for existing profiles */
+#pin-overlay{position:fixed;inset:0;z-index:9997;background:rgba(6,11,18,.97);display:none;align-items:center;justify-content:center;}
+#pin-overlay.show{display:flex;}
+#pin-box{background:var(--surface);border:1px solid var(--b2);border-radius:12px;padding:32px 40px;text-align:center;display:flex;flex-direction:column;gap:16px;min-width:280px;}
+#pin-dots{font-size:32px;letter-spacing:10px;color:var(--accent);min-height:44px;}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:220px;margin:0 auto;}
+.pin-btn{background:var(--s2);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:14px;font-size:18px;font-weight:700;cursor:pointer;transition:all .12s;font-family:inherit;}
+.pin-btn:hover{background:var(--s3);border-color:var(--accent);}.pin-btn.wide{grid-column:span 3;}
+#pin-err{color:var(--red);font-size:12px;min-height:18px;}
+/* Profile bar in header */
+#prof-bar{display:flex;align-items:center;gap:8px;padding:4px 10px;background:var(--s2);border:1px solid var(--border);border-radius:20px;cursor:pointer;transition:border-color .15s;flex-shrink:0;}
+#prof-bar:hover{border-color:var(--accent);}
+#prof-bar .pb-em{font-size:16px;}
+#prof-bar .pb-name{font-size:11px;font-weight:700;color:var(--text);}
+#prof-bar .pb-arrow{font-size:9px;color:var(--muted);}
+/* Notes panel */
+.notes-area{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;font-family:inherit;padding:7px 8px;resize:vertical;min-height:70px;line-height:1.5;}
+.notes-area:focus{outline:none;border-color:var(--accent);}
+/* Hit/Miss on resource buttons */
+.rb .hm-row{display:flex;gap:3px;margin-left:auto;flex-shrink:0;}
+.hm-btn{background:transparent;border:1px solid var(--border);border-radius:4px;width:22px;height:22px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;padding:0;}
+.hm-btn:hover{transform:scale(1.15);}
+.hm-btn.active-hit{background:#14532d;border-color:#16a34a;}
+.hm-btn.active-miss{background:#450a0a;border-color:#dc2626;}
+.rb.found{border-left:3px solid #16a34a;}.rb.nope{border-left:3px solid #dc2626;opacity:.55;}
+/* Per-section launch */
+.sec-launch{margin-left:auto;font-size:10px;font-weight:700;background:rgba(200,162,39,.1);color:var(--teal);border:1px solid rgba(200,162,39,.35);border-radius:4px;padding:3px 9px;cursor:pointer;font-family:inherit;transition:all .12s;white-space:nowrap;}
+.sec-launch:hover{background:rgba(200,162,39,.22);}
+/* Export button */
+#btn-export{background:transparent;color:var(--muted2);border:1px solid var(--border);border-radius:5px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .12s;}
+#btn-export:hover{border-color:var(--accent);color:var(--accent);}
+/* Case tags / status chips */
+.case-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid;}
+.tag-active{border-color:#0369a1;color:#38bdf8;background:rgba(14,165,233,.08);}
+.tag-closed{border-color:#374151;color:var(--muted);}
+/* ── TUTORIAL MODAL ───────────────────────────────── */
+#tut-overlay{position:fixed;inset:0;z-index:9996;background:rgba(8,7,10,.96);display:none;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;}
+#tut-overlay.show{display:flex;}
+#tut-box{background:var(--surface);border:1px solid var(--b2);border-radius:12px;max-width:740px;width:100%;padding:32px 36px;display:flex;flex-direction:column;gap:20px;margin:auto;}
+#tut-box h2{font-size:20px;font-weight:900;color:var(--accent);}
+#tut-box h3{font-size:13px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted2);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.tut-sec{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px 18px;}
+.tut-sec p,.tut-sec li{font-size:13px;color:var(--muted2);line-height:1.75;}
+.tut-sec ul,.tut-sec ol{padding-left:18px;}.tut-sec li{margin-bottom:5px;}
+.tut-sec strong{color:var(--text);}
+.tut-sec code{background:var(--s2);color:var(--teal);padding:1px 6px;border-radius:3px;font-size:12px;font-family:monospace;}
+.tut-step{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start;}
+.tut-num{background:var(--accent);color:#1a1200;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0;margin-top:1px;}
+.tut-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;}
+.tut-chip{background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:12px;}.tut-chip strong{display:block;color:var(--accent);margin-bottom:3px;}
+#btn-tut{background:transparent;color:var(--muted2);border:1px solid var(--border);border-radius:5px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .12s;}
+#btn-tut:hover{border-color:var(--accent);color:var(--accent);}
+/* ── DISCLAIMER OVERLAY ───────────────────────────── */
+#disc-overlay{position:fixed;inset:0;z-index:9999;background:rgba(6,11,18,.97);display:flex;align-items:center;justify-content:center;padding:20px;}
+#disc-box{background:var(--surface);border:1px solid var(--b2);border-radius:12px;max-width:640px;width:100%;padding:36px 40px;display:flex;flex-direction:column;gap:20px;}
+.disc-logo{font-size:26px;font-weight:900;color:var(--accent);letter-spacing:-0.5px;}
+.disc-logo em{color:var(--muted2);font-style:normal;font-weight:400;font-size:14px;}
+.disc-logo small{display:block;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:2px;}
+.disc-title{font-size:18px;font-weight:800;color:var(--text);}
+.disc-body{font-size:13px;color:var(--muted2);line-height:1.75;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:16px 18px;max-height:260px;overflow-y:auto;}
+.disc-body p{margin-bottom:10px;}.disc-body p:last-child{margin-bottom:0;}
+.disc-body strong{color:var(--text);}
+.disc-body ul{padding-left:18px;margin-top:6px;}.disc-body li{margin-bottom:5px;}
+.disc-check{display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;color:var(--text);}
+.disc-check input[type=checkbox]{margin-top:2px;width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;cursor:pointer;}
+#disc-agree{background:linear-gradient(135deg,#c8a227,#e8c456);color:#1a1200;border:none;border-radius:7px;padding:13px 24px;font-size:14px;font-weight:800;cursor:pointer;transition:opacity .15s;letter-spacing:.3px;}
+#disc-agree:disabled{opacity:.3;cursor:not-allowed;}
+#disc-agree:not(:disabled):hover{opacity:.85;}
+.disc-footer{font-size:11px;color:var(--muted);text-align:center;line-height:1.6;}
+</style>
+</head>
+<body>
+
+<!-- PROFILE SELECTOR -->
+<div id="prof-overlay">
+  <div id="prof-box">
+    <div style="text-align:center"><img src="logo.png" alt="Hyve Sleuth" class="disc-logo-img" style="height:54px;"/></div>
+    <div class="disc-title" style="font-size:15px">Who's researching today?</div>
+    <div id="prof-grid" class="prof-grid"></div>
+    <div class="prof-or">— or create a new profile —</div>
+    <div class="prof-new">
+      <select id="prof-emoji-in" title="Choose avatar">
+        <option>🕵️</option><option>👤</option><option>🔍</option>
+        <option>🏛️</option><option>⚖️</option><option>🛡️</option>
+        <option>🦅</option><option>🔐</option><option>📡</option>
+      </select>
+      <input id="prof-name-in" placeholder="Researcher name…" maxlength="28"/>
+    </div>
+    <div id="prof-pin-row">
+      <label style="font-size:12px;color:var(--muted2);white-space:nowrap">Optional PIN:</label>
+      <input id="prof-pin-in" type="password" inputmode="numeric" maxlength="6" placeholder="——" class="notes-area" style="height:36px;min-height:36px;resize:none;width:90px;text-align:center;font-size:18px;letter-spacing:4px;padding:4px 8px;"/>
+    </div>
+    <button id="prof-create-btn" class="btn btn-p">Create Profile →</button>
+  </div>
+</div>
+
+<!-- PIN ENTRY -->
+<div id="pin-overlay">
+  <div id="pin-box">
+    <div style="font-size:22px;font-weight:900;color:var(--accent)" id="pin-profile-name"></div>
+    <div style="font-size:13px;color:var(--muted2)">Enter your PIN</div>
+    <div id="pin-dots">——</div>
+    <div class="pin-pad">
+      <button class="pin-btn" data-d="1">1</button><button class="pin-btn" data-d="2">2</button><button class="pin-btn" data-d="3">3</button>
+      <button class="pin-btn" data-d="4">4</button><button class="pin-btn" data-d="5">5</button><button class="pin-btn" data-d="6">6</button>
+      <button class="pin-btn" data-d="7">7</button><button class="pin-btn" data-d="8">8</button><button class="pin-btn" data-d="9">9</button>
+      <button class="pin-btn" data-d="back">⌫</button><button class="pin-btn" data-d="0">0</button><button class="pin-btn" data-d="ok">OK</button>
+    </div>
+    <div id="pin-err"></div>
+    <button class="btn btn-g" id="pin-cancel" style="font-size:11px;padding:4px 10px">← Back</button>
+  </div>
+</div>
+
+<!-- DISCLAIMER GATE -->
+<div id="disc-overlay">
+  <div id="disc-box">
+    <div style="text-align:center">
+      <img src="logo.png" alt="Hyve Sleuth" class="disc-logo-img"/>
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);margin-top:6px;">A Majixx Corp Project · Authorized Research Platform</div>
+    </div>
+    <div class="disc-title">Legal Notice &amp; Terms of Use</div>
+    <div class="disc-body">
+      <p><strong>Hyve Sleuth is an OSINT research launcher</strong> that opens links to official public records and third-party databases in new browser tabs. It does not scrape, store, or transmit any personal data.</p>
+      <p><strong>By entering this platform you confirm that:</strong></p>
+      <ul>
+        <li>You are a licensed private investigator, law enforcement officer, attorney, journalist, authorized security researcher, or other permissible-purpose professional.</li>
+        <li>You will use this tool only for lawful purposes and in compliance with all applicable federal, state, and local laws.</li>
+        <li>You will <strong>NOT</strong> use results from this tool to make decisions about a consumer's eligibility for credit, employment, housing, insurance, or any other purpose regulated by the <strong>Fair Credit Reporting Act (FCRA), 15 U.S.C. § 1681</strong>.</li>
+        <li>You understand that public records data may be incomplete, outdated, or inaccurate and must be independently verified before acting on it.</li>
+        <li>You accept full legal responsibility for how you use information accessed through this platform.</li>
+      </ul>
+      <p>Unauthorized use — including using this tool to stalk, harass, or unlawfully surveil any individual — is strictly prohibited and may constitute a criminal offense.</p>
+    </div>
+    <label class="disc-check">
+      <input type="checkbox" id="disc-cb"/>
+      I have read and agree to the Terms of Use. I am an authorized researcher accessing public records for a lawful, permissible purpose.
+    </label>
+    <button id="disc-agree" disabled>Enter Hyve Sleuth →</button>
+    <div class="disc-footer">Hyve Sleuth · A Majixx Corp Project · For authorized research use only<br/>Not affiliated with any government agency. Not FCRA compliant.</div>
+  </div>
+</div>
+
+<div id="hdr">
+  <div class="logo"><img src="logo.png" alt="Hyve Sleuth" class="logo-img"/></div>
+  <div id="subj-status">No subject loaded</div>
+  <div class="hdr-space"></div>
+  <div id="smart-count" style="display:none"></div>
+  <button id="btn-tut" title="How to use Hyve Sleuth">? Help</button>
+  <button id="btn-export" title="Export findings report">📄 Export</button>
+  <button id="btn-launch-all" disabled>⚡ Launch All Smart</button>
+  <div id="prof-bar" title="Switch researcher profile">
+    <span class="pb-em" id="pb-em">🕵️</span>
+    <span class="pb-name" id="pb-name">…</span>
+    <span class="pb-arrow">▾</span>
+  </div>
+</div>
+<div class="app">
+<aside>
+  <div class="sec-label">Subject Profile</div>
+  <div class="field"><label>Full Name *</label><input id="i-name" placeholder="John Q Doe"/></div>
+  <div class="field"><label>Date of Birth / Age</label><input id="i-dob" placeholder="MM/DD/YYYY or year"/></div>
+  <div class="field"><label>City / County</label><input id="i-city" placeholder="Orlando, Orange County"/></div>
+  <div class="field"><label>State</label><select id="i-state"><option value="">— Select State —</option></select></div>
+  <div class="field"><label>Phone Number</label><input id="i-phone" placeholder="(555) 867-5309"/></div>
+  <div class="field"><label>Email Address</label><input id="i-email" placeholder="john@example.com"/></div>
+  <div class="field"><label>Username / Handle</label><input id="i-user" placeholder="johndoe or @johndoe"/></div>
+  <div class="field"><label>Street Address</label><input id="i-addr" placeholder="123 Main St"/></div>
+  <div class="field"><label>Domain / IP</label><input id="i-domain" placeholder="example.com or 1.2.3.4"/></div>
+  <div class="field"><label>VIN / Plate</label><input id="i-vin" placeholder="1HGCM82633A123456"/></div>
+  <div class="field"><label>Image URL (face search)</label><input id="i-img" placeholder="https://…"/></div>
+  <div class="btn-row">
+    <button class="btn btn-p" id="btn-load">Load</button>
+    <button class="btn btn-g" id="btn-save">Save</button>
+    <button class="btn btn-g" id="btn-clear">Clear</button>
+  </div>
+  <div class="btn-row" style="margin-top:4px">
+    <button class="btn btn-g" id="btn-export-subj" style="font-size:11px;padding:4px 9px">📄 Export Findings</button>
+  </div>
+  <hr class="div"/>
+  <div class="sec-label">Research Notes</div>
+  <textarea id="research-notes" class="notes-area" placeholder="Add notes about this subject…"></textarea>
+  <div style="display:flex;justify-content:flex-end;margin-top:4px">
+    <button class="btn btn-g" id="btn-save-notes" style="font-size:11px;padding:3px 9px">Save Notes</button>
+  </div>
+  <hr class="div"/>
+  <div class="sec-label">Saved Subjects</div>
+  <div id="saved-list"></div>
+</aside>
+<main>
+  <div id="tab-bar"></div>
+  <div id="tab-content">
+    <div class="welcome"><div class="wi">🔎</div><div class="wt">No Subject Loaded</div><div class="ws">Fill in at least a name and click <strong>Load</strong> to open the full resource panel.</div></div>
+  </div>
+</main>
+</div>
+
+<!-- TUTORIAL MODAL -->
+<div id="tut-overlay">
+  <div id="tut-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <h2>📖 Hyve Sleuth — How to Use</h2>
+      <button id="btn-tut-close" class="btn btn-g" style="font-size:12px;padding:5px 14px">✕ Close</button>
+    </div>
+
+    <div class="tut-sec">
+      <h3>🔎 What is Hyve Sleuth?</h3>
+      <p>Hyve Sleuth is an <strong>OSINT research launcher</strong> built by <strong>Vibe Software Solutions / Majixx Corp</strong>. It doesn't scrape data — it opens official public records and research databases in new browser tabs, pre-filled with your subject's information wherever possible. Think of it as a smart command center for investigators.</p>
+    </div>
+
+    <div class="tut-sec">
+      <h3>🚀 Quick Start — 4 Steps</h3>
+      <div class="tut-step"><div class="tut-num">1</div><div><strong>Create a Researcher Profile</strong> — Click your profile name in the header to manage profiles. Each profile keeps its own saved subjects, notes, and findings separate.</div></div>
+      <div class="tut-step"><div class="tut-num">2</div><div><strong>Fill in the Subject Profile</strong> — Enter as much information as you have. At minimum, enter a <strong>Full Name</strong>. The more fields you fill, the more <span style="color:var(--teal);font-weight:700">SMART</span> links activate.</div></div>
+      <div class="tut-step"><div class="tut-num">3</div><div><strong>Click Load</strong> — This activates the full resource panel. Use the tabs to navigate by category (Courts, People, Email, etc.). Gold-highlighted cards are <strong>Smart Links</strong> — they open pre-filled search forms.</div></div>
+      <div class="tut-step"><div class="tut-num">4</div><div><strong>Launch &amp; Research</strong> — Click any card to open it in a new tab. Use <strong>⚡ Launch All Smart</strong> to open every pre-filled link at once. Use per-section <strong>⚡ Launch (N)</strong> to batch-open just one category.</div></div>
+    </div>
+
+    <div class="tut-sec">
+      <h3>🔑 Smart Links Explained</h3>
+      <p>Cards marked <span style="background:linear-gradient(135deg,#c8a227,#e8c456);color:#1a1200;font-size:10px;font-weight:800;padding:2px 6px;border-radius:3px">SMART</span> use your subject's info to pre-populate the destination URL — saving you from manually typing into each site. The more inputs you fill, the more smart links activate.</p>
+      <div class="tut-grid" style="margin-top:12px">
+        <div class="tut-chip"><strong>Name → {name}</strong>People search, court records, news</div>
+        <div class="tut-chip"><strong>Email → {email}</strong>Breach checks, HIBP, email rep</div>
+        <div class="tut-chip"><strong>Phone → {phone}</strong>Reverse lookup, carrier ID</div>
+        <div class="tut-chip"><strong>Username → {username}</strong>WhatsMyName, IDCrawl, social</div>
+        <div class="tut-chip"><strong>Image URL → {image}</strong>Google Lens, TinEye, Yandex</div>
+        <div class="tut-chip"><strong>VIN → {vin}</strong>NHTSA, CARFAX, VehicleHistory</div>
+        <div class="tut-chip"><strong>Domain/IP → {domain}</strong>WHOIS, Shodan, VirusTotal</div>
+        <div class="tut-chip"><strong>State → {state}</strong>Unlocks all state-specific tabs</div>
+      </div>
+    </div>
+
+    <div class="tut-sec">
+      <h3>✅ Tracking Your Findings</h3>
+      <p>Each resource card has two small buttons on the right:</p>
+      <ul>
+        <li><strong style="color:#16a34a">✓ (Found)</strong> — Mark this resource as a <em>hit</em>. The card turns green. Findings are saved per subject, per profile.</li>
+        <li><strong style="color:#dc2626">✕ (No Result)</strong> — Mark as <em>no result</em>. The card dims. Helps you track which resources you've already checked.</li>
+      </ul>
+      <p>Hit/Miss data is stored locally in your browser — nothing leaves your device.</p>
+    </div>
+
+    <div class="tut-sec">
+      <h3>📝 Research Notes &amp; Export</h3>
+      <ul>
+        <li>Use the <strong>Research Notes</strong> box in the sidebar to jot down findings for the loaded subject. Click <strong>Save Notes</strong> to persist them.</li>
+        <li>Click <strong>📄 Export Findings</strong> (sidebar or header) to download a <code>.txt</code> report with subject info, hit/miss results, and your notes.</li>
+        <li>Use <strong>Save</strong> to store the subject profile for quick re-loading later.</li>
+      </ul>
+    </div>
+
+    <div class="tut-sec">
+      <h3>📑 Tab Guide</h3>
+      <div class="tut-grid">
+        <div class="tut-chip"><strong>⚖️ Courts</strong>Federal + state court records</div>
+        <div class="tut-chip"><strong>🔒 Corrections</strong>Inmate & offender search</div>
+        <div class="tut-chip"><strong>🚨 Sex Offender</strong>NSOPW + state registries</div>
+        <div class="tut-chip"><strong>📂 State Records</strong>SOS, property, voter, license</div>
+        <div class="tut-chip"><strong>👥 People</strong>20+ aggregator sites</div>
+        <div class="tut-chip"><strong>📞 Phone</strong>Reverse phone & carrier lookup</div>
+        <div class="tut-chip"><strong>📧 Email</strong>Verification, reputation, OSINT</div>
+        <div class="tut-chip"><strong>🔐 Breach/DW</strong>Leaked credential databases</div>
+        <div class="tut-chip"><strong>🔑 Username</strong>600+ site username search</div>
+        <div class="tut-chip"><strong>📱 Social</strong>Major platform profiles</div>
+        <div class="tut-chip"><strong>🖼️ Image/Face</strong>Reverse image & EXIF tools</div>
+        <div class="tut-chip"><strong>📰 News/Arrests</strong>Mugshots, arrest records, news</div>
+        <div class="tut-chip"><strong>🏛️ Federal</strong>FBI, OFAC, SAM, SEC, FAA</div>
+        <div class="tut-chip"><strong>🎓 Professional</strong>NPI, FINRA, Nursys, Avvo</div>
+        <div class="tut-chip"><strong>💰 Financial</strong>SEC, FEC, bankruptcy, FDIC</div>
+        <div class="tut-chip"><strong>🌳 Genealogy</strong>FamilySearch, Ancestry, graves</div>
+        <div class="tut-chip"><strong>🚗 Vehicles</strong>VIN decode, CARFAX, NHTSA</div>
+        <div class="tut-chip"><strong>🌐 Domain/IP</strong>WHOIS, Shodan, VirusTotal</div>
+      </div>
+    </div>
+
+    <div class="tut-sec">
+      <h3>⚠️ Legal Reminder</h3>
+      <p>Hyve Sleuth opens links to <strong>official public records and third-party databases only</strong>. It does not scrape, store, or transmit personal data. You must use this tool in compliance with all applicable laws. Results may <strong>not</strong> be used for FCRA-regulated purposes (employment, housing, credit). Always verify data through primary sources before acting on it.</p>
+    </div>
+
+    <div style="text-align:center;font-size:11px;color:var(--muted);line-height:1.7">
+      Hyve Sleuth · Created by <strong style="color:var(--muted2)">Vibe Software Solutions</strong> / Majixx Corp<br/>
+      For authorized research use only · Not FCRA compliant · Not affiliated with any government agency
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div style="background:var(--surface);border-top:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:11px;color:var(--muted);">
+  <span>© 2025 <strong style="color:var(--muted2)">Vibe Software Solutions</strong> / Majixx Corp · Hyve Sleuth</span>
+  <span style="text-align:right">For authorized research use only · Not FCRA compliant · Not affiliated with any government agency · <a href="#" id="footer-disc-link" style="color:var(--accent);text-decoration:none">View Disclaimer</a></span>
+</div>
+
+<script>
+const enc = encodeURIComponent;
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+const TABS=[
+  {id:'all',label:'All',icon:'🗂️'},{id:'courts',label:'Courts',icon:'⚖️'},
+  {id:'doc',label:'Corrections',icon:'🔒'},{id:'sor',label:'Sex Offender',icon:'🚨'},
+  {id:'state',label:'State Records',icon:'📂'},{id:'people',label:'People',icon:'👥'},
+  {id:'phone',label:'Phone',icon:'📞'},{id:'email',label:'Email',icon:'📧'},
+  {id:'breach',label:'Breach/DW',icon:'🔐'},{id:'username',label:'Username',icon:'🔑'},
+  {id:'social',label:'Social',icon:'📱'},{id:'image',label:'Image/Face',icon:'🖼️'},
+  {id:'news',label:'News/Arrests',icon:'📰'},{id:'federal',label:'Federal',icon:'🏛️'},
+  {id:'professional',label:'Professional',icon:'🎓'},{id:'financial',label:'Financial',icon:'💰'},
+  {id:'genealogy',label:'Genealogy',icon:'🌳'},{id:'vehicle',label:'Vehicles',icon:'🚗'},
+  {id:'domain',label:'Domain/IP',icon:'🌐'},
+];
+
+const SN={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DC:'Washington DC',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming'};
+
+function buildUrl(t,s){
+  if(!t)return null;
+  const ph=(s.phone||'').replace(/\D/g,'');
+  const nm=s.name||'';const pts=nm.trim().split(/\s+/);
+  const fi=pts[0]||'',la=pts[pts.length-1]||'';
+  const stn=SN[s.state]||s.state||'';
+  return t.replace(/{name}/g,enc(nm)).replace(/{name_dashed}/g,enc(nm.replace(/\s+/g,'-'))).replace(/{name_state}/g,enc(nm+' '+(stn||s.state||''))).replace(/{first}/g,enc(fi)).replace(/{last}/g,enc(la)).replace(/{phone}/g,enc(ph)).replace(/{phone_raw}/g,ph).replace(/{email}/g,enc(s.email||'')).replace(/{username}/g,enc((s.username||'').replace(/^@/,''))).replace(/{address}/g,enc(s.address||'')).replace(/{city}/g,enc(s.city||'')).replace(/{state}/g,enc(s.state||'')).replace(/{state_name}/g,enc(stn)).replace(/{image}/g,enc(s.image||'')).replace(/{domain}/g,enc(s.domain||'')).replace(/{vin}/g,enc(s.vin||'')).replace(/{dob}/g,enc(s.dob||''));
+}
+
+/* compact helpers */
+const r=(l,b,s=null)=>({l,b,s});
+const vr=(b)=>r('Voter Registration',b);
+const pl=(b)=>r('Professional License',b);
+
+const STATE_DB={
+AL:{name:'Alabama',
+  courts:r('AL SJIS Court Records','https://www.alacourt.gov/'),
+  doc:r('AL DOC Inmate Search','https://www.doc.alabama.gov/InmateSearch'),
+  sor:r('AL Sex Offender Registry','https://www.communitynotification.com/cap_office_disclaimer.php?office=55149'),
+  sos:r('AL SOS Business','https://sos.alabama.gov/government-records/business-entity-records'),
+  prop:r('AL Property Records','https://www.assessmentdata.org/al/'),
+  voter:vr('https://myinfo.alabamavotes.gov/'),
+  license:pl('https://www.asc.state.al.us/')},
+AK:{name:'Alaska',
+  courts:r('AK eCourt Records','https://records.courts.alaska.gov/eaccess/home.page.2'),
+  doc:r('AK Offender Search','https://vinelink.com/#/home'),
+  sor:r('AK Sex Offender Registry','https://www.dps.alaska.gov/sorweb/sorweb.aspx'),
+  sos:r('AK Business Search','https://www.commerce.alaska.gov/cbp/main/search/entities'),
+  prop:r('AK Property Records','https://www.assessmentdata.org/ak/'),
+  voter:vr('https://myvoterinformation.alaska.gov/'),
+  license:pl('https://www.commerce.alaska.gov/web/cbpl/ProfessionalLicensing.aspx')},
+AZ:{name:'Arizona',
+  courts:r('AZ Public Access Courts','https://apps.supremecourt.az.gov/publicaccess/'),
+  doc:r('AZ DOC Inmate Search','https://corrections.az.gov/inmate-datasearch'),
+  sor:r('AZ Sex Offender Registry','https://www.azdps.gov/Safety/Sex_Offenders'),
+  sos:r('AZ Corp Commission','https://ecorp.azcc.gov/EntitySearch/Index'),
+  prop:r('AZ Assessor Directory','https://www.assessmentdata.org/az/'),
+  voter:vr('https://my.arizona.vote/'),
+  license:pl('https://roc.az.gov/')},
+AR:{name:'Arkansas',
+  courts:r('AR Court Records','https://caseinfo.arcourts.gov/cgi-bin/caseinfo.pl'),
+  doc:r('AR Inmate Search','https://apps.ark.org/inmate_info/'),
+  sor:r('AR Sex Offender Registry','https://www.acic.org/registration'),
+  sos:r('AR SOS Business','https://www.sos.arkansas.gov/corps/search_all.php'),
+  prop:r('AR Property Records','https://www.assessmentdata.org/ar/'),
+  voter:vr('https://www.sos.arkansas.gov/elections/voter-information/'),
+  license:pl('https://www.arkansas.gov/agency/licenses')},
+CA:{name:'California',
+  courts:r('CA Courts (County Portals)','https://www.courts.ca.gov/selfhelp-courtrecords.htm'),
+  doc:r('CA CDCR Inmate Search','https://ciris.mt.cdcr.ca.gov/'),
+  sor:r("CA Megan's Law Registry",'https://meganslaw.ca.gov/'),
+  sos:r('CA SOS Business Search','https://bizfileonline.sos.ca.gov/search/business'),
+  prop:r('CA BOE Assessors Dir.','https://www.boe.ca.gov/assessors/index.html'),
+  voter:vr('https://voterstatus.sos.ca.gov/'),
+  license:pl('https://search.dca.ca.gov/')},
+CO:{name:'Colorado',
+  courts:r('CO Courts Docket','https://www.courts.state.co.us/dockets/index.cfm'),
+  doc:r('CO DOC Inmate Search','https://www.doc.state.co.us/oss/'),
+  sor:r('CO Sex Offender Registry','https://sor.colorado.gov/sor/'),
+  sos:r('CO SOS Business','https://www.sos.state.co.us/biz/BusinessEntityCriteriaExt.do'),
+  prop:r('CO Property Records','https://www.assessmentdata.org/co/'),
+  voter:vr('https://www.sos.state.co.us/voter/pages/pub/olvr/findVoterReg.xhtml'),
+  license:pl('https://apps.colorado.gov/dora/licensing/lookup/')},
+CT:{name:'Connecticut',
+  courts:r('CT Judicial Records','https://www.jud.ct.gov/jud2.htm'),
+  doc:r('CT DOC Inmate Lookup','https://www.ctdoc.info/inmate_inquiry/index.html'),
+  sor:r('CT Sex Offender Registry','https://www.communitynotification.com/cap_office_disclaimer.php?office=55012'),
+  sos:r('CT Business Search','https://service.ct.gov/business/s/onlinebusinesssearch'),
+  prop:r('CT Property Records','https://www.assessmentdata.org/ct/'),
+  voter:vr('https://portaldir.ct.gov/sots/LookupAction.do'),
+  license:pl('https://www.elicense.ct.gov/')},
+DC:{name:'Washington DC',
+  courts:r('DC Superior Court Cases','https://www.dccourts.gov/superior-court/cases-online'),
+  doc:r('DC DOC Inmate Search','https://doc.dc.gov/'),
+  sor:r('DC Sex Offender Registry','https://app.mpdc.dc.gov/sor/home'),
+  sos:r('DC DCRA Business','https://corponline.dcra.dc.gov/'),
+  prop:r('DC Real Property','https://www.taxpayerservicecenter.com/RP_Search.jsp?search_type=Assessment'),
+  voter:vr('https://www.vote4dc.com/'),
+  license:pl('https://dcra.dc.gov/service/license-lookup')},
+DE:{name:'Delaware',
+  courts:r('DE Courts Records','https://courts.delaware.gov/'),
+  doc:r('DE DOC Inmate Search','https://www.doc.delaware.gov/'),
+  sor:r('DE Sex Offender Registry','https://sexoffender.dsp.delaware.gov/'),
+  sos:r('DE Corp Entity Search','https://icis.corp.delaware.gov/Ecorp/EntitySearch/NameSearch.aspx'),
+  prop:r('DE Property Records','https://www.assessmentdata.org/de/'),
+  voter:vr('https://ivote.de.gov/voterinfo/findyourvoterinformation'),
+  license:pl('https://delpros.delaware.gov/OH_Web/Web/LicenseLookupSearch.aspx')},
+FL:{name:'Florida',
+  courts:r('FL Court Access (CiviTek)','https://www.myflcourtaccess.com/','https://www.myflcourtaccess.com/application/#/view?section=generalSearch&term={name}'),
+  doc:r('FL DOC Inmate Search','https://offender.fdc.myflorida.com/Search/Inmatesearch.aspx'),
+  sor:r('FDLE Sex Offender Search','https://offender.fdle.state.fl.us/offender/Search.jsp'),
+  sos:r('FL Sunbiz Business','https://search.sunbiz.org/Inquiry/CorporationSearch/SearchResults/EntityName/{name}/Page1','https://search.sunbiz.org/Inquiry/CorporationSearch/SearchResults/EntityName/{name}/Page1'),
+  prop:r('FL Property Appraiser Dir.','https://floridarevenue.com/property/Pages/PADirectory.aspx'),
+  voter:vr('https://registration.elections.myflorida.com/'),
+  license:pl('https://www.myfloridalicense.com/wl11.asp')},
+GA:{name:'Georgia',
+  courts:r('GA Courts Records','https://georgiacourts.gov/'),
+  doc:r('GA DOC Offender Search','https://www.dcor.state.ga.us/content/offender-query'),
+  sor:r('GA Sex Offender Registry','https://gbi.georgia.gov/georgia-sex-offender-registry'),
+  sos:r('GA SOS Business','https://ecorp.sos.ga.gov/BusinessSearch'),
+  prop:r('GA Property Records','https://www.assessmentdata.org/ga/'),
+  voter:vr('https://mvp.sos.ga.gov/'),
+  license:pl('https://verify.sos.ga.gov/verification/')},
+HI:{name:'Hawaii',
+  courts:r('HI Courts Records','https://www.courts.state.hi.us/'),
+  doc:r('HI Corrections Search','https://scd.hawaii.gov/'),
+  sor:r('HI Sex Offender Registry','https://sorh.hawaii.gov/'),
+  sos:r('HI Business Entity','https://hbe.ehawaii.gov/documents/search.html'),
+  prop:r('HI Property Records','https://www.assessmentdata.org/hi/'),
+  voter:vr('https://olvr.hawaii.gov/'),
+  license:pl('https://pvl.ehawaii.gov/pvlsearch/')},
+ID:{name:'Idaho',
+  courts:r('ID iCourt Portal','https://mycourts.idaho.gov/odysseyportal/'),
+  doc:r('ID DOC Offender Search','https://www.idoc.idaho.gov/content/prisons/offender_search'),
+  sor:r('ID Sex Offender Registry','https://isor.idjc.idaho.gov/'),
+  sos:r('ID SOS Business','https://www.sos.idaho.gov/business-services/'),
+  prop:r('ID Property Records','https://www.assessmentdata.org/id/'),
+  voter:vr('https://elections.sos.idaho.gov/'),
+  license:pl('https://elicense.idaho.gov/')},
+IL:{name:'Illinois',
+  courts:r('IL Courts (County)','https://www.illinoiscourts.gov/'),
+  doc:r('IL DOC Inmate Search','https://www.illinois.gov/idoc/Offender/Pages/InmateSearch.aspx'),
+  sor:r('IL Sex Offender Registry','https://www.isp.state.il.us/sor/'),
+  sos:r('IL SOS Business','https://www.ilsos.gov/corporatellc/'),
+  prop:r('IL Property Records','https://www.assessmentdata.org/il/'),
+  voter:vr('https://www.vote.illinois.gov/'),
+  license:pl('https://online-dfpr.micropact.com/')},
+IN:{name:'Indiana',
+  courts:r('IN MyCase Records','https://public.courts.in.gov/mycase/'),
+  doc:r('IN DOC Offender Search','https://www.in.gov/idoc/2374.htm'),
+  sor:r('IN Sex Offender Registry','https://www.in.gov/isp/2358.htm'),
+  sos:r('IN SOS Business','https://bsd.sos.in.gov/publicbusinnessearch'),
+  prop:r('IN Property Records','https://www.assessmentdata.org/in/'),
+  voter:vr('https://indianavoters.in.gov/'),
+  license:pl('https://mylicense.in.gov/')},
+IA:{name:'Iowa',
+  courts:r('IA Courts Records','https://www.iowacourts.gov/for-the-public/court-records-online/'),
+  doc:r('IA Offender Search','https://www.iowaparoleboard.org/offender_search/'),
+  sor:r('IA Sex Offender Registry','https://www.iowasexoffender.com/'),
+  sos:r('IA SOS Business','https://sos.iowa.gov/search/business/search.aspx'),
+  prop:r('IA Property Records','https://www.assessmentdata.org/ia/'),
+  voter:vr('https://sos.iowa.gov/elections/voterinformation/voterregistration/search.html'),
+  license:pl('https://eservices.iowa.gov/')},
+KS:{name:'Kansas',
+  courts:r('KS Courts Records','https://www.kscourts.org/'),
+  doc:r('KS KASPER Inmate','https://kdocrepository.doc.ks.gov/kasper/'),
+  sor:r('KS Sex Offender Registry','https://www.kbi.gov/sor/'),
+  sos:r('KS SOS Business','https://www.sos.ks.gov/business/business.html'),
+  prop:r('KS Property Records','https://www.assessmentdata.org/ks/'),
+  voter:vr('https://myvoteinfo.voteks.org/'),
+  license:pl('https://www.kansas.gov/klis/')},
+KY:{name:'Kentucky',
+  courts:r('KY eCourts Records','https://kcoj.kycourts.net/kyecourts/'),
+  doc:r('KY DOC Offender','https://corrections.ky.gov/'),
+  sor:r('KY Sex Offender Registry','https://kspsor.ky.gov/'),
+  sos:r('KY SOS Business','https://app.sos.ky.gov/ftsearch/'),
+  prop:r('KY Property Records','https://www.assessmentdata.org/ky/'),
+  voter:vr('https://vrsws.sos.ky.gov/ovrweb/'),
+  license:pl('https://secure.kentucky.gov/LicenseLookup/LicenseLookup/')},
+LA:{name:'Louisiana',
+  courts:r('LA Court Records','https://www.louisianalegal.directory/courts'),
+  doc:r('LA DOC Offender','https://www.doc.louisiana.gov/_doc/opso/'),
+  sor:r('LA Sex Offender Registry','https://www.lsp.org/socpr/default.html'),
+  sos:r('LA SOS Business','https://www.sos.la.gov/BusinessServices/SearchForLouisianaBusinessFilings'),
+  prop:r('LA Property Records','https://www.assessmentdata.org/la/'),
+  voter:vr('https://voterportal.sos.la.gov/'),
+  license:pl('https://lslbc.louisiana.gov/')},
+ME:{name:'Maine',
+  courts:r('ME Courts Records','https://www.courts.maine.gov/'),
+  doc:r('ME Corrections','https://www1.maine.gov/corrections/'),
+  sor:r('ME Sex Offender Registry','https://sor.maine.gov/'),
+  sos:r('ME SOS Business','https://icrs.informe.org/nei-sos-icrs/ICRS?MainPage=x'),
+  prop:r('ME Property Records','https://www.assessmentdata.org/me/'),
+  voter:vr('https://www.maine.gov/sos/cec/elec/voter-info/'),
+  license:pl('https://www.pfr.maine.gov/almsonline/almsquery/')},
+MD:{name:'Maryland',
+  courts:r('MD Case Search','https://casesearch.courts.state.md.us/casesearch/','https://casesearch.courts.state.md.us/casesearch/inquirySearch.jis?lastName={last}&firstName={first}&middleName=&stateAbbreviation=MD&action=Search'),
+  doc:r('MD DOC Inmate Lookup','https://msa.maryland.gov/msa/mdmanual/19doc/html/doc.html'),
+  sor:r('MD Sex Offender Registry','https://msorr.dpscs.state.md.us/'),
+  sos:r('MD Business Express','https://egov.maryland.gov/businessexpress/EntitySearch'),
+  prop:r('MD Property Records','https://www.assessmentdata.org/md/'),
+  voter:vr('https://voterservices.elections.maryland.gov/voterregistrationlookup'),
+  license:pl('https://www.dlslookup.maryland.gov/')},
+MA:{name:'Massachusetts',
+  courts:r('MA Courts Records','https://www.masscourts.org/'),
+  doc:r('MA DOC Inmate Search','https://www.mass.gov/info-details/search-for-a-doc-inmate'),
+  sor:r('MA Sex Offender Registry','https://sorb.chs.state.ma.us/'),
+  sos:r('MA SOS Corp Search','https://corp.sec.state.ma.us/CorpWeb/CorpSearch/CorpSearch.aspx'),
+  prop:r('MA Property Records','https://www.assessmentdata.org/ma/'),
+  voter:vr('https://www.sec.state.ma.us/ovr/'),
+  license:pl('https://www.mass.gov/orgs/division-of-professional-licensure')},
+MI:{name:'Michigan',
+  courts:r('MI Court C2NI','https://www.courts.michigan.gov/c2ni/'),
+  doc:r('MI OTIS Offender','https://mdocweb.state.mi.us/otis2/otis2.aspx'),
+  sor:r('MI Sex Offender Registry','https://www.mipsor.state.mi.us/'),
+  sos:r('MI LARA Business','https://cofs.lara.state.mi.us/SearchApi/Search/Search'),
+  prop:r('MI Property Records','https://www.assessmentdata.org/mi/'),
+  voter:vr('https://mvic.sos.state.mi.us/'),
+  license:pl('https://aca-prod.accela.com/MILARA/')},
+MN:{name:'Minnesota',
+  courts:r('MN Court Public Access','https://publicaccess.courts.state.mn.us/','https://publicaccess.courts.state.mn.us/CaseSearch?party={name}&countyId='),
+  doc:r('MN DOC Offender','https://coms.doc.state.mn.us/PublicViewer'),
+  sor:r('MN Predator Alert','https://coms.doc.state.mn.us/publicviewer/'),
+  sos:r('MN MBLS Business','https://mblsportal.sos.state.mn.us/Business/Search'),
+  prop:r('MN Property Records','https://www.assessmentdata.org/mn/'),
+  voter:vr('https://mnvotes.sos.state.mn.us/'),
+  license:pl('https://mblsportal.sos.state.mn.us/Business/Search')},
+MS:{name:'Mississippi',
+  courts:r('MS Courts Records','https://courts.ms.gov/'),
+  doc:r('MS DOC Offender','https://www.mdoc.ms.gov/Offender-Search/Pages/Offender-Search.aspx'),
+  sor:r('MS Sex Offender Registry','https://www.ms.gov/dps/sor/'),
+  sos:r('MS SOS Business','https://corp.sos.ms.gov/corp/portal/c/page/corpBusinessIdSearch/portal.aspx'),
+  prop:r('MS Property Records','https://www.assessmentdata.org/ms/'),
+  voter:vr('https://www.sos.ms.gov/elections-voting/voter-registration-information/voter-registration-lookup'),
+  license:pl('https://www.ms.gov/msdh/')},
+MO:{name:'Missouri',
+  courts:r('MO Case.net Records','https://www.courts.mo.gov/casenet/'),
+  doc:r('MO DOC Offender','https://doc.mo.gov/offender-search'),
+  sor:r('MO Sex Offender Registry','https://www.mshp.dps.missouri.gov/MSHPWeb/PatrolDivisions/CRID/SOR/SORPage.html'),
+  sos:r('MO SOS Business','https://www.sos.mo.gov/BusinessEntity/soskb/Corp.asp'),
+  prop:r('MO Property Records','https://www.assessmentdata.org/mo/'),
+  voter:vr('https://voteroutreach.sos.mo.gov/'),
+  license:pl('https://pr.mo.gov/')},
+MT:{name:'Montana',
+  courts:r('MT Courts BTM','https://btm.courts.mt.gov/'),
+  doc:r('MT DOC Offender','https://apps.corrections.mt.gov/'),
+  sor:r('MT Sex Offender Registry','https://svor.doj.mt.gov/'),
+  sos:r('MT SOS Business','https://biz.mt.gov/'),
+  prop:r('MT Property Records','https://www.assessmentdata.org/mt/'),
+  voter:vr('https://mvp.mt.gov/'),
+  license:pl('https://ebiz.mt.gov/')},
+NE:{name:'Nebraska',
+  courts:r('NE JUSTICE Courts','https://www.nebraska.gov/courts/'),
+  doc:r('NE Corrections Search','https://www.corrections.nebraska.gov/'),
+  sor:r('NE Sex Offender Registry','https://www.nebraska.gov/sor/'),
+  sos:r('NE SOS Business','https://www.nebraska.gov/sos/corp/corpsearch.cgi'),
+  prop:r('NE Property Records','https://www.assessmentdata.org/ne/'),
+  voter:vr('https://www.nebraska.gov/apps-sos-voter-records/'),
+  license:pl('https://www.nebraska.gov/LISSearch/search.cgi')},
+NV:{name:'Nevada',
+  courts:r('NV Courts Records','https://www.nevadacourts.gov/'),
+  doc:r('NV DOC Offender','https://www.doc.nv.gov/Offenders/Search/'),
+  sor:r('NV Sex Offender Registry','https://nsor.nv.gov/'),
+  sos:r('NV SOS Business','https://esos.nv.gov/EntitySearch/OnlineEntitySearch'),
+  prop:r('NV Property Records','https://www.assessmentdata.org/nv/'),
+  voter:vr('https://www.nvsos.gov/sos/elections/voters'),
+  license:pl('https://www.nvsos.gov/sos/licensing/state-licensing-lookup')},
+NH:{name:'New Hampshire',
+  courts:r('NH Courts Records','https://www.courts.nh.gov/'),
+  doc:r('NH DOC Search','https://www.nh.gov/nhdoc/'),
+  sor:r('NH Sex Offender Registry','https://business.nh.gov/nsor/'),
+  sos:r('NH QuickStart Business','https://quickstart.sos.nh.gov/online/Account/LandingPage'),
+  prop:r('NH Property Records','https://www.assessmentdata.org/nh/'),
+  voter:vr('https://app.sos.nh.gov/voterinformation'),
+  license:pl('https://www.oplc.nh.gov/')},
+NJ:{name:'New Jersey',
+  courts:r('NJ Courts WebCivil','https://portal.njcourts.gov/webcivilcr/'),
+  doc:r('NJ DOC Offender','https://www.state.nj.us/corrections/pages/offendersearch.html'),
+  sor:r('NJ Sex Offender Registry','https://www.njsp.org/sex-offender-registry/'),
+  sos:r('NJ Business Name','https://www.njportal.com/DOR/BusinessNameSearch/'),
+  prop:r('NJ Property Records','https://www.assessmentdata.org/nj/'),
+  voter:vr('https://voter.svrs.nj.gov/registration-check'),
+  license:pl('https://newjersey.mylicense.com/')},
+NM:{name:'New Mexico',
+  courts:r('NM Case Lookup','https://caselookup.nmcourts.gov/'),
+  doc:r('NM Corrections','https://www.corrections.nm.gov/'),
+  sor:r('NM Sex Offender Registry','https://socrates.nmsp.com/'),
+  sos:r('NM SOS Business','https://businessservices.sos.state.nm.us/BusinessServices.MVC/Search'),
+  prop:r('NM Property Records','https://www.assessmentdata.org/nm/'),
+  voter:vr('https://voterportal.servis.sos.nm.us/'),
+  license:pl('https://www.rld.nm.gov/')},
+NY:{name:'New York',
+  courts:r('NY NYSCEF Case Search','https://iapps.courts.state.ny.us/nyscef/CaseSearch'),
+  doc:r('NY DOCCS Inmate','https://nysdoccslookup.doccs.ny.gov/','https://nysdoccslookup.doccs.ny.gov/GCA00P00/WIQ1/WINQ000?M00_LAST_NAMEI={last}&M00_FIRST_NAMEI={first}'),
+  sor:r('NY Sex Offender Registry','https://www.criminaljustice.ny.gov/SomsSUBDirectory/search_index.jsp'),
+  sos:r('NY DOS Public Inquiry','https://apps.dos.ny.gov/publicInquiry/'),
+  prop:r('NY Property Records','https://www.assessmentdata.org/ny/'),
+  voter:vr('https://voterlookup.elections.ny.gov/'),
+  license:pl('https://www.op.nysed.gov/opsearches.htm')},
+NC:{name:'North Carolina',
+  courts:r('NC Courts Records','https://www.nccourts.gov/online-services/court-records'),
+  doc:r('NC DPS Offender','https://www.ncdps.gov/DPS-Services/Offender-Info/Offender-Public-Search'),
+  sor:r('NC SBI Sex Offender','https://sbi.ncdoj.gov/sex-offender-and-public-protection-registry/'),
+  sos:r('NC SOS Business','https://www.sosnc.gov/online_services/search/Business_Registration_Results'),
+  prop:r('NC Property Records','https://www.assessmentdata.org/nc/'),
+  voter:vr('https://vt.ncsbe.gov/RegLkup/'),
+  license:pl('https://www.ncmedboard.org/')},
+ND:{name:'North Dakota',
+  courts:r('ND Courts Public Search','https://publicsearch.ndcourts.gov/'),
+  doc:r('ND DOCR Offender','https://www.docr.nd.gov/'),
+  sor:r('ND Sex Offender Registry','https://www.sexoffender.nd.gov/'),
+  sos:r('ND SOS Business','https://firststop.sos.nd.gov/search/business'),
+  prop:r('ND Property Records','https://www.assessmentdata.org/nd/'),
+  voter:vr('https://vip.sos.nd.gov/'),
+  license:pl('https://www.ndrealestatecommission.com/')},
+OH:{name:'Ohio',
+  courts:r('OH Courts (County)','https://courts.ohio.gov/'),
+  doc:r('OH DRC Offender','https://appgateway.drc.ohio.gov/OffenderSearch/'),
+  sor:r('OH iCrimeWatch SOR','https://icrimewatch.net/ohio/'),
+  sos:r('OH SOS Business','https://businesssearch.ohiosos.gov/'),
+  prop:r('OH Property Records','https://www.assessmentdata.org/oh/'),
+  voter:vr('https://voterlookup.ohiosos.gov/'),
+  license:pl('https://license.ohio.gov/')},
+OK:{name:'Oklahoma',
+  courts:r('OK OSCN Court Records','https://www.oscn.net/','https://www.oscn.net/applications/oscn/GetCaseInformation.asp?number=&lastName={last}&firstName={first}&db=all'),
+  doc:r('OK DOC Offender','https://docapp.doc.ok.gov/pls/detain/pkg_public_qry_vw.set_page_location'),
+  sor:r('OK Sex Offender Registry','https://sso.ok.gov/'),
+  sos:r('OK SOS Business','https://www.sos.ok.gov/'),
+  prop:r('OK Property Records','https://www.assessmentdata.org/ok/'),
+  voter:vr('https://sev.sos.ok.gov/results.aspx'),
+  license:pl('https://www.ok.gov/able/')},
+OR:{name:'Oregon',
+  courts:r('OR Courts Public Access','https://publicaccess.courts.oregon.gov/'),
+  doc:r('OR DOC Offender','https://www.oregon.gov/doc/'),
+  sor:r('OR Sex Offender Registry','https://sexoffenders.oregon.gov/'),
+  sos:r('OR SOS Business','https://sos.oregon.gov/business/pages/find.aspx'),
+  prop:r('OR Property Records','https://www.assessmentdata.org/or/'),
+  voter:vr('https://sos.oregon.gov/voting/Pages/vrpage.aspx'),
+  license:pl('https://www.oregon.gov/ogden/')},
+PA:{name:'Pennsylvania',
+  courts:r('PA UJS Portal','https://ujsportal.pacourts.us/'),
+  doc:r('PA DOC Inmate Locator','https://www.cor.pa.gov/inmatelocator/pages/default.aspx'),
+  sor:r("PA Megan's Law",'https://www.pameganslaw.state.pa.us/'),
+  sos:r('PA Corp Search','https://www.corporations.pa.gov/search/corpsearch'),
+  prop:r('PA Property Records','https://www.assessmentdata.org/pa/'),
+  voter:vr('https://www.vote.pa.gov/'),
+  license:pl('https://www.pals.pa.gov/')},
+RI:{name:'Rhode Island',
+  courts:r('RI Courts Records','https://www.courts.ri.gov/'),
+  doc:r('RI DOC Inmate','https://doc.ri.gov/'),
+  sor:r('RI Sex Offender Registry','https://www.sor.ri.gov/'),
+  sos:r('RI SOS Business','https://business.sos.ri.gov/CorpWeb/CorpSearch/CorpSearch.aspx'),
+  prop:r('RI Property Records','https://www.assessmentdata.org/ri/'),
+  voter:vr('https://vote.sos.ri.gov/'),
+  license:pl('https://www.dir.ri.gov/')},
+SC:{name:'South Carolina',
+  courts:r('SC Public Index','https://publicindex.sccourts.org/'),
+  doc:r('SC DOC Inmate','https://www.doc.sc.gov/'),
+  sor:r('SC SLED Sex Offender','https://scor.sled.sc.gov/'),
+  sos:r('SC Business Entity','https://businessfilings.sc.gov/BusinessFiling/Entity/Search'),
+  prop:r('SC Property Records','https://www.assessmentdata.org/sc/'),
+  voter:vr('https://info.scvotes.sc.gov/eng/voterinquiry/VoterInformationRequest.aspx'),
+  license:pl('https://verify.llr.sc.gov/')},
+SD:{name:'South Dakota',
+  courts:r('SD eFiling Courts','https://efile.sd.gov/'),
+  doc:r('SD DOC Inmate','https://doc.sd.gov/'),
+  sor:r('SD Sex Offender Registry','https://sor.sd.gov/'),
+  sos:r('SD Business Entity','https://sosenterprise.sd.gov/BusinessServices/Business/FilingSearch.aspx'),
+  prop:r('SD Property Records','https://www.assessmentdata.org/sd/'),
+  voter:vr('https://vip.sdsos.gov/'),
+  license:pl('https://dlr.sd.gov/')},
+TN:{name:'Tennessee',
+  courts:r('TN Courts Records','https://www.tncourts.gov/'),
+  doc:r('TN DOC Offender','https://www.tn.gov/correction/'),
+  sor:r('TN TBI Sex Offender','https://www.tn.gov/tbi/crime-statistics-unit/sex-offender-registry.html'),
+  sos:r('TN TNBear Business','https://tnbear.tn.gov/Ecommerce/FilingSearch.aspx'),
+  prop:r('TN Property Records','https://www.assessmentdata.org/tn/'),
+  voter:vr('https://tnmap.tn.gov/voterlookup/'),
+  license:pl('https://verify.tn.gov/')},
+TX:{name:'Texas',
+  courts:r('TX re:SearchTX','https://research.txcourts.gov/'),
+  doc:r('TX TDCJ Offender','https://offender.tdcj.texas.gov/OffenderSearch/start','https://offender.tdcj.texas.gov/OffenderSearch/search?lastName={last}&firstName={first}'),
+  sor:r('TX DPS Sex Offender','https://records.txdps.state.tx.us/SexOffenderRegistry'),
+  sos:r('TX SOS Business','https://www.sos.state.tx.us/corp/sosda/index.shtml'),
+  prop:r('TX TAAD Appraisals','https://www.taad.org/'),
+  voter:vr('https://teamrv-mvp.sos.texas.gov/MVP/mvp.do'),
+  license:pl('https://www.tdlr.texas.gov/LicenseSearch/')},
+UT:{name:'Utah',
+  courts:r('UT Courts Records','https://www.utcourts.gov/'),
+  doc:r('UT DOC Offender','https://corrections.utah.gov/'),
+  sor:r('UT Sex Offender Registry','https://corrections.utah.gov/sex-offender-registry/'),
+  sos:r('UT Business Entity','https://secure.utah.gov/bes/'),
+  prop:r('UT Property Records','https://www.assessmentdata.org/ut/'),
+  voter:vr('https://votesearch.utah.gov/'),
+  license:pl('https://secure.utah.gov/llv/')},
+VT:{name:'Vermont',
+  courts:r('VT Judiciary Records','https://www.vermontjudiciary.org/'),
+  doc:r('VT DOC Offender','https://doc.vermont.gov/'),
+  sor:r('VT Sex Offender Registry','https://www.communitynotification.com/cap_office_disclaimer.php?office=55516'),
+  sos:r('VT SOS Business','https://sos.vermont.gov/corporations/'),
+  prop:r('VT Property Records','https://www.assessmentdata.org/vt/'),
+  voter:vr('https://mvp.vermont.gov/'),
+  license:pl('https://www.sec.state.vt.us/professional-regulation.aspx')},
+VA:{name:'Virginia',
+  courts:r('VA Courts Case Search','https://eapps.courts.state.va.us/gdcourts/caseSearch.do','https://eapps.courts.state.va.us/gdcourts/caseSearch.do?newSearch=Y&lastName={last}&firstName={first}'),
+  doc:r('VA DOC Offender','https://vadoc.virginia.gov/inmates-parolees-probationers/'),
+  sor:r('VA VSP Sex Offender','https://sex-offender.vsp.virginia.gov/sor/'),
+  sos:r('VA SCC Business','https://scc.virginia.gov/clss/'),
+  prop:r('VA Property Records','https://www.assessmentdata.org/va/'),
+  voter:vr('https://vote.elections.virginia.gov/'),
+  license:pl('https://dhp.virginiainteractive.org/Lookup/Index')},
+WA:{name:'Washington',
+  courts:r('WA Docket Search','https://docketweb.courts.wa.gov/'),
+  doc:r('WA DOC Offender','https://www.doc.wa.gov/information/offender-search/'),
+  sor:r('WA iCrimeWatch SOR','https://www.icrimewatch.net/washington.php'),
+  sos:r('WA SOS Business','https://ccfs.sos.wa.gov/#/'),
+  prop:r('WA Property Records','https://www.assessmentdata.org/wa/'),
+  voter:vr('https://www.sos.wa.gov/elections/voters/'),
+  license:pl('https://professions.dol.wa.gov/')},
+WV:{name:'West Virginia',
+  courts:r('WV Courts Records','https://www.courtswv.gov/'),
+  doc:r('WV DOC Offender','https://wvdoc.com/'),
+  sor:r('WV Sex Offender Registry','https://www.wvsp.gov/about%20us/CriminalRecords/Pages/SOR.aspx'),
+  sos:r('WV SOS Business','https://apps.sos.wv.gov/business/corporations/'),
+  prop:r('WV Property Records','https://www.assessmentdata.org/wv/'),
+  voter:vr('https://ovr.sos.wv.gov/'),
+  license:pl('https://wvsos.gov/')},
+WI:{name:'Wisconsin',
+  courts:r('WI WCCA Court Access','https://wcca.wicourts.gov/','https://wcca.wicourts.gov/caseSearch?partyName={name}&submit=Search'),
+  doc:r('WI DOC Offender','https://appsdoc.wi.gov/lop/home.do'),
+  sor:r('WI DOC Sex Offender','https://offender.doc.wi.gov/public/'),
+  sos:r('WI WDFI Business','https://www.wdfi.org/apps/CorpSearch/Search.aspx','https://www.wdfi.org/apps/CorpSearch/Search.aspx?type=Simple&q={name}'),
+  prop:r('WI Property Records','https://www.assessmentdata.org/wi/'),
+  voter:vr('https://myvote.wi.gov/'),
+  license:pl('https://licenseelookup.wi.gov/')},
+WY:{name:'Wyoming',
+  courts:r('WY Courts Records','https://www.courts.state.wy.us/'),
+  doc:r('WY DOC Offender','https://corrections.wyo.gov/'),
+  sor:r('WY Sex Offender Registry','https://wysors.dci.wyo.gov/'),
+  sos:r('WY Business Filing','https://wyobiz.wyo.gov/Business/FilingSearch.aspx'),
+  prop:r('WY Property Records','https://www.assessmentdata.org/wy/'),
+  voter:vr('https://sos.wyo.gov/'),
+  license:pl('https://www.wyoming.gov/')},
+};
+/* NAT + APP injected by part2 */
+
+/* ── DISCLAIMER GATE (inline — runs before hyve-part2.js) ── */
+(function(){
+  var AGREED_KEY='hyve_sleuth_agreed_v1';
+  var overlay=document.getElementById('disc-overlay');
+  var cb=document.getElementById('disc-cb');
+  var btn=document.getElementById('disc-agree');
+  if(!overlay||!cb||!btn)return;
+
+  function setReady(ready){
+    btn.disabled=!ready;
+    btn.style.opacity=ready?'1':'0.3';
+    btn.style.cursor=ready?'pointer':'not-allowed';
+    btn.style.pointerEvents=ready?'':'none';
+  }
+  setReady(false);
+
+  if(localStorage.getItem(AGREED_KEY)==='1'){
+    overlay.style.display='none';
+    /* runInit called by hyve-part2.js after it loads */
+    return;
+  }
+
+  cb.addEventListener('change',function(){ setReady(cb.checked); });
+  cb.addEventListener('click',function(){ setReady(cb.checked); });
+
+  btn.addEventListener('click',function(){
+    if(!cb.checked)return;
+    localStorage.setItem(AGREED_KEY,'1');
+    overlay.style.transition='opacity .35s';
+    overlay.style.opacity='0';
+    setTimeout(function(){
+      overlay.style.display='none';
+      /* runInit is defined by hyve-part2.js — call it if ready */
+      if(typeof runInit==='function')runInit();
+    },380);
+  });
+})();
+</script>
+<script src="hyve-part2.js"></script>
+</body>
+</html>

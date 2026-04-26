@@ -1,12 +1,28 @@
 'use client';
 
-// Intel hub — landing page that routes to the three Pro intel tabs:
-// surveillance infrastructure, sex offender registry, and crime heatmap.
-// Each is its own dedicated single-purpose map for fast, focused load.
+// Intel hub — landing page that routes to all Pro intel tools:
+//   1. Surveillance map (existing)
+//   2. Sex offender registry (existing)
+//   3. Hyve Sleuth — OSINT smart-launcher (NEW, embedded web tool)
+//   4. HYVE Residential — distressed-property intel (NEW, desktop installer)
+//
+// Each tile shows what it is, the volume / scope, and a clear "open" affordance.
+// Sleuth + Residential are tagged Pro on the badge for clarity even though
+// the actual access gate is enforced inside each child page.
 
 import Link from 'next/link';
 
-const TILES: { href: string; label: string; subtitle: string; color: string; icon: string; count: string }[] = [
+type Tile = {
+  href: string
+  label: string
+  subtitle: string
+  color: string
+  icon: string
+  count: string
+  badge?: string // e.g. "PRO · INLINE" / "PRO · DESKTOP"
+}
+
+const TILES: Tile[] = [
   {
     href: '/spy/app/surveillance',
     label: 'SURVEILLANCE',
@@ -23,6 +39,24 @@ const TILES: { href: string; label: string; subtitle: string; color: string; ico
     icon: '⛔',
     count: '97k+ records',
   },
+  {
+    href: '/spy/app/sleuth',
+    label: 'HYVE SLEUTH',
+    subtitle: 'OSINT smart-launcher · 100+ public databases (courts, BOP, NSOPW, OpenCorporates, Zillow, voter rolls). Enter a subject → one click opens every relevant resource pre-filled.',
+    color: '#C8A227',
+    icon: '🕵️',
+    count: 'web tool · 100+ sources',
+    badge: 'PRO · INLINE',
+  },
+  {
+    href: '/spy/app/residential',
+    label: 'HYVE RESIDENTIAL',
+    subtitle: 'Distressed-property intel for real-estate investors. Auto-scrapes county records: foreclosures, tax delinquencies, HOA / mechanic / judgment liens, with outreach-doc generator. Same data PropStream charges $200/mo for.',
+    color: '#F59E0B',
+    icon: '🏚️',
+    count: 'desktop · NC counties',
+    badge: 'PRO · DESKTOP',
+  },
 ];
 
 export default function IntelHub() {
@@ -31,7 +65,9 @@ export default function IntelHub() {
       <div className="border-b border-[#0D2235] px-4 py-3">
         <div className="font-mono text-[10px] tracking-[0.4em] text-[#94A3B8]">HYVE SPY</div>
         <div className="text-base font-black text-white">Intel · Pro</div>
-        <div className="mt-1 text-[10px] text-[#64748B]">Each layer has its own dedicated map. Tap to open.</div>
+        <div className="mt-1 text-[10px] text-[#64748B]">
+          Map layers + research tools. Tap a card to open.
+        </div>
       </div>
       <div className="grid gap-3 p-4">
         {TILES.map((t) => (
@@ -46,6 +82,14 @@ export default function IntelHub() {
                 <div className="mb-1 flex items-center gap-2 font-mono text-[10px] tracking-[0.3em]" style={{ color: t.color }}>
                   <span>{t.icon}</span>
                   <span>{t.label}</span>
+                  {t.badge && (
+                    <span
+                      className="ml-1 rounded border px-1.5 py-0.5 text-[8px] tracking-[0.2em]"
+                      style={{ borderColor: t.color, color: t.color, background: 'rgba(0,0,0,0.4)' }}
+                    >
+                      {t.badge}
+                    </span>
+                  )}
                 </div>
                 <p className="text-sm text-[#E2E8F0]">{t.subtitle}</p>
                 <div className="mt-2 font-mono text-[10px] text-[#94A3B8]">{t.count}</div>

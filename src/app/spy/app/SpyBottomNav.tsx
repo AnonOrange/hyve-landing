@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 
 const NAV = [
   {
@@ -190,36 +191,106 @@ export default function SpyBottomNav() {
   // Hide on full-screen feed detail
   if (/^\/spy\/app\/feed\/[^/]+/.test(pathname)) return null;
 
+  // Collapsed by default so the 3-row grid doesn't eat ~120px of map height.
+  // Expand triggers:
+  //   - Pointer hover anywhere on the nav (desktop)
+  //   - Tap on the peek strip (mobile)
+  // Auto-collapse 250ms after pointer leaves so a tiny mouse jiggle doesn't
+  // cause the panel to flicker.
+  const [expanded, setExpanded] = useState(false);
+  const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const onEnter = () => {
+    if (collapseTimer.current) clearTimeout(collapseTimer.current);
+    setExpanded(true);
+  };
+  const onLeave = () => {
+    if (collapseTimer.current) clearTimeout(collapseTimer.current);
+    collapseTimer.current = setTimeout(() => setExpanded(false), 250);
+  };
+  useEffect(() => {
+    return () => {
+      if (collapseTimer.current) clearTimeout(collapseTimer.current);
+    };
+  }, []);
+
+  // Auto-collapse when route changes (user just navigated, get out of the way)
+  useEffect(() => {
+    setExpanded(false);
+  }, [pathname]);
+
+  // The currently-active tab, surfaced on the collapsed peek strip so the
+  // user always sees where they are even when the nav is hidden.
+  const activeItem = NAV.find((it) => it.match(pathname));
+
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-[3000] border-t border-[#0D2235] bg-[#020D14]/95 backdrop-blur"
+      className="fixed inset-x-0 bottom-0 z-[3000]"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
     >
+      {/* Peek strip — always visible, ~28px tall. Tap to toggle on mobile. */}
+      <button
+        type="button"
+        onClick={() => setExpanded((e) => !e)}
+        aria-expanded={expanded}
+        aria-label={expanded ? 'Collapse navigation' : 'Expand navigation'}
+        className="flex h-7 w-full items-center justify-center gap-2 border-t border-[#0D2235] bg-[#020D14]/85 backdrop-blur transition hover:bg-[#020D14]"
+      >
+        <span className="text-[10px] font-bold tracking-[0.4em] text-[#475569]">
+          {expanded ? '▼' : '▲'}
+        </span>
+        {activeItem && (
+          <span className="flex items-center gap-1.5">
+            <span className="scale-75">{activeItem.icon(true)}</span>
+            <span className="text-[10px] font-bold tracking-widest text-[#00D4FF]">
+              {activeItem.label.toUpperCase()}
+            </span>
+          </span>
+        )}
+        <span className="text-[9px] font-mono text-[#334155]">
+          {expanded ? 'tap to hide' : 'tap or hover to reveal · 15 tabs'}
+        </span>
+      </button>
+
       {/*
-        15 tabs in a clean 3 rows × 5 cols grid. Same icon/label size as the
-        old 9-tab nav — every cell stays a comfortable tap target.
+        Full nav grid — only takes layout space when `expanded` is true. The
+        slide-up uses transform so the underlying map keeps its full height
+        (no reflow), and pointer-events:none when collapsed so the area
+        isn't accidentally tappable.
       */}
-      <ul className="mx-auto grid max-w-3xl grid-cols-5">
-        {NAV.map((item) => {
-          const active = item.match(pathname);
-          return (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                className="flex flex-col items-center gap-1 py-2 transition"
-              >
-                {item.icon(active)}
-                <span
-                  className="text-[10px] font-bold tracking-widest"
-                  style={{ color: active ? '#00D4FF' : '#64748B' }}
+      <div
+        className="overflow-hidden border-t border-[#0D2235] bg-[#020D14]/95 backdrop-blur transition-all duration-200"
+        style={{
+          maxHeight: expanded ? '14rem' : '0',
+          opacity: expanded ? 1 : 0,
+          pointerEvents: expanded ? 'auto' : 'none',
+        }}
+      >
+        <ul className="mx-auto grid max-w-3xl grid-cols-5">
+          {NAV.map((item) => {
+            const active = item.match(pathname);
+            return (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  onClick={() => setExpanded(false)}
+                  className="flex flex-col items-center gap-1 py-2 transition"
                 >
-                  {item.label.toUpperCase()}
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+                  {item.icon(active)}
+                  <span
+                    className="text-[10px] font-bold tracking-widest"
+                    style={{ color: active ? '#00D4FF' : '#64748B' }}
+                  >
+                    {item.label.toUpperCase()}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </nav>
   );
 }

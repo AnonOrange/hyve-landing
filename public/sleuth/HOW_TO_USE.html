@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Hyve Sleuth — User Guide</title>
+<style>
+:root{--bg:#08070a;--surface:#100e13;--s2:#16121c;--border:#2a2135;--accent:#c8a227;--teal:#e8c456;--text:#ede8d8;--muted:#6b5e3a;--muted2:#9e8a55;--red:#ef4444;--green:#16a34a;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;}
+a{color:var(--accent);text-decoration:none;}a:hover{text-decoration:underline;}
+
+/* HEADER */
+.hdr{background:var(--surface);border-bottom:2px solid var(--accent);padding:24px 40px;display:flex;align-items:center;gap:20px;}
+.hdr img{height:64px;border-radius:8px;}
+.hdr-text h1{font-size:26px;font-weight:900;color:var(--accent);letter-spacing:-0.5px;}
+.hdr-text p{font-size:12px;color:var(--muted2);margin-top:3px;letter-spacing:1.5px;text-transform:uppercase;}
+
+/* LAYOUT */
+.page{max-width:860px;margin:0 auto;padding:36px 24px 60px;}
+
+/* SECTION */
+.sec{margin-bottom:36px;}
+.sec-title{font-size:18px;font-weight:900;color:var(--accent);display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.sec-body{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;}
+.sec-body p{color:var(--muted2);margin-bottom:10px;}
+.sec-body p:last-child{margin-bottom:0;}
+.sec-body strong{color:var(--text);}
+
+/* STEPS */
+.steps{display:flex;flex-direction:column;gap:14px;}
+.step{display:flex;gap:14px;align-items:flex-start;}
+.step-num{background:linear-gradient(135deg,#c8a227,#e8c456);color:#1a1200;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex-shrink:0;margin-top:2px;}
+.step-body h3{font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px;}
+.step-body p{color:var(--muted2);font-size:13px;margin:0;}
+
+/* CODE BLOCKS */
+.code-block{background:#0d0b10;border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:6px;padding:14px 18px;font-family:'Consolas','Courier New',monospace;font-size:13px;color:var(--teal);margin:12px 0;overflow-x:auto;}
+code{background:#1c1724;color:var(--teal);padding:2px 7px;border-radius:4px;font-family:'Consolas',monospace;font-size:12px;}
+
+/* METHOD CARDS */
+.method-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:4px;}
+.method-card{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:16px 18px;}
+.method-card .mc-num{font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
+.method-card h3{font-size:14px;font-weight:800;color:var(--text);margin-bottom:6px;}
+.method-card p{font-size:12px;color:var(--muted2);margin-bottom:0;}
+.method-card .mc-tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-top:8px;}
+.tag-easy{background:rgba(22,163,74,.15);color:#4ade80;border:1px solid rgba(22,163,74,.3);}
+.tag-reliable{background:rgba(200,162,39,.12);color:var(--teal);border:1px solid rgba(200,162,39,.3);}
+.tag-pro{background:rgba(99,102,241,.12);color:#a5b4fc;border:1px solid rgba(99,102,241,.3);}
+
+/* FEATURE TABLE */
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted2);padding:8px 12px;border-bottom:1px solid var(--border);}
+td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--muted2);vertical-align:top;}
+td:first-child{color:var(--text);font-weight:700;white-space:nowrap;}
+tr:last-child td{border-bottom:none;}
+
+/* TAB CHIPS */
+.tab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-top:4px;}
+.tab-chip{background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:10px 13px;}
+.tab-chip .tc-icon{font-size:16px;margin-bottom:4px;}
+.tab-chip .tc-name{font-size:12px;font-weight:800;color:var(--accent);}
+.tab-chip .tc-desc{font-size:11px;color:var(--muted2);margin-top:2px;}
+
+/* SMART BADGE */
+.badge-smart{display:inline-block;background:linear-gradient(135deg,#c8a227,#e8c456);color:#1a1200;font-size:9px;font-weight:800;padding:2px 6px;border-radius:3px;letter-spacing:.5px;vertical-align:middle;}
+.badge-state{display:inline-block;border:1px solid #1d4ed8;color:#93c5fd;font-size:9px;font-weight:800;padding:2px 6px;border-radius:3px;letter-spacing:.5px;vertical-align:middle;}
+
+/* TIPS */
+.tip{display:flex;gap:12px;background:rgba(200,162,39,.06);border:1px solid rgba(200,162,39,.25);border-radius:7px;padding:13px 16px;margin-bottom:10px;}
+.tip-icon{font-size:18px;flex-shrink:0;}
+.tip-body{font-size:13px;color:var(--muted2);}
+.tip-body strong{color:var(--text);}
+
+/* DISCLAIMER BOX */
+.disc-box{background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:16px 20px;}
+.disc-box h3{color:var(--red);font-size:13px;font-weight:800;margin-bottom:8px;}
+.disc-box ul{padding-left:18px;}
+.disc-box li{font-size:12px;color:var(--muted2);margin-bottom:5px;}
+.disc-box li:last-child{margin-bottom:0;}
+
+/* FOOTER */
+footer{background:var(--surface);border-top:1px solid var(--border);padding:16px 40px;font-size:11px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+footer strong{color:var(--muted2);}
+
+/* PRINT */
+@media print{body{background:#fff;color:#000;}.hdr{border-color:#000;}.sec-body,.method-card,.tab-chip,.tip{border-color:#ccc;}.hdr-text h1,.sec-title{color:#8a6a00;}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <img src="logo.png" alt="Hyve Sleuth Logo"/>
+  <div class="hdr-text">
+    <h1>Hyve Sleuth</h1>
+    <p>User Guide &amp; Quick-Start Manual · Vibe Software Solutions / Majixx Corp</p>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- WHAT IS IT -->
+  <div class="sec">
+    <div class="sec-title">🔎 What is Hyve Sleuth?</div>
+    <div class="sec-body">
+      <p><strong>Hyve Sleuth</strong> is a professional OSINT (Open Source Intelligence) research launcher. It opens official public records, government databases, and third-party research tools directly in your browser — pre-filled with your subject's information wherever possible.</p>
+      <p>It works like a command center: enter a subject's details once, then launch 170+ national resources and 7 state-specific databases for all 50 states + DC with a single click. <strong>No scraping. No data collection. Nothing leaves your device.</strong></p>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+        <span style="background:rgba(200,162,39,.1);border:1px solid rgba(200,162,39,.3);color:var(--teal);font-size:12px;font-weight:700;padding:5px 12px;border-radius:20px;">170+ National Resources</span>
+        <span style="background:rgba(200,162,39,.1);border:1px solid rgba(200,162,39,.3);color:var(--teal);font-size:12px;font-weight:700;padding:5px 12px;border-radius:20px;">All 50 States + DC</span>
+        <span style="background:rgba(200,162,39,.1);border:1px solid rgba(200,162,39,.3);color:var(--teal);font-size:12px;font-weight:700;padding:5px 12px;border-radius:20px;">Smart URL Pre-fill</span>
+        <span style="background:rgba(200,162,39,.1);border:1px solid rgba(200,162,39,.3);color:var(--teal);font-size:12px;font-weight:700;padding:5px 12px;border-radius:20px;">Zero Install</span>
+        <span style="background:rgba(200,162,39,.1);border:1px solid rgba(200,162,39,.3);color:var(--teal);font-size:12px;font-weight:700;padding:5px 12px;border-radius:20px;">100% Client-Side</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW TO RUN -->
+  <div class="sec">
+    <div class="sec-title">🖥️ How to Run Hyve Sleuth</div>
+    <div class="sec-body">
+      <p>Hyve Sleuth is a <strong>browser-based application</strong> — no installation required. Choose any method below:</p>
+      <div class="method-grid" style="margin-top:16px;">
+
+        <div class="method-card">
+          <div class="mc-num">Method 1</div>
+          <h3>Double-Click (Firefox / Edge)</h3>
+          <p>Double-click <code>index.html</code> to open in your browser. Works in Firefox and Edge. Chrome may block the JS file — use Method 2 if the page loads blank.</p>
+          <span class="mc-tag tag-easy">✓ Easiest</span>
+        </div>
+
+        <div class="method-card">
+          <div class="mc-num">Method 2</div>
+          <h3>Python Server (Recommended)</h3>
+          <p>Open a terminal in the Hyve Sleuth folder, then run:</p>
+          <div class="code-block">python -m http.server 8080</div>
+          <p>Open <strong>http://localhost:8080</strong> in any browser.</p>
+          <span class="mc-tag tag-reliable">✓ Most Reliable</span>
+        </div>
+
+        <div class="method-card">
+          <div class="mc-num">Method 3</div>
+          <h3>VS Code Live Server</h3>
+          <p>Install the <strong>Live Server</strong> extension in VS Code. Right-click <code>index.html</code> → <strong>Open with Live Server</strong>. Auto-reloads on save.</p>
+          <span class="mc-tag tag-pro">✓ Developer</span>
+        </div>
+
+        <div class="method-card">
+          <div class="mc-num">Method 4</div>
+          <h3>Node.js / npx serve</h3>
+          <p>If Node.js is installed:</p>
+          <div class="code-block">npx serve .</div>
+          <p>Opens automatically on <strong>http://localhost:3000</strong></p>
+          <span class="mc-tag tag-pro">✓ Developer</span>
+        </div>
+
+      </div>
+
+      <div class="tip" style="margin-top:16px;">
+        <div class="tip-icon">💡</div>
+        <div class="tip-body"><strong>How to open a terminal in the folder:</strong> On Windows, hold Shift and right-click the Hyve Sleuth folder → <strong>"Open PowerShell window here"</strong> or <strong>"Open in Terminal"</strong>. Then type the command above and press Enter.</div>
+      </div>
+
+      <div class="tip">
+        <div class="tip-icon">📁</div>
+        <div class="tip-body"><strong>Keep all files together.</strong> The <code>index.html</code>, <code>hyve-part2.js</code>, and <code>logo.png</code> files must stay in the same folder. Moving them separately will break the app.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUICK START -->
+  <div class="sec">
+    <div class="sec-title">🚀 Quick Start — First Time</div>
+    <div class="sec-body">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h3>Read &amp; Accept the Disclaimer</h3>
+            <p>On first launch, a legal notice appears. Read it carefully, check the box confirming you are an authorized researcher, then click <strong>"Enter Hyve Sleuth →"</strong>. This acceptance is stored locally and won't appear again unless you clear your browser data.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h3>Create a Researcher Profile</h3>
+            <p>The Profile Selector appears next. Pick an avatar emoji, type your name (e.g., "Agent Smith"), optionally set a PIN for security, then click <strong>"Create Profile →"</strong>. Each profile stores its own subjects, notes, and findings separately. You can add more profiles later by clicking your name in the top-right header.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h3>Enter Your Subject's Information</h3>
+            <p>Fill in the left sidebar fields — Full Name is the only required field, but the more you fill in, the more <span class="badge-smart">SMART</span> links will activate. Fields: Full Name, Date of Birth, City/County, State, Phone, Email, Username, Address, Domain/IP, VIN, and Image URL.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h3>Click "Load"</h3>
+            <p>The resource panel opens showing the subject banner and all available resources grouped by category. The header shows how many smart links are ready (e.g., <strong>"77 smart links ready"</strong>).</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <h3>Launch Resources</h3>
+            <p>Click any resource card to open it in a new tab. Cards marked <span class="badge-smart">SMART</span> open pre-filled search forms. Use <strong>⚡ Launch All Smart</strong> (top-right) to open every pre-filled link at once, or use <strong>⚡ Launch (N)</strong> buttons on each section header to batch-open just that category.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <h3>Save Your Subject</h3>
+            <p>Click <strong>Save</strong> to store the subject profile for quick re-loading in future sessions. Saved subjects appear under the "Saved Subjects" section in the sidebar — click <strong>Load</strong> next to any saved subject to restore it.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SMART LINKS -->
+  <div class="sec">
+    <div class="sec-title">⚡ Understanding Smart Links</div>
+    <div class="sec-body">
+      <p>Smart Links automatically insert your subject's information into the destination URL, saving you from manually typing into each site's search form. A card glows with a teal left border and shows the <span class="badge-smart">SMART</span> badge when it's pre-filled and ready.</p>
+      <table style="margin-top:14px;">
+        <thead><tr><th>Field You Fill In</th><th>What It Unlocks</th></tr></thead>
+        <tbody>
+          <tr><td>Full Name</td><td>People search sites, court records, news, people finders, genealogy, federal checks</td></tr>
+          <tr><td>State</td><td>All state-specific tabs: Courts, Corrections, Sex Offender, SOS, Property, Voter, License</td></tr>
+          <tr><td>Email Address</td><td>HaveIBeenPwned, DeHashed, Hunter.io, EmailRep, OSINT Industries, Phonebook.cz and more</td></tr>
+          <tr><td>Phone Number</td><td>WhitePages Phone, NumLookup, SpyDialer, WhoCalledMe, OkCaller and more</td></tr>
+          <tr><td>Username</td><td>WhatsMyName (600+ sites), IDCrawl, Namechk, KnowEm, social profiles</td></tr>
+          <tr><td>Image URL</td><td>Google Lens, TinEye, Yandex, Bing Visual, SauceNAO, FotoForensics</td></tr>
+          <tr><td>VIN</td><td>NHTSA VIN Decoder, CARFAX, VehicleHistory.com, iSeeCars, AutoCheck</td></tr>
+          <tr><td>Domain / IP</td><td>DomainTools WHOIS, Shodan, VirusTotal, URLScan, IPInfo, SecurityTrails</td></tr>
+          <tr><td>Street Address</td><td>Zillow, AddressReport property lookup</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TRACKING -->
+  <div class="sec">
+    <div class="sec-title">✅ Tracking Your Findings</div>
+    <div class="sec-body">
+      <p>Every resource card has two small marking buttons on the right side:</p>
+      <table style="margin-top:8px;">
+        <thead><tr><th>Button</th><th>Meaning</th><th>Visual Result</th></tr></thead>
+        <tbody>
+          <tr><td>✓ (green)</td><td><strong>Found / Hit</strong> — This source returned a result for your subject</td><td>Card gets a green left border</td></tr>
+          <tr><td>✕ (red)</td><td><strong>No Result / Miss</strong> — Checked but nothing found</td><td>Card dims to 55% opacity</td></tr>
+          <tr><td>(click again)</td><td><strong>Clear mark</strong> — Toggle the same button to remove the marking</td><td>Card returns to normal</td></tr>
+        </tbody>
+      </table>
+      <div class="tip" style="margin-top:14px;">
+        <div class="tip-icon">💾</div>
+        <div class="tip-body">All hit/miss data is saved automatically in your browser's local storage — no action needed. It persists across sessions and is tied to your researcher profile.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTES & EXPORT -->
+  <div class="sec">
+    <div class="sec-title">📝 Notes &amp; Export</div>
+    <div class="sec-body">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num" style="background:var(--s2);color:var(--accent);border:1px solid var(--accent)">📝</div>
+          <div class="step-body">
+            <h3>Research Notes</h3>
+            <p>The <strong>Research Notes</strong> textarea in the sidebar stores freeform notes for the currently loaded subject. Type your observations, then click <strong>Save Notes</strong>. Notes are saved per-subject and per-profile — switching subjects switches their notes automatically.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num" style="background:var(--s2);color:var(--accent);border:1px solid var(--accent)">📄</div>
+          <div class="step-body">
+            <h3>Export Findings Report</h3>
+            <p>Click <strong>📄 Export Findings</strong> (in the sidebar or the header Export button) to download a <code>.txt</code> report file containing: subject info, list of all marked hits, list of all misses, and your research notes. The file is named automatically: <code>HyveSleuth_SubjectName_timestamp.txt</code></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFILES -->
+  <div class="sec">
+    <div class="sec-title">👤 Researcher Profiles</div>
+    <div class="sec-body">
+      <p>Hyve Sleuth supports multiple researcher profiles — ideal for teams or investigators working multiple cases. Each profile has completely separate data: saved subjects, notes, and hit/miss findings.</p>
+      <table style="margin-top:12px;">
+        <thead><tr><th>Action</th><th>How To</th></tr></thead>
+        <tbody>
+          <tr><td>Create a profile</td><td>Click your profile name in the top-right → fill in name &amp; optional PIN → Create Profile</td></tr>
+          <tr><td>Switch profiles</td><td>Click your profile name in the top-right → click another profile card</td></tr>
+          <tr><td>Add a PIN</td><td>When creating a profile, enter a numeric PIN (up to 6 digits) in the PIN field</td></tr>
+          <tr><td>Delete a profile</td><td>Click your profile name → hover a profile card → click the ✕ in the top-right corner of that card</td></tr>
+        </tbody>
+      </table>
+      <div class="tip" style="margin-top:12px;">
+        <div class="tip-icon">⚠️</div>
+        <div class="tip-body"><strong>Deleting a profile is permanent</strong> — all saved subjects, notes, and findings for that profile will be erased. There is no recovery.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS REFERENCE -->
+  <div class="sec">
+    <div class="sec-title">📑 Tab Reference — All 19 Categories</div>
+    <div class="sec-body">
+      <p>Use the scrollable tab bar at the top of the resource panel to filter by category:</p>
+      <div class="tab-grid" style="margin-top:14px;">
+        <div class="tab-chip"><div class="tc-icon">🗂️</div><div class="tc-name">All</div><div class="tc-desc">Everything in one view</div></div>
+        <div class="tab-chip"><div class="tc-icon">⚖️</div><div class="tc-name">Courts</div><div class="tc-desc">Federal + state court records</div></div>
+        <div class="tab-chip"><div class="tc-icon">🔒</div><div class="tc-name">Corrections</div><div class="tc-desc">Inmate &amp; offender search</div></div>
+        <div class="tab-chip"><div class="tc-icon">🚨</div><div class="tc-name">Sex Offender</div><div class="tc-desc">NSOPW + state registries</div></div>
+        <div class="tab-chip"><div class="tc-icon">📂</div><div class="tc-name">State Records</div><div class="tc-desc">SOS, property, voter, license</div></div>
+        <div class="tab-chip"><div class="tc-icon">👥</div><div class="tc-name">People</div><div class="tc-desc">20+ people aggregators</div></div>
+        <div class="tab-chip"><div class="tc-icon">📞</div><div class="tc-name">Phone</div><div class="tc-desc">Reverse phone &amp; carrier ID</div></div>
+        <div class="tab-chip"><div class="tc-icon">📧</div><div class="tc-name">Email</div><div class="tc-desc">Verification, reputation, OSINT</div></div>
+        <div class="tab-chip"><div class="tc-icon">🔐</div><div class="tc-name">Breach / DW</div><div class="tc-desc">Leaked credential databases</div></div>
+        <div class="tab-chip"><div class="tc-icon">🔑</div><div class="tc-name">Username</div><div class="tc-desc">600+ site username checker</div></div>
+        <div class="tab-chip"><div class="tc-icon">📱</div><div class="tc-name">Social</div><div class="tc-desc">Major social platform profiles</div></div>
+        <div class="tab-chip"><div class="tc-icon">🖼️</div><div class="tc-name">Image / Face</div><div class="tc-desc">Reverse image &amp; EXIF tools</div></div>
+        <div class="tab-chip"><div class="tc-icon">📰</div><div class="tc-name">News / Arrests</div><div class="tc-desc">Mugshots, arrest records, news</div></div>
+        <div class="tab-chip"><div class="tc-icon">🏛️</div><div class="tc-name">Federal</div><div class="tc-desc">FBI, OFAC, SAM.gov, SEC, FAA</div></div>
+        <div class="tab-chip"><div class="tc-icon">🎓</div><div class="tc-name">Professional</div><div class="tc-desc">NPI, FINRA, Nursys, Avvo</div></div>
+        <div class="tab-chip"><div class="tc-icon">💰</div><div class="tc-name">Financial</div><div class="tc-desc">SEC, FEC, bankruptcy, FDIC</div></div>
+        <div class="tab-chip"><div class="tc-icon">🌳</div><div class="tc-name">Genealogy</div><div class="tc-desc">FamilySearch, Ancestry, graves</div></div>
+        <div class="tab-chip"><div class="tc-icon">🚗</div><div class="tc-name">Vehicles</div><div class="tc-desc">VIN decode, CARFAX, NHTSA</div></div>
+        <div class="tab-chip"><div class="tc-icon">🌐</div><div class="tc-name">Domain / IP</div><div class="tc-desc">WHOIS, Shodan, VirusTotal</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIPS -->
+  <div class="sec">
+    <div class="sec-title">💡 Pro Tips</div>
+    <div class="sec-body">
+      <div class="tip"><div class="tip-icon">🔍</div><div class="tip-body"><strong>Start with a name + state.</strong> Even without any other info, you'll unlock courts, DOC, sex offender registries, SOS, and 10+ people search sites with smart pre-fill.</div></div>
+      <div class="tip"><div class="tip-icon">⚡</div><div class="tip-body"><strong>Use per-section Launch buttons.</strong> Instead of "Launch All Smart" (which opens 70+ tabs), use the <strong>⚡ Launch (N)</strong> button on each section header to open just that category — keeps your investigation organized.</div></div>
+      <div class="tip"><div class="tip-icon">💾</div><div class="tip-body"><strong>Save subjects before clearing.</strong> Click Save before clearing the form — Hyve Sleuth stores as many subjects as your browser's localStorage allows (typically 5–10MB).</div></div>
+      <div class="tip"><div class="tip-icon">🖼️</div><div class="tip-body"><strong>Image URL for face search.</strong> Find a public photo of your subject online, right-click → "Copy image address", paste it into the Image URL field, then use the Image/Face tab to run reverse image searches.</div></div>
+      <div class="tip"><div class="tip-icon">🔐</div><div class="tip-body"><strong>Breach + Email combo.</strong> Load an email address and go to the Breach/DW tab — DeHashed, HaveIBeenPwned, Intelligence X, and LeakCheck will all be pre-filled and ready to launch simultaneously.</div></div>
+      <div class="tip"><div class="tip-icon">📄</div><div class="tip-body"><strong>Export at the end of every session.</strong> The Export report captures everything — use it to document your investigation for case files or client reports.</div></div>
+    </div>
+  </div>
+
+  <!-- TROUBLESHOOTING -->
+  <div class="sec">
+    <div class="sec-title">🔧 Troubleshooting</div>
+    <div class="sec-body">
+      <table>
+        <thead><tr><th>Problem</th><th>Solution</th></tr></thead>
+        <tbody>
+          <tr><td>Page loads blank / white</td><td>Chrome blocks local JS files. Use Method 2 (Python server) or open in Firefox/Edge instead.</td></tr>
+          <tr><td>Tabs / buttons don't work</td><td>Make sure all 3 files (<code>index.html</code>, <code>hyve-part2.js</code>, <code>logo.png</code>) are in the same folder and you're using a local server.</td></tr>
+          <tr><td>Saved subjects disappeared</td><td>Data is in browser localStorage. Make sure you're using the same browser. Clearing browser data will erase saved subjects.</td></tr>
+          <tr><td>Logo doesn't appear</td><td>Make sure <code>logo.png</code> is in the same folder as <code>index.html</code>.</td></tr>
+          <tr><td>Smart links not pre-filling</td><td>Check that the required field for that resource is filled in (e.g., email for breach tools, VIN for vehicle tools).</td></tr>
+          <tr><td>External sites won't load</td><td>Some sites require you to be logged in or have an account. The tool opens them — you may need to create free accounts on some platforms.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- LEGAL DISCLAIMER -->
+  <div class="sec">
+    <div class="sec-title">⚠️ Legal Disclaimer</div>
+    <div class="sec-body">
+      <div class="disc-box">
+        <h3>⚠️ IMPORTANT — Read Before Use</h3>
+        <ul>
+          <li>Hyve Sleuth is intended exclusively for <strong>licensed investigators, law enforcement, attorneys, journalists, and authorized security researchers</strong>.</li>
+          <li>Results obtained through this tool <strong>may NOT be used</strong> to make decisions about any consumer's eligibility for credit, employment, housing, insurance, or any other purpose regulated by the <strong>Fair Credit Reporting Act (FCRA), 15 U.S.C. § 1681</strong>.</li>
+          <li>All data must be <strong>independently verified</strong> through primary sources before being acted upon. Public records may be incomplete, outdated, or inaccurate.</li>
+          <li>Using this tool to stalk, harass, or unlawfully surveil any individual is <strong>strictly prohibited</strong> and may constitute a criminal offense under federal and state law.</li>
+          <li>The user accepts <strong>full legal responsibility</strong> for how information accessed through this platform is used.</li>
+          <li>Hyve Sleuth is <strong>not affiliated with any government agency</strong> and makes no warranties regarding the accuracy of third-party data sources.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<footer>
+  <span>© 2025 <strong>Vibe Software Solutions</strong> / Majixx Corp · Hyve Sleuth User Guide</span>
+  <span>For authorized research use only · Not FCRA compliant</span>
+</footer>
+
+</body>
+</html>
