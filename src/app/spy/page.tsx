@@ -16,12 +16,12 @@ export const metadata: Metadata = {
 };
 
 const STATS = [
-  { value: '6,500+', label: 'Scanner feeds' },
-  { value: '73,000+', label: 'Live cameras' },
-  { value: '164,000+', label: 'Surveillance markers' },
-  { value: '97,000+', label: 'Offender pins' },
-  { value: '31,000+', label: 'Live crime reports' },
-  { value: '199', label: 'Countries' },
+  { value: '6,581', label: 'Scanner feeds' },
+  { value: '73,898', label: 'Live cameras' },
+  { value: '164,733', label: 'Surveillance markers' },
+  { value: '97,061', label: 'Offender pins' },
+  { value: '48,242', label: 'Live crime reports' },
+  { value: '13', label: 'Cities w/ daily crime' },
 ];
 
 const FEATURES = [
@@ -54,16 +54,16 @@ const FEATURES = [
     tag: 'OFFENDERS',
   },
   {
-    title: '31,000+ live crime reports — Pro Intel tab',
+    title: '48,242 live crime reports — 13 cities, refreshed daily',
     body:
-      'Real incident pins (not heatmaps) sourced daily from city open-data portals: Chicago, NYC, Los Angeles, San Francisco, Seattle, Washington DC, Buffalo. 12 category icons (🔫 shooting, 💀 homicide, 👊 assault, 💰 robbery, 🏚 burglary, 🚗 vehicle theft, 🛒 theft, 💊 drug, 🎨 vandalism, 🔥 arson, 💳 fraud, ⚠ sex offense). Filter chips per category. Click pin → offense, time-ago, source.',
+      'Real incident pins (not heatmaps) sourced daily at 9am UTC from city open-data portals: Chicago, NYC, LA, San Francisco, Seattle, DC, Buffalo, Dallas, Philadelphia, Raleigh, Tucson, Montgomery County MD, Gainesville FL. 12 category icons (🔫 shooting, 💀 homicide, 👊 assault, 💰 robbery, 🏚 burglary, 🚗 vehicle theft, 🛒 theft, 💊 drug, 🎨 vandalism, 🔥 arson, 💳 fraud, ⚠ sex offense). Filter chips per category. Click pin → offense, time-ago, source.',
     accent: '#EF4444',
     tag: 'CRIME',
   },
   {
-    title: 'Push alerts within X miles of you',
+    title: 'Live alert pipeline — 3 detection signals',
     body:
-      'Opt in once in Settings, set your radius (1–50 mi), grant location + notification permission. Whisper STT keyword detection + listener-spike + transmission-burst → instant push to your phone or browser when an incident fires near you. The same feature that built Citizen into a billion-dollar company.',
+      'Three independent signals all fire into one push pipeline: (1) Whisper STT keyword detection running continuously on Railway transcribes scanner audio for words like "shots fired", "structure fire", "officer down". (2) Listener-spike — when a feed\'s listener count jumps 5× its baseline, an incident is in progress. (3) Transmission-burst — >8 calls in 30s on OpenMHz feeds. Opt in once in Settings, set your radius (1–50 mi), grant location + notification permission. Push hits within seconds.',
     accent: '#FF2D2D',
     tag: 'ALERTS',
   },
@@ -108,6 +108,20 @@ const FEATURES = [
       'Hybrid Android APK with native scanner audio playback (background, lock-screen controls, no autoplay restrictions) and WebView for everything else (auto-inherits your sign-in via cookie sharing). Installable PWA on iOS. Tester APK at hyveapp.co/spy/downloads.',
     accent: '#10B981',
     tag: 'APPS',
+  },
+  {
+    title: 'Tactical radar loading — never silent',
+    body:
+      "Every page transition shows a tactical radar sweep: concentric rings with subtle pulses, rotating arm with a fading trail, blip-spawns simulating target detection, and an indeterminate progress bar. Color matches each tab's accent. So you always know the app is working — even when pulling 100k+ markers across the wire.",
+    accent: '#06B6D4',
+    tag: 'UX',
+  },
+  {
+    title: 'Built across three runtimes for maximum uptime',
+    body:
+      "Same hyve-api codebase deployed three ways: Vercel for fast edge-cached HTTP reads (lazy-loaded layers + CDN cache), Railway for the always-on Whisper STT worker that needs continuous CPU, and GitHub Actions for free 5-minute alert polls. Every signal-detection layer runs independently — one platform's outage doesn't kill the others.",
+    accent: '#8B5CF6',
+    tag: 'INFRA',
   },
 ];
 
@@ -173,7 +187,7 @@ export default function SpyPage() {
               <span className="text-[#E2E8F0]"> right now.</span>
             </h1>
             <p className="mt-6 max-w-xl text-lg text-[#64748B]">
-              Real-time scanner audio · 73,000 live cameras · 164,000 surveillance markers · 97,000 sex offender pins · 31,000 live crime reports. Push alerts within X miles. AI summaries on any LLM key. One tap on a map.
+              Real-time scanner audio · 73,000 live cameras · 164,000 surveillance markers · 97,000 sex offender pins · 48,000 live crime reports across 13 cities. Whisper-STT push alerts within X miles. AI summaries on any LLM key. One tap on a map.
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <a href="#pricing" className="rounded bg-[#00D4FF] px-6 py-3 text-sm font-black tracking-widest text-[#020D14] transition hover:bg-white" style={{ boxShadow: '0 0 60px -10px rgba(0,212,255,0.4),0 0 140px -40px rgba(0,212,255,0.6)' }}>
@@ -359,7 +373,7 @@ export default function SpyPage() {
           </div>
           <p className="mb-6 text-center text-xs text-[#64748B]">
             Pro tier unlocks the <span className="text-[#22C55E]">Global view</span> (24,410 worldwide cams) +
-            the <span className="text-[#F59E0B]">Intel suite</span> (164k surveillance · 97k offenders · 31k live crime reports).
+            the <span className="text-[#F59E0B]">Intel suite</span> (164k surveillance · 97k offenders · 48k live crime reports).
           </p>
           <ul className="grid gap-3 md:grid-cols-2">
             {[
