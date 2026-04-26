@@ -58,9 +58,14 @@ export default async function AdminPage() {
             <div className="text-[10px] font-black tracking-[0.4em] text-[#00D4FF]">HYVE SPY · ADMIN</div>
             <div className="mt-1 font-mono text-[10px] text-[#475569]">signed in as {email}</div>
           </div>
-          <a href="/spy/app" className="text-[10px] font-bold tracking-widest text-[#64748B] hover:text-[#E2E8F0]">
-            ← BACK TO APP
-          </a>
+          <div className="flex items-center gap-2">
+            <a href="/spy/admin/recon" className="rounded border border-[#FF2D2D] bg-[#FF2D2D]/10 px-3 py-1 text-[10px] font-bold tracking-widest text-[#FF2D2D] hover:bg-[#FF2D2D]/20">
+              RECON →
+            </a>
+            <a href="/spy/app" className="text-[10px] font-bold tracking-widest text-[#64748B] hover:text-[#E2E8F0]">
+              ← BACK TO APP
+            </a>
+          </div>
         </div>
       </header>
       <div className="mx-auto max-w-6xl p-6">
