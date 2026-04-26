@@ -7,9 +7,12 @@ type Audit = {
   id: string;
   user_email: string;
   tier: string;
+  scope_type?: string;
   status: string;
   scan_completed_at: string | null;
   agreement_signed_name: string;
+  purged_at?: string | null;
+  severity_summary?: Record<string, number>;
 };
 
 type Asset = {
@@ -42,7 +45,7 @@ const SEVERITY_META: Record<string, { color: string; rank: number }> = {
 export default function ReportPage() {
   const params = useParams();
   const id = params?.id as string;
-  const [data, setData] = useState<{ audit: Audit; assets: Asset[]; findings: Finding[] } | null>(null);
+  const [data, setData] = useState<{ audit: Audit; assets: Asset[]; findings: Finding[]; purged?: boolean; severitySummary?: Record<string, number> } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -58,7 +61,9 @@ export default function ReportPage() {
 
   const { audit, assets, findings } = data;
   const sortedFindings = [...findings].sort((a, b) => (SEVERITY_META[a.severity]?.rank ?? 9) - (SEVERITY_META[b.severity]?.rank ?? 9));
-  const counts = findings.reduce<Record<string, number>>((acc, f) => { acc[f.severity] = (acc[f.severity] || 0) + 1; return acc; }, {});
+  const counts = data.purged && data.severitySummary
+    ? data.severitySummary
+    : findings.reduce<Record<string, number>>((acc, f) => { acc[f.severity] = (acc[f.severity] || 0) + 1; return acc; }, {});
   const assetById: Record<string, Asset> = {};
   for (const a of assets) assetById[a.id] = a;
 
@@ -126,8 +131,43 @@ export default function ReportPage() {
         )}
       </section>
 
-      <div className="mx-auto max-w-3xl px-4 pb-8 font-mono text-[10px] text-[#64748B]">
-        Report generated for audit {audit.id}. Save this URL — your audit and findings are stored for 90 days for your records.
+      {/* Soft product recommendation — single mention at the bottom, not per finding */}
+      {findings.length > 0 && !data.purged && (
+        <section className="mx-auto max-w-3xl px-4 py-6 border-t border-[#0D2235]">
+          <div className="rounded-lg border border-[#0D2235] bg-black/30 p-5">
+            <div className="mb-2 font-mono text-[10px] tracking-widest text-[#64748B]">RELATED · OPTIONAL</div>
+            <div className="mb-2 text-sm font-bold text-white">Stay aware after you fix these</div>
+            <p className="mb-3 text-xs leading-relaxed text-[#94A3B8]">
+              Once you've worked through the remediation steps, two of our other products help you keep an eye out:
+            </p>
+            <ul className="space-y-2 text-xs text-[#E2E8F0]">
+              <li>
+                ▸ <a href="/spy" className="text-[#00D4FF] hover:underline">Hyve Spy</a> — see if any cameras
+                near your home or business appear in public surveillance databases (EFF Atlas, DeFlock, OSM-tagged CCTV).
+                Useful situational awareness once your own devices are locked down.
+              </li>
+              <li>
+                ▸ <a href="/spy/app/sentinel" className="text-[#A855F7] hover:underline">Run a follow-up audit</a> in
+                30 days — quickest way to verify your fixes hold and no new exposures crept in.
+              </li>
+            </ul>
+          </div>
+        </section>
+      )}
+
+      {/* Encryption + retention notice */}
+      <div className="mx-auto max-w-3xl px-4 pb-8 font-mono text-[10px] leading-relaxed text-[#64748B]">
+        <div className="mb-2 flex items-center gap-2">
+          <span style={{ color: '#22C55E' }}>🔒</span>
+          <span>Hyve Encryption: AES-256-GCM with per-audit derived keys</span>
+        </div>
+        <div>
+          {data.purged ? (
+            <>This audit's sensitive details were purged on {new Date(audit.purged_at!).toLocaleDateString()}. Only the severity summary remains for your records. Run a fresh audit anytime.</>
+          ) : (
+            <>Audit data is encrypted at rest with a key derived per-audit. Sensitive findings (asset identifiers, endpoints, signatures) are <strong>auto-purged 7 days after this report was generated</strong> so we never retain a long-term map of your exposed systems. Save or print this page if you need a longer-term record.</>
+          )}
+        </div>
       </div>
     </main>
   );

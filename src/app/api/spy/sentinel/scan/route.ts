@@ -4,6 +4,7 @@ import { probeTls } from './probes/tls'
 import { probeHttpHeaders, probeAdminPanels } from './probes/http'
 import { probeCameraVendors } from './probes/camera'
 import { probeDatabasePorts } from './probes/ports'
+import { encrypt, decrypt, encryptDeep } from '@/lib/hyveCrypt'
 
 const SUPA_URL = process.env.SUPABASE_URL!
 const SUPA_KEY = process.env.SUPABASE_SERVICE_KEY!
@@ -59,7 +60,9 @@ export async function POST(req: NextRequest) {
   // Run probes per asset, in parallel across assets
   const allFindings: any[] = []
   await Promise.all(assets.map(async (asset: any) => {
-    const target = asset.identifier
+    // Decrypt the asset identifier in-memory only for the probe — never logged.
+    const target = decrypt(auditId, asset.identifier) || ''
+    if (!target) return
     let findings: ProbeFinding[] = []
 
     try {
@@ -88,6 +91,9 @@ export async function POST(req: NextRequest) {
     }
 
     for (const f of findings) {
+      // Hyve Encryption: sensitive fields go through AES-256-GCM with a key
+      // derived from the audit ID + master env key. Severity stays plaintext
+      // so the report can show counts without decrypting.
       allFindings.push({
         audit_id: auditId,
         asset_id: asset.id,
@@ -95,10 +101,10 @@ export async function POST(req: NextRequest) {
         vendor: f.vendor,
         exposure_type: f.exposure_type,
         port: f.port,
-        endpoint_path: f.endpoint_path,
-        signature: f.signature,
-        remediation_title: f.remediation_title,
-        remediation_steps: f.remediation_steps,
+        endpoint_path: encrypt(auditId, f.endpoint_path),
+        signature: encrypt(auditId, f.signature),
+        remediation_title: encrypt(auditId, f.remediation_title),
+        remediation_steps: encryptDeep(auditId, f.remediation_steps),
       })
     }
   }))
@@ -112,6 +118,11 @@ export async function POST(req: NextRequest) {
     })
   }
 
+  // Severity summary stays in plaintext so we can render audit history (count
+  // by severity) even after the per-finding details are purged at retention end.
+  const severitySummary: Record<string, number> = { critical: 0, high: 0, medium: 0, low: 0 }
+  for (const f of allFindings) severitySummary[f.severity] = (severitySummary[f.severity] || 0) + 1
+
   // Mark audit complete
   await fetch(`${SUPA_URL}/rest/v1/sentinel_audits?id=eq.${encodeURIComponent(auditId)}`, {
     method: 'PATCH',
@@ -120,6 +131,7 @@ export async function POST(req: NextRequest) {
       status: 'complete',
       scan_completed_at: new Date().toISOString(),
       report_url: `/spy/app/sentinel/report/${auditId}`,
+      severity_summary: severitySummary,
     }),
   })
 

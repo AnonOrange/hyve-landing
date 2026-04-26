@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
+import { encrypt, decrypt } from '@/lib/hyveCrypt'
 
 const SUPA_URL = process.env.SUPABASE_URL!
 const SUPA_KEY = process.env.SUPABASE_SERVICE_KEY!
@@ -20,7 +21,10 @@ export async function GET(req: NextRequest) {
     { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } },
   )
   if (!r.ok) return NextResponse.json({ error: await r.text() }, { status: 502 })
-  return NextResponse.json({ assets: await r.json() })
+  // Decrypt identifier for display
+  const rows = (await r.json()) as Array<any>
+  const decrypted = rows.map((a) => ({ ...a, identifier: decrypt(auditId, a.identifier) }))
+  return NextResponse.json({ assets: decrypted })
 }
 
 export async function POST(req: NextRequest) {
@@ -50,10 +54,13 @@ export async function POST(req: NextRequest) {
 
   const isDomain = assetType === 'domain'
   const token = isDomain ? `hyve-sentinel-${randomBytes(8).toString('hex')}` : null
+  // Encrypt the asset identifier so it's not sitting in DB rows in plaintext.
+  // The display_label stays plaintext since it's user-chosen and harmless.
+  const cleanIdentifier = String(identifier).trim().toLowerCase().slice(0, 200)
   const row = {
     audit_id: auditId,
     asset_type: assetType,
-    identifier: String(identifier).trim().toLowerCase().slice(0, 200),
+    identifier: encrypt(auditId, cleanIdentifier),
     display_label: displayLabel || null,
     verification_status: isDomain ? 'pending' : 'verified',
     verification_token: token,
@@ -71,6 +78,8 @@ export async function POST(req: NextRequest) {
   })
   if (!r.ok) return NextResponse.json({ error: await r.text() }, { status: 502 })
   const [asset] = await r.json()
+  // Return decrypted identifier so the wizard can display what was added
+  if (asset) asset.identifier = decrypt(auditId, asset.identifier)
   return NextResponse.json({ asset })
 }
 
