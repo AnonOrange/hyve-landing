@@ -97,7 +97,19 @@ const FAQ = [
   },
   {
     q: 'Do you store my data?',
-    a: 'We store the audit record (assets you registered, findings, your typed signature) for 90 days for your records and dispute purposes. We never store the content of your cameras or response bodies — only the signature line that proved exposure (e.g., "Server: Hikvision-Webs/4.x").',
+    a: 'We store the encrypted audit record (asset identifiers, findings, your typed signature) for 7 days post-scan, then auto-purge sensitive details. The audit metadata (severity counts, timestamps, your signature) is kept for 90 days for your compliance trail. We never store camera footage, response bodies, or default credentials we discover.',
+  },
+  {
+    q: 'How is my data encrypted?',
+    a: 'Hyve Encryption uses AES-256-GCM (NIST-standard authenticated encryption) with per-audit keys derived via HKDF-SHA256 from a master key that lives in our environment, never in the database. Even if our database is breached, an attacker gets ciphertext blobs they can\'t decrypt without our master key — and they\'d need each audit\'s UUID to derive its specific key.',
+  },
+  {
+    q: 'What happens after the 7-day purge?',
+    a: 'On day 7 after your scan completes, every sensitive field is deleted: all findings rows are removed, asset identifiers are nulled, verification tokens cleared. What remains is just the audit metadata (severity counts, your signature, timestamps) for your compliance trail. The report page shows a "purged" notice with the date. Save or print your report within 7 days if you need a longer-term record.',
+  },
+  {
+    q: 'Can you audit a system you can\'t see remotely?',
+    a: 'No. Sentinel/Scout probe externally — they look at your assets the way an attacker on the internet would. If your camera lives only on your home LAN with no port-forward, we can\'t reach it (which is exactly the point — that means it\'s not exposed). For internal-only audits, you\'d need on-premise scanning tools, not a remote service.',
   },
 ];
 
@@ -194,9 +206,15 @@ export default function SentinelLanding() {
 
           {/* Trust strip */}
           <div className="mt-12 grid gap-4 border-t border-[#0D2235] pt-8 text-xs text-[#64748B] md:grid-cols-4">
-            <div><div className="mb-1 text-2xl font-black text-white">100%</div>Authorized testing only</div>
+            <div>
+              <div className="mb-1 flex items-center gap-1.5 text-2xl font-black text-white">
+                <span style={{ color: '#22C55E' }}>🔒</span>
+                <span>AES-256</span>
+              </div>
+              Hyve Encryption per audit
+            </div>
+            <div><div className="mb-1 text-2xl font-black text-white">7-day</div>Auto-purge of details</div>
             <div><div className="mb-1 text-2xl font-black text-white">~30s</div>Typical scan time</div>
-            <div><div className="mb-1 text-2xl font-black text-white">90d</div>Audit retention</div>
             <div><div className="mb-1 text-2xl font-black text-white">$9.99+</div>Pay once, no subscription</div>
           </div>
         </div>
@@ -263,6 +281,95 @@ export default function SentinelLanding() {
               <div className="text-sm leading-relaxed text-[#94A3B8]">{s.body}</div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Security & Privacy — flagship trust section, between How It Works and Pricing */}
+      <section className="mx-auto max-w-5xl px-6 py-16 border-t border-[#0D2235]">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="text-2xl" style={{ color: '#22C55E' }}>🔒</span>
+          <h2 className="text-2xl font-black md:text-3xl">Security & Privacy</h2>
+        </div>
+        <p className="mb-10 max-w-3xl text-sm leading-relaxed text-[#94A3B8]">
+          We can't audit your systems if we open them up to other threats by storing the very data we just helped you secure.
+          So we don't. Here's the engineering behind that promise:
+        </p>
+
+        <div className="grid gap-5 md:grid-cols-2">
+          {/* Encryption */}
+          <div className="rounded-lg border-2 bg-black/30 p-6" style={{ borderColor: '#22C55E' }}>
+            <div className="mb-3 flex items-center gap-2 font-mono text-[10px] tracking-widest text-[#22C55E]">
+              <span>🔒</span>
+              <span>HYVE ENCRYPTION</span>
+            </div>
+            <div className="mb-2 text-base font-bold text-white">AES-256-GCM with per-audit derived keys</div>
+            <p className="mb-4 text-sm leading-relaxed text-[#94A3B8]">
+              Every sensitive field — your IP/domain/asset identifiers, the vendor signatures we found, the endpoint paths,
+              the remediation steps that document your specific issues — is encrypted at the application layer before it
+              ever touches the database.
+            </p>
+            <ul className="space-y-1.5 text-xs text-[#E2E8F0]">
+              <li>▸ <strong>AES-256-GCM</strong> — NIST-standard authenticated encryption</li>
+              <li>▸ <strong>HKDF-derived per-audit keys</strong> — a single audit compromise can't leak others</li>
+              <li>▸ <strong>Master key in env, never in DB</strong> — DB-only breaches yield ciphertext</li>
+              <li>▸ <strong>Plaintext only in transit</strong> — your report response is the only place it briefly exists</li>
+            </ul>
+          </div>
+
+          {/* Auto-purge */}
+          <div className="rounded-lg border-2 bg-black/30 p-6" style={{ borderColor: '#A855F7' }}>
+            <div className="mb-3 flex items-center gap-2 font-mono text-[10px] tracking-widest text-[#A855F7]">
+              <span>🗑</span>
+              <span>7-DAY AUTO-PURGE</span>
+            </div>
+            <div className="mb-2 text-base font-bold text-white">Sensitive details deleted after retention</div>
+            <p className="mb-4 text-sm leading-relaxed text-[#94A3B8]">
+              We don't retain a long-term map of your exposed systems. After 7 days, every sensitive field is purged.
+              You keep the audit record (timestamp, signature, severity counts) for your compliance trail —
+              we keep nothing actionable.
+            </p>
+            <ul className="space-y-1.5 text-xs text-[#E2E8F0]">
+              <li>▸ <strong>Findings deleted entirely</strong> after day 7</li>
+              <li>▸ <strong>Asset identifiers nulled</strong> — we forget what we scanned for you</li>
+              <li>▸ <strong>Severity summary preserved</strong> — counts only, no detail</li>
+              <li>▸ <strong>Save / print before day 7</strong> — for longer-term records</li>
+            </ul>
+          </div>
+
+          {/* Scope safety */}
+          <div className="rounded-lg border bg-black/30 p-6" style={{ borderColor: '#0D2235' }}>
+            <div className="mb-3 font-mono text-[10px] tracking-widest text-[#94A3B8]">SCOPE LOCKED</div>
+            <div className="mb-2 text-base font-bold text-white">We only scan what you list. Nothing else.</div>
+            <p className="text-sm leading-relaxed text-[#94A3B8]">
+              Your authorization is captured with typed name + IP + timestamp + user agent — same legal record professional
+              pen-testing firms use. Scope is enforced at the orchestrator: probes refuse to run against any target not on your
+              registered list. We don't scan adjacent infrastructure, neighbors, or anyone else.
+            </p>
+          </div>
+
+          {/* Non-disruptive */}
+          <div className="rounded-lg border bg-black/30 p-6" style={{ borderColor: '#0D2235' }}>
+            <div className="mb-3 font-mono text-[10px] tracking-widest text-[#94A3B8]">NON-DISRUPTIVE</div>
+            <div className="mb-2 text-base font-bold text-white">Looks identical to normal user traffic.</div>
+            <p className="text-sm leading-relaxed text-[#94A3B8]">
+              Every probe is a single non-disruptive request: DNS lookup, one TLS handshake, one HTTP GET, TCP connect-only
+              for ports. No SYN scans, no fuzzing, no flood. Indistinguishable from any normal user hitting your site —
+              your services keep running and your IDS doesn't fire.
+            </p>
+          </div>
+        </div>
+
+        {/* What we DON'T store */}
+        <div className="mt-8 rounded-lg border border-[#0D2235] bg-black/30 p-5">
+          <div className="mb-2 font-mono text-[10px] tracking-widest text-[#FF2D2D]">WE NEVER STORE</div>
+          <div className="grid gap-2 text-xs text-[#E2E8F0] md:grid-cols-2">
+            <div>✗ Camera footage or video stream content</div>
+            <div>✗ HTTP response bodies from your assets</div>
+            <div>✗ Default credentials we discover (yours or anyone's)</div>
+            <div>✗ Screenshots of your admin panels or dashboards</div>
+            <div>✗ Any payload that could re-enable an attack</div>
+            <div>✗ Plaintext copies of asset identifiers in any logs</div>
+          </div>
         </div>
       </section>
 
@@ -357,11 +464,12 @@ export default function SentinelLanding() {
         </p>
         <h3 className="mt-8 mb-2 text-lg font-bold">Legal posture</h3>
         <ul className="list-disc space-y-1.5 pl-5 text-sm text-[#94A3B8]">
-          <li>You authorize us in writing (typed name + IP + timestamp) to scan only the specific assets you list.</li>
-          <li>Scope is locked to those assets only. We do not scan adjacent infrastructure, neighbors, or anyone else.</li>
+          <li>You authorize us in writing (typed name + IP + timestamp + user agent) to scan only the specific assets you list.</li>
+          <li>Scope is locked to those assets only — enforced at the orchestrator. We do not scan adjacent infrastructure, neighbors, or anyone else.</li>
           <li>Domain assets require DNS TXT verification before scanning.</li>
           <li>All probes are non-disruptive (DNS lookups, single TLS handshake, single HTTP GET, TCP connect-only).</li>
-          <li>Findings are stored against your audit ID for 90 days. We never share with third parties.</li>
+          <li><strong>Sensitive findings are encrypted at rest with AES-256-GCM</strong> using per-audit derived keys, never plaintext in our database.</li>
+          <li><strong>Sensitive details auto-purge 7 days after the scan completes</strong> — we don't retain a long-term map of any user's exposed systems.</li>
           <li>Same legal model used by Bishop Fox, Mandiant, NCC Group, and other professional security firms.</li>
         </ul>
       </section>
