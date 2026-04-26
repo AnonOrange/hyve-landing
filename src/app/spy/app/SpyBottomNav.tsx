@@ -29,6 +29,17 @@ const NAV = [
     ),
   },
   {
+    href: '/spy/app/cameras',
+    label: 'Cams',
+    match: (p: string) => p.startsWith('/spy/app/cameras'),
+    icon: (active: boolean) => (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#00D4FF' : '#64748B'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M23 7l-7 5 7 5V7z" />
+        <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+      </svg>
+    ),
+  },
+  {
     href: '/spy/app/watchlist',
     label: 'Watch',
     match: (p: string) => p.startsWith('/spy/app/watchlist'),
@@ -61,7 +72,7 @@ export default function SpyBottomNav() {
       className="fixed inset-x-0 bottom-0 z-[3000] border-t border-[#0D2235] bg-[#020D14]/95 backdrop-blur"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <ul className="mx-auto grid max-w-3xl grid-cols-4">
+      <ul className="mx-auto grid max-w-3xl grid-cols-5">
         {NAV.map((item) => {
           const active = item.match(pathname);
           return (
