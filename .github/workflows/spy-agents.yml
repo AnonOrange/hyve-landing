@@ -70,3 +70,23 @@ jobs:
           curl -fsS -X POST -H "X-Agent-Secret: ${{ secrets.HYVE_API_AGENT_SECRET }}" \
             "$API/agents/prune" | tee /tmp/out.json
           jq -e '.ok == true' /tmp/out.json
+
+  # Once a day, audit that every agent has run recently. Fails loudly if any
+  # is stale — GitHub emails the repo owner automatically on workflow failure.
+  health-audit:
+    if: github.event.schedule == '7 3 * * *'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    needs: [prune]   # run after the daily prune so its row is fresh
+    steps:
+      - name: fetch + assert no agent is stale
+        run: |
+          set -e
+          curl -fsS -H "X-Agent-Secret: ${{ secrets.HYVE_API_AGENT_SECRET }}" \
+            "$API/agents/health" | tee /tmp/health.json
+          # Fail the job (and thus alert by email) if ANY agent is marked stale
+          if jq -e 'to_entries | any(.value.stale == true)' /tmp/health.json; then
+            echo "::error::At least one agent is stale — investigate at hyveapp.co/admin"
+            jq 'to_entries | map(select(.value.stale == true))' /tmp/health.json
+            exit 1
+          fi
