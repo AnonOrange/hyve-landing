@@ -1,5 +1,5 @@
 /* Hyve Spy PWA — minimal app-shell cache */
-const CACHE = 'hyve-spy-shell-v1';
+const CACHE = 'hyve-spy-shell-v3';
 const SHELL = [
   '/spy/app/manifest.json',
   '/spy-logo/hyve-spy-logo.png',
@@ -35,6 +35,27 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Network-first for navigation / HTML documents — the app shell evolves
+  // (new tabs, new routes), and stale HTML hides those changes from users.
+  // Falls back to cached document if offline.
+  const isNavigation =
+    req.mode === 'navigate' ||
+    (req.headers.get('accept') || '').includes('text/html');
+  if (isNavigation && url.origin === location.origin) {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          if (res && res.status === 200) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+          }
+          return res;
+        })
+        .catch(() => caches.match(req).then((hit) => hit || new Response('Offline', { status: 503 }))),
+    );
+    return;
+  }
+
   // Cache-first for shell assets we precached.
   if (SHELL.some((p) => url.pathname.endsWith(p))) {
     event.respondWith(
@@ -47,7 +68,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stale-while-revalidate for same-origin navigations and static.
+  // Stale-while-revalidate for other same-origin static (JS/CSS/images).
   if (url.origin === location.origin) {
     event.respondWith(
       caches.match(req).then((hit) => {

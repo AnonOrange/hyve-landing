@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { CameraOverlay, CameraThumb, type Camera as SharedCamera } from '../../CameraOverlay';
 
 const API_BASE = 'https://hyve-api.vercel.app';
 
@@ -121,6 +122,7 @@ export default function FeedDetailView() {
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cameras, setCameras] = useState<Camera[]>([]);
+  const [selectedCam, setSelectedCam] = useState<Camera | null>(null);
 
   // Watchlist star
   const [watched, setWatched] = useState(false);
@@ -592,9 +594,13 @@ export default function FeedDetailView() {
             <div className="mb-2 font-mono text-[10px] uppercase tracking-widest text-[#00D4FF]">
               Live cameras within 30 miles
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {cameras.map((cam, i) => (
-                <CameraTile key={i} cam={cam} />
+                <CameraThumb
+                  key={(cam as any).id || i}
+                  cam={cam as SharedCamera}
+                  onOpen={() => setSelectedCam(cam)}
+                />
               ))}
             </div>
           </div>
@@ -652,6 +658,9 @@ export default function FeedDetailView() {
           </a>
         </div>
       </div>
+      {selectedCam && (
+        <CameraOverlay cam={selectedCam as SharedCamera} onClose={() => setSelectedCam(null)} />
+      )}
     </main>
   );
 }

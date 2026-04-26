@@ -2,6 +2,64 @@
 
 import { useEffect, useRef, useState } from 'react'
 
+// CameraThumb is declared *after* its dependencies (camUrl/camName/youtubeId), but TS
+// hoists function declarations so we can keep the export at the top of the file.
+export function CameraThumb({ cam, onOpen }: { cam: Camera; onOpen: () => void }) {
+  const url = camUrl(cam)
+  const name = camName(cam)
+  const type = (cam.feedType || '').toLowerCase()
+  const [tick, setTick] = useState(0)
+  const isSnap = type === 'snapshot' || (!type && /\.(jpg|jpeg|png|gif)(\?|$)/i.test(url))
+
+  useEffect(() => {
+    if (!isSnap) return
+    const i = setInterval(() => setTick((t) => t + 1), 10000)
+    return () => clearInterval(i)
+  }, [isSnap])
+
+  const ytId = type === 'youtube' || /youtube\.com|youtu\.be/.test(url) ? youtubeId(url) : null
+  const thumbSrc = ytId
+    ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
+    : isSnap
+      ? `${url}${url.includes('?') ? '&' : '?'}_t=${tick}`
+      : null
+
+  return (
+    <button
+      onClick={onOpen}
+      className="group relative aspect-video overflow-hidden rounded border border-[#0D2235] bg-black text-left transition hover:border-[#00D4FF]"
+    >
+      {thumbSrc ? (
+        <img
+          src={thumbSrc}
+          alt={name}
+          className="h-full w-full object-cover"
+          loading="lazy"
+          onError={(e) => ((e.target as HTMLImageElement).style.opacity = '0.2')}
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-[10px] font-bold tracking-widest text-[#475569]">
+          {(type || 'STREAM').toUpperCase()}
+        </div>
+      )}
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/80 to-transparent p-2">
+        <div className="truncate text-[11px] font-bold text-white">{name}</div>
+        {cam.agency && <div className="truncate font-mono text-[9px] text-[#94A3B8]">{cam.agency}</div>}
+      </div>
+      <div className="absolute right-1.5 top-1.5 rounded bg-black/70 px-1.5 py-0.5 font-mono text-[9px] tracking-widest text-[#00D4FF]">
+        {(type || 'snap').toUpperCase()}
+      </div>
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition group-hover:opacity-100">
+        <div className="rounded-full bg-black/70 p-3 text-[#00D4FF]">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+          </svg>
+        </div>
+      </div>
+    </button>
+  )
+}
+
 export type Camera = {
   id?: string
   name?: string
