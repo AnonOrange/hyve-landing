@@ -124,6 +124,13 @@ const FEATURES = [
     tag: 'UX',
   },
   {
+    title: 'Sentinel — one-shot camera exposure audit',
+    body:
+      "Pay $9.99-$49.99 once, list the cameras / IPs / domains you own, sign the authorization agreement, and we deliver a plain-English report: which of your devices are exposed to the internet, what kind of exposure (Hikvision unauthenticated UI, Dahua default credentials, Foscam weak password, Axis open RTSP, etc.), and step-by-step instructions to fix each one. Same legal model as professional pen-testing. No recurring fee, no scanning third-party assets.",
+    accent: '#A855F7',
+    tag: 'SENTINEL',
+  },
+  {
     title: 'Built across three runtimes for maximum uptime',
     body:
       "Same hyve-api codebase deployed three ways: Vercel for fast edge-cached HTTP reads (lazy-loaded layers + CDN cache), Railway for the always-on Whisper STT worker that needs continuous CPU, and GitHub Actions for free 5-minute alert polls. Every signal-detection layer runs independently — one platform's outage doesn't kill the others.",
