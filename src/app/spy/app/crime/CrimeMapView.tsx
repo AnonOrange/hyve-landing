@@ -30,6 +30,25 @@ type CrimeIncident = {
   source: string;
 };
 
+type NearbyFeed = {
+  feedId: string;
+  name: string;
+  type: string;
+  agency: string | null;
+  listeners: number;
+  distanceMi: number;
+  liveListenUrl: string;
+  broadcastifyArchiveUrl: string | null;
+  openMhzCallsUrl: string | null;
+  openMhzAvailable: boolean;
+};
+
+type ScannerLookup = {
+  feeds: NearbyFeed[];
+  archiveAvailable: boolean;
+  loading: boolean;
+};
+
 // Category taxonomy: emoji + color + display label. Frontend renders the icon
 // directly via Leaflet divIcon — no SVG sprite needed.
 const CATEGORY_META: Record<string, { icon: string; color: string; label: string }> = {
@@ -94,6 +113,29 @@ export default function CrimeMapView() {
     Object.keys(CATEGORY_META).forEach((k) => (init[k] = true));
     return init;
   });
+
+  // Per-incident scanner lookup cache. Lazy-fetched the first time a popup
+  // opens for that incident, so map navigation doesn't pre-load hundreds.
+  const [scannerLookups, setScannerLookups] = useState<Record<string, ScannerLookup>>({});
+  const fetchScannerLookup = (incidentId: string) => {
+    if (scannerLookups[incidentId]) return; // already fetched
+    setScannerLookups((s) => ({ ...s, [incidentId]: { feeds: [], archiveAvailable: false, loading: true } }));
+    fetch(`${API_BASE}/crime/incidents/${encodeURIComponent(incidentId)}/nearby-feeds`)
+      .then((r) => r.json())
+      .then((j) => {
+        setScannerLookups((s) => ({
+          ...s,
+          [incidentId]: {
+            feeds: j?.feeds || [],
+            archiveAvailable: !!j?.archiveAvailable,
+            loading: false,
+          },
+        }));
+      })
+      .catch(() => {
+        setScannerLookups((s) => ({ ...s, [incidentId]: { feeds: [], archiveAvailable: false, loading: false } }));
+      });
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -198,10 +240,16 @@ export default function CrimeMapView() {
           >
             {visible.map((i) => {
               const meta = CATEGORY_META[i.category] || CATEGORY_META.other;
+              const lookup = scannerLookups[i.id];
               return (
-                <Marker key={i.id} position={[i.lat, i.lng]} icon={makeIcon(i.category)}>
-                  <Popup>
-                    <div className="min-w-[220px]">
+                <Marker
+                  key={i.id}
+                  position={[i.lat, i.lng]}
+                  icon={makeIcon(i.category)}
+                  eventHandlers={{ popupopen: () => fetchScannerLookup(i.id) }}
+                >
+                  <Popup minWidth={280}>
+                    <div className="min-w-[260px]">
                       <div className="mb-1 flex items-center gap-2">
                         <span className="text-lg">{meta.icon}</span>
                         <span className="text-[10px] font-black tracking-widest" style={{ color: meta.color }}>
@@ -215,8 +263,69 @@ export default function CrimeMapView() {
                       <div className="font-mono text-[10px] text-[#64748B]">
                         {i.city} · {timeAgo(i.occurred_at)}
                       </div>
-                      <div className="font-mono text-[9px] text-[#94A3B8]">
-                        Source: {i.source}
+
+                      {/* Listen-to-nearby-scanner section. Lazy-loads on popup open.
+                          Two paths: live (any feed nearby) + archived (Broadcastify
+                          Premium deep-link or OpenMHz public calls). */}
+                      <div className="mt-3 border-t border-[#E2E8F0] pt-2">
+                        <div className="mb-1.5 font-mono text-[9px] font-black tracking-widest text-[#EF4444]">
+                          🎙 SCANNER AUDIO
+                        </div>
+                        {!lookup || lookup.loading ? (
+                          <div className="text-[10px] text-[#94A3B8]">finding nearby feeds…</div>
+                        ) : lookup.feeds.length === 0 ? (
+                          <div className="text-[10px] text-[#94A3B8]">No scanner feeds within 50 miles.</div>
+                        ) : (
+                          <div className="space-y-1">
+                            {lookup.feeds.slice(0, 3).map((f) => (
+                              <div key={f.feedId} className="flex items-center justify-between gap-2 rounded border border-[#E2E8F0] px-2 py-1">
+                                <div className="min-w-0 flex-1">
+                                  <div className="truncate text-[11px] font-bold text-[#020D14]">{f.name}</div>
+                                  <div className="font-mono text-[9px] text-[#64748B]">
+                                    {f.distanceMi} mi · {f.type} · {f.listeners}🎧
+                                  </div>
+                                </div>
+                                <div className="flex shrink-0 gap-1">
+                                  <a
+                                    href={f.liveListenUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="rounded bg-[#EF4444] px-1.5 py-0.5 text-[9px] font-bold tracking-widest text-white hover:bg-[#DC2626]"
+                                    title="Live audio"
+                                  >
+                                    ▶ LIVE
+                                  </a>
+                                  {f.broadcastifyArchiveUrl && (
+                                    <a
+                                      href={f.broadcastifyArchiveUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="rounded border border-[#A855F7] px-1.5 py-0.5 text-[9px] font-bold tracking-widest text-[#A855F7] hover:bg-[#A855F7] hover:text-white"
+                                      title="Broadcastify Premium archive (login required)"
+                                    >
+                                      🔒 ARCHIVE
+                                    </a>
+                                  )}
+                                  {f.openMhzAvailable && (
+                                    <a
+                                      href={f.openMhzCallsUrl || '#'}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="rounded border border-[#22C55E] px-1.5 py-0.5 text-[9px] font-bold tracking-widest text-[#22C55E] hover:bg-[#22C55E] hover:text-white"
+                                      title="OpenMHz public calls (free, last 14 days)"
+                                    >
+                                      📻 CALLS
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                            <div className="mt-1.5 font-mono text-[8px] leading-tight text-[#94A3B8]">
+                              🔒 ARCHIVE = Broadcastify Premium ($15/yr) — opens to login.
+                              📻 CALLS = OpenMHz, free public.
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </Popup>
