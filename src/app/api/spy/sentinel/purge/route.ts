@@ -27,7 +27,11 @@ const RETENTION_DAYS = 7
 export async function GET(req: NextRequest) {
   const got = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')
     || req.headers.get('x-cron-secret')
-  if (CRON_SECRET && got !== CRON_SECRET) {
+  // FAIL-CLOSED: when CRON_SECRET is unset (env-var misconfiguration), deny
+  // every request rather than allowing every request. The previous condition
+  // `if (CRON_SECRET && got !== CRON_SECRET)` short-circuited when the env
+  // var was missing, leaving the purge job exposed to unauthenticated callers.
+  if (!CRON_SECRET || got !== CRON_SECRET) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
