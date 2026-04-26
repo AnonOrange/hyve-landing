@@ -95,6 +95,12 @@ export default function SpyPage() {
         </nav>
         <div className="flex items-center gap-3">
           <OpenWebAppButton />
+          <a
+            href="https://hyve-spy-accounts.vercel.app/login?return_url=https%3A%2F%2Fwww.hyveapp.co%2Fspy%2Fapp"
+            className="text-xs font-bold tracking-widest text-[#64748B] transition hover:text-[#E2E8F0]"
+          >
+            SIGN IN
+          </a>
           <a href="#pricing" className="rounded border border-[#00D4FF] bg-[#00D4FF]/10 px-4 py-2 text-xs font-bold tracking-widest text-[#00D4FF] transition hover:bg-[#00D4FF]/20">
             START FREE TRIAL
           </a>
@@ -130,10 +136,10 @@ export default function SpyPage() {
                 START 72-HOUR FREE TRIAL
               </a>
               <a
-                href="/spy/app"
+                href="https://hyve-spy-accounts.vercel.app/login?return_url=https%3A%2F%2Fwww.hyveapp.co%2Fspy%2Fapp"
                 className="rounded border border-[#00D4FF] bg-transparent px-6 py-3 text-sm font-black tracking-widest text-[#00D4FF] transition hover:bg-[#00D4FF]/10"
               >
-                OPEN WEB APP →
+                SIGN IN →
               </a>
               <span className="font-mono text-sm text-[#64748B]">$5.99/mo · cancel anytime</span>
             </div>
