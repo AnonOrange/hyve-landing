@@ -96,7 +96,7 @@ export default function SpyPage() {
         <div className="flex items-center gap-3">
           <OpenWebAppButton />
           <a
-            href="https://hyve-spy-accounts.vercel.app/login?return_url=https%3A%2F%2Fwww.hyveapp.co%2Fspy%2Fapp"
+            href="/spy/login"
             className="text-xs font-bold tracking-widest text-[#64748B] transition hover:text-[#E2E8F0]"
           >
             SIGN IN
@@ -136,7 +136,7 @@ export default function SpyPage() {
                 START 72-HOUR FREE TRIAL
               </a>
               <a
-                href="https://hyve-spy-accounts.vercel.app/login?return_url=https%3A%2F%2Fwww.hyveapp.co%2Fspy%2Fapp"
+                href="/spy/login"
                 className="rounded border border-[#00D4FF] bg-transparent px-6 py-3 text-sm font-black tracking-widest text-[#00D4FF] transition hover:bg-[#00D4FF]/10"
               >
                 SIGN IN →
