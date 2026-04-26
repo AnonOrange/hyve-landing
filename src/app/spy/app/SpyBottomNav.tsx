@@ -236,20 +236,20 @@ export default function SpyBottomNav() {
         onClick={() => setExpanded((e) => !e)}
         aria-expanded={expanded}
         aria-label={expanded ? 'Collapse navigation' : 'Expand navigation'}
-        className="flex h-7 w-full items-center justify-center gap-2 border-t border-[#0D2235] bg-[#020D14]/85 backdrop-blur transition hover:bg-[#020D14]"
+        className="flex h-7 w-full items-center justify-center gap-2 border-t border-[#2a2135] bg-[#08070a]/85 backdrop-blur transition hover:bg-[#08070a]"
       >
-        <span className="text-[10px] font-bold tracking-[0.4em] text-[#475569]">
+        <span className="text-[10px] font-bold tracking-[0.4em] text-[#6b5e3a]">
           {expanded ? '▼' : '▲'}
         </span>
         {activeItem && (
           <span className="flex items-center gap-1.5">
             <span className="scale-75">{activeItem.icon(true)}</span>
-            <span className="text-[10px] font-bold tracking-widest text-[#00D4FF]">
+            <span className="text-[10px] font-bold tracking-widest text-[#E8C456]">
               {activeItem.label.toUpperCase()}
             </span>
           </span>
         )}
-        <span className="text-[9px] font-mono text-[#334155]">
+        <span className="text-[9px] font-mono text-[#475569]">
           {expanded ? 'tap to hide' : 'tap or hover to reveal · 15 tabs'}
         </span>
       </button>
@@ -261,7 +261,7 @@ export default function SpyBottomNav() {
         isn't accidentally tappable.
       */}
       <div
-        className="overflow-hidden border-t border-[#0D2235] bg-[#020D14]/95 backdrop-blur transition-all duration-200"
+        className="overflow-hidden border-t border-[#2a2135] bg-[#08070a]/95 backdrop-blur transition-all duration-200"
         style={{
           maxHeight: expanded ? '14rem' : '0',
           opacity: expanded ? 1 : 0,
@@ -281,7 +281,7 @@ export default function SpyBottomNav() {
                   {item.icon(active)}
                   <span
                     className="text-[10px] font-bold tracking-widest"
-                    style={{ color: active ? '#00D4FF' : '#64748B' }}
+                    style={{ color: active ? '#E8C456' : '#6b5e3a' }}
                   >
                     {item.label.toUpperCase()}
                   </span>

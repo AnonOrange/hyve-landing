@@ -18,6 +18,7 @@
 // when the user's active sub uses STRIPE_SPY_PRO_PRICE_ID or the annual one).
 
 import { useEffect, useMemo, useState } from 'react'
+import Image from 'next/image'
 import {
   loadDistressProfiles,
   formatCurrency,
@@ -84,15 +85,21 @@ export default function ResidentialPage() {
   return (
     <main className="min-h-screen bg-[#020D14] pb-32 text-[#E2E8F0]">
       <div
-        className="sticky top-0 z-20 border-b border-[#0D2235] bg-[#020D14]/95 backdrop-blur"
+        className="sticky top-0 z-20 border-b border-[#1c1724] bg-[#08070a]/95 backdrop-blur"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span className="text-base">🏚️</span>
-            <div>
-              <div className="text-[10px] font-black tracking-[0.4em] text-[#F59E0B]">RESIDENTIAL</div>
-              <div className="font-mono text-[10px] text-[#64748B]">
+          <div className="flex items-center gap-3">
+            <Image
+              src="/spy-logo/hyve-residential-logo.png"
+              alt="Hyve Residential"
+              width={1536}
+              height={1024}
+              className="h-12 w-auto"
+              priority
+            />
+            <div className="hidden sm:block">
+              <div className="font-mono text-[10px] tracking-[0.3em] text-[#9e8a55]">
                 {profiles.length} properties · {counties.length} counties · sample data
               </div>
             </div>
@@ -392,13 +399,17 @@ function ProfileDrawer({ profile, onClose }: { profile: DistressProfile; onClose
 
 function UpgradeGate() {
   return (
-    <main className="flex min-h-screen w-full flex-col items-center justify-center bg-[#020D14] px-6 py-12 text-[#E2E8F0]">
+    <main className="flex min-h-screen w-full flex-col items-center justify-center bg-[#08070a] px-6 py-12 text-[#ede8d8]">
       <div className="max-w-md text-center">
-        <div className="text-5xl">🏚️</div>
-        <h1 className="mt-4 text-3xl font-black">
-          HYVE <span style={{ color: '#F59E0B' }}>Residential</span>
-        </h1>
-        <div className="mt-2 font-mono text-[11px] tracking-widest text-[#64748B]">
+        <Image
+          src="/spy-logo/hyve-residential-logo.png"
+          alt="Hyve Residential"
+          width={1536}
+          height={1024}
+          className="mx-auto h-auto w-full max-w-sm"
+          priority
+        />
+        <div className="mt-2 font-mono text-[11px] tracking-widest text-[#9e8a55]">
           DISTRESSED-PROPERTY INTEL · IN-TAB · PRO
         </div>
         <p className="mt-5 text-sm leading-relaxed text-[#94A3B8]">

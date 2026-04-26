@@ -23,7 +23,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#020D14',
+  // Near-black warm tone matching the new gold-on-black brand (hyvealpha.com style)
+  themeColor: '#08070a',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -33,7 +34,7 @@ export const viewport: Viewport = {
 
 export default function SpyAppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#020D14] text-[#E2E8F0]">
+    <div className="min-h-screen bg-[#08070a] text-[#ede8d8]">
       {/* PWA + iOS standalone hints (some are duplicated by Next metadata for safety) */}
       <link rel="manifest" href="/spy/app/manifest.json" />
       <link rel="apple-touch-icon" href="/spy-logo/hyve-spy-logo.png" />

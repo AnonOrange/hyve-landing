@@ -211,33 +211,57 @@ const SHOTS = [
 
 export default function SpyPage() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#020D14] font-sans text-[#E2E8F0]">
+    <main className="relative min-h-screen overflow-hidden bg-[#08070a] font-sans text-[#ede8d8]">
+      {/*
+        Themed to match the new gold-on-near-black HYVE Spy brand
+        (logo art, hyvealpha.com aesthetic). The grid lines are now a faint
+        gold tint instead of cyan; primary CTAs use the gold gradient that
+        matches the logo's metallic feel.
+      */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-40"
+        className="pointer-events-none absolute inset-0 opacity-30"
         style={{
           backgroundImage:
-            'linear-gradient(rgba(0,212,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.06) 1px, transparent 1px)',
+            'linear-gradient(rgba(200,162,39,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(200,162,39,0.06) 1px, transparent 1px)',
           backgroundSize: '32px 32px',
         }}
       />
 
       <header className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
-        <div className="text-sm font-black tracking-[0.3em] text-[#64748B]">HYVE SPY</div>
-        <nav className="hidden gap-8 text-sm font-medium text-[#64748B] md:flex">
-          <a href="#features" className="transition hover:text-[#00D4FF]">Features</a>
+        <div
+          className="text-sm font-black tracking-[0.3em]"
+          style={{
+            background: 'linear-gradient(135deg, #C8A227 0%, #E8C456 50%, #C8A227 100%)',
+            WebkitBackgroundClip: 'text',
+            backgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            color: 'transparent',
+          }}
+        >
+          HYVE SPY
+        </div>
+        <nav className="hidden gap-8 text-sm font-medium text-[#9e8a55] md:flex">
+          <a href="#features" className="transition hover:text-[#E8C456]">Features</a>
           <a href="#sentinel" className="transition hover:text-[#A855F7]">Sentinel · Scout</a>
-          <a href="#screenshots" className="transition hover:text-[#00D4FF]">Screenshots</a>
-          <a href="#pricing" className="transition hover:text-[#00D4FF]">Pricing</a>
+          <a href="#screenshots" className="transition hover:text-[#E8C456]">Screenshots</a>
+          <a href="#pricing" className="transition hover:text-[#E8C456]">Pricing</a>
         </nav>
         <div className="flex items-center gap-3">
           <OpenWebAppButton />
           <a
             href="/spy/login"
-            className="text-xs font-bold tracking-widest text-[#64748B] transition hover:text-[#E2E8F0]"
+            className="text-xs font-bold tracking-widest text-[#9e8a55] transition hover:text-[#ede8d8]"
           >
             SIGN IN
           </a>
-          <a href="#pricing" className="rounded border border-[#00D4FF] bg-[#00D4FF]/10 px-4 py-2 text-xs font-bold tracking-widest text-[#00D4FF] transition hover:bg-[#00D4FF]/20">
+          <a
+            href="#pricing"
+            className="rounded px-4 py-2 text-xs font-black tracking-widest text-[#1a1200] transition hover:opacity-90"
+            style={{
+              background: 'linear-gradient(135deg, #C8A227, #E8C456)',
+              boxShadow: '0 0 30px -10px rgba(200,162,39,0.5)',
+            }}
+          >
             START FREE TRIAL
           </a>
         </div>
@@ -246,57 +270,65 @@ export default function SpyPage() {
       <section className="relative z-10 mx-auto max-w-7xl px-6 pb-16 pt-8 md:pt-12">
         <div className="mb-12 flex justify-center md:mb-16">
           <div className="relative w-full max-w-3xl">
-            <div className="absolute -inset-12 bg-gradient-to-r from-[#F59E0B]/20 via-[#FF2D2D]/10 to-[#F59E0B]/20 blur-3xl" />
+            {/* Gold halo behind the new logo to amplify the metallic glow */}
+            <div className="absolute -inset-12 bg-gradient-to-r from-[#C8A227]/30 via-[#E8C456]/15 to-[#C8A227]/30 blur-3xl" />
             <Image src="/spy-logo/hyve-spy-logo.png" alt="Hyve Spy" width={1536} height={1024} className="relative h-auto w-full" priority />
           </div>
         </div>
 
         <div className="grid items-center gap-12 md:grid-cols-2">
           <div>
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#0D2235] bg-black/40 px-3 py-1 text-xs font-bold tracking-widest text-[#00D4FF]">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-[#FF2D2D]" />
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#C8A227]/40 bg-black/40 px-3 py-1 text-xs font-bold tracking-widest text-[#E8C456]">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-[#E8C456]" />
               LIVE NATIONWIDE COVERAGE
             </div>
             <h1 className="text-5xl font-black leading-[0.95] tracking-tight md:text-7xl">
-              <span className="text-[#E2E8F0]">Hear what&apos;s </span>
-              <span style={{ background: 'linear-gradient(110deg,#00D4FF 0%,#A855F7 35%,#FF2D2D 65%,#F59E0B 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent' }}>
+              <span className="text-[#ede8d8]">Hear what&apos;s </span>
+              <span style={{ background: 'linear-gradient(110deg,#C8A227 0%,#E8C456 50%,#C8A227 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent' }}>
                 happening
               </span>
-              <span className="text-[#E2E8F0]"> right now.</span>
+              <span className="text-[#ede8d8]"> right now.</span>
             </h1>
-            <p className="mt-6 max-w-xl text-lg text-[#64748B]">
+            <p className="mt-6 max-w-xl text-lg text-[#9e8a55]">
               Real-time scanner audio · 73,000 live cameras · 39,000 free TV channels · 54,000 free radio stations · 164,000 surveillance markers · 97,000 sex offender pins · 57,000 live crime reports across 20 cities. Whisper-STT push alerts within X miles. AI summaries on any LLM key. One tap on a map.
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-4">
-              <a href="#pricing" className="rounded bg-[#00D4FF] px-6 py-3 text-sm font-black tracking-widest text-[#020D14] transition hover:bg-white" style={{ boxShadow: '0 0 60px -10px rgba(0,212,255,0.4),0 0 140px -40px rgba(0,212,255,0.6)' }}>
+              <a
+                href="#pricing"
+                className="rounded px-6 py-3 text-sm font-black tracking-widest text-[#1a1200] transition hover:opacity-90"
+                style={{
+                  background: 'linear-gradient(135deg, #C8A227, #E8C456)',
+                  boxShadow: '0 0 60px -10px rgba(200,162,39,0.5), 0 0 140px -40px rgba(232,196,86,0.6)',
+                }}
+              >
                 START 72-HOUR FREE TRIAL
               </a>
               <a
                 href="/spy/login"
-                className="rounded border border-[#00D4FF] bg-transparent px-6 py-3 text-sm font-black tracking-widest text-[#00D4FF] transition hover:bg-[#00D4FF]/10"
+                className="rounded border border-[#C8A227] bg-transparent px-6 py-3 text-sm font-black tracking-widest text-[#E8C456] transition hover:bg-[#C8A227]/10"
               >
                 SIGN IN →
               </a>
-              <span className="font-mono text-sm text-[#64748B]">$5.99/mo · cancel anytime</span>
+              <span className="font-mono text-sm text-[#6b5e3a]">$5.99/mo · cancel anytime</span>
             </div>
-            <p className="mt-3 font-mono text-xs text-[#334155]">
+            <p className="mt-3 font-mono text-xs text-[#475569]">
               iOS-friendly · works in any browser · installable as a PWA
             </p>
             <div className="mt-12 grid grid-cols-2 gap-6 md:grid-cols-4">
               {STATS.map((s) => (
                 <div key={s.label}>
-                  <div className="font-mono text-2xl font-bold text-[#00D4FF]">{s.value}</div>
-                  <div className="mt-1 text-xs uppercase tracking-widest text-[#334155]">{s.label}</div>
+                  <div className="font-mono text-2xl font-bold text-[#E8C456]">{s.value}</div>
+                  <div className="mt-1 text-xs uppercase tracking-widest text-[#6b5e3a]">{s.label}</div>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="relative flex justify-center md:justify-end">
-            <div className="absolute -inset-8 rounded-[3rem] bg-[#00D4FF]/10 blur-3xl" />
+            <div className="absolute -inset-8 rounded-[3rem] bg-[#C8A227]/10 blur-3xl" />
             <div className="relative">
-              <div className="rounded-[2.5rem] border border-[#0D2235] bg-black p-2 shadow-2xl">
-                <div className="overflow-hidden rounded-[2rem] border border-[#0D2235]">
+              <div className="rounded-[2.5rem] border border-[#2a2135] bg-black p-2 shadow-2xl">
+                <div className="overflow-hidden rounded-[2rem] border border-[#2a2135]">
                   <Image src="/spy-screenshots/1-map.png" alt="Hyve Spy live map" width={540} height={1170} className="h-auto w-[280px] md:w-[320px]" priority />
                 </div>
               </div>

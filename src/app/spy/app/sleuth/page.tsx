@@ -21,6 +21,7 @@
 // infrastructure — see src/app/api/spy/checkout/route.ts).
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 
 export default function SleuthPage() {
   const [tier, setTier] = useState<'pro' | 'basic' | null>(null)
@@ -46,19 +47,25 @@ export default function SleuthPage() {
 
   return (
     <main className="relative h-screen w-full bg-[#020D14] text-[#E2E8F0]">
-      <div className="flex items-center justify-between gap-3 border-b border-[#0D2235] bg-[#020D14] px-4 py-2.5">
-        <div className="flex items-center gap-2">
-          <span className="text-base">🕵️</span>
-          <div>
-            <div className="text-[10px] font-black tracking-[0.4em] text-[#C8A227]">HYVE SLEUTH</div>
-            <div className="font-mono text-[10px] text-[#64748B]">National OSINT smart launcher · Pro</div>
+      <div className="flex items-center justify-between gap-3 border-b border-[#1c1724] bg-[#08070a] px-4 py-3">
+        <div className="flex items-center gap-3">
+          <Image
+            src="/spy-logo/hyve-sleuth-logo.png"
+            alt="Hyve Sleuth"
+            width={1536}
+            height={1024}
+            className="h-10 w-auto"
+            priority
+          />
+          <div className="hidden sm:block">
+            <div className="font-mono text-[10px] tracking-[0.3em] text-[#9e8a55]">National OSINT smart launcher · Pro</div>
           </div>
         </div>
         <a
           href="/sleuth/HOW_TO_USE.html"
           target="_blank"
           rel="noopener"
-          className="rounded border border-[#0D2235] px-2.5 py-1 text-[10px] font-bold tracking-widest text-[#94A3B8] hover:border-[#C8A227] hover:text-[#C8A227]"
+          className="rounded border border-[#2a2135] px-2.5 py-1 text-[10px] font-bold tracking-widest text-[#9e8a55] hover:border-[#C8A227] hover:text-[#C8A227]"
         >
           📖 HOW TO USE
         </a>
@@ -78,13 +85,17 @@ export default function SleuthPage() {
 
 function UpgradeGate() {
   return (
-    <main className="flex min-h-screen w-full flex-col items-center justify-center bg-[#020D14] px-6 py-12 text-[#E2E8F0]">
+    <main className="flex min-h-screen w-full flex-col items-center justify-center bg-[#08070a] px-6 py-12 text-[#ede8d8]">
       <div className="max-w-md text-center">
-        <div className="text-5xl">🕵️</div>
-        <h1 className="mt-4 text-3xl font-black">
-          Hyve <span style={{ color: '#C8A227' }}>Sleuth</span>
-        </h1>
-        <div className="mt-2 font-mono text-[11px] tracking-widest text-[#64748B]">
+        <Image
+          src="/spy-logo/hyve-sleuth-logo.png"
+          alt="Hyve Sleuth"
+          width={1536}
+          height={1024}
+          className="mx-auto h-auto w-full max-w-sm"
+          priority
+        />
+        <div className="mt-2 font-mono text-[11px] tracking-widest text-[#9e8a55]">
           NATIONAL OSINT SMART LAUNCHER · PRO
         </div>
         <p className="mt-5 text-sm leading-relaxed text-[#94A3B8]">
