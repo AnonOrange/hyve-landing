@@ -1,13 +1,27 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet'
 import L from 'leaflet'
+// Leaflet stylesheet MUST be loaded for tiles to position correctly. Inherited
+// from the spy-app layout, but importing here too guarantees it on this route.
+import 'leaflet/dist/leaflet.css'
 import 'leaflet.markercluster/dist/leaflet.markercluster.js'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import { CameraOverlay, type Camera } from '../CameraOverlay'
+
+// Forces Leaflet to measure its container after mount — fixes the well-known
+// "tiles never appear" bug when the container's parent uses 100vh/100% sizing.
+function MapInvalidator() {
+  const map = useMap()
+  useEffect(() => {
+    const id = setTimeout(() => map.invalidateSize(), 100)
+    return () => clearTimeout(id)
+  }, [map])
+  return null
+}
 
 const API_BASE = 'https://hyve-api.vercel.app'
 
@@ -62,6 +76,7 @@ export default function WorldMapView() {
         dragging
         style={{ height: '100%', width: '100%' }}
       >
+        <MapInvalidator />
         <TileLayer
           url="https://basemaps.cartocdn.com/dark_matter/{z}/{x}/{y}{r}.png"
           attribution="© CARTO © OpenStreetMap"

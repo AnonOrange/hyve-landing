@@ -1,13 +1,26 @@
 'use client'
 
 import { useEffect, useState, type FormEvent } from 'react'
-import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet'
 import L from 'leaflet'
+// Leaflet base stylesheet is required for tile positioning + container layout.
+// /spy/admin/recon doesn't inherit the /spy/app layout that imports it globally,
+// so we MUST import it here directly or the map renders blank.
+import 'leaflet/dist/leaflet.css'
 import 'leaflet.markercluster/dist/leaflet.markercluster.js'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import { CameraOverlay, type Camera } from '../../app/CameraOverlay'
+
+function MapInvalidator() {
+  const map = useMap()
+  useEffect(() => {
+    const id = setTimeout(() => map.invalidateSize(), 100)
+    return () => clearTimeout(id)
+  }, [map])
+  return null
+}
 
 function lat(o: any) { return o?.lat ?? o?.latitude }
 function lng(o: any) { return o?.lng ?? o?.longitude }
@@ -148,6 +161,7 @@ export default function ReconMapView({ initial }: { initial: Camera[] }) {
         dragging
         style={{ height: '100%', width: '100%' }}
       >
+        <MapInvalidator />
         <TileLayer
           url="https://basemaps.cartocdn.com/dark_matter/{z}/{x}/{y}{r}.png"
           attribution="© CARTO © OpenStreetMap"
