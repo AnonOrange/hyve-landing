@@ -40,9 +40,21 @@ const NAV = [
     ),
   },
   {
+    href: '/spy/app/crime',
+    label: 'Crime',
+    match: (p: string) => p.startsWith('/spy/app/crime'),
+    icon: (active: boolean) => (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#EF4444' : '#64748B'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {/* Police shield silhouette */}
+        <path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z" />
+        <path d="M9 12l2 2 4-4" />
+      </svg>
+    ),
+  },
+  {
     href: '/spy/app/intel',
     label: 'Intel',
-    match: (p: string) => p.startsWith('/spy/app/intel') || p.startsWith('/spy/app/surveillance') || p.startsWith('/spy/app/offenders') || p.startsWith('/spy/app/crime'),
+    match: (p: string) => p.startsWith('/spy/app/intel') || p.startsWith('/spy/app/surveillance') || p.startsWith('/spy/app/offenders'),
     icon: (active: boolean) => (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#F59E0B' : '#64748B'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -106,7 +118,7 @@ export default function SpyBottomNav() {
       className="fixed inset-x-0 bottom-0 z-[3000] border-t border-[#0D2235] bg-[#020D14]/95 backdrop-blur"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <ul className="mx-auto grid max-w-3xl grid-cols-8">
+      <ul className="mx-auto grid max-w-3xl grid-cols-9">
         {NAV.map((item) => {
           const active = item.match(pathname);
           return (

@@ -23,14 +23,6 @@ const TILES: { href: string; label: string; subtitle: string; color: string; ico
     icon: '⛔',
     count: '97k+ records',
   },
-  {
-    href: '/spy/app/crime',
-    label: 'CRIME',
-    subtitle: 'Crime intensity heatmap · 6,500+ jurisdictions · Live + FBI baseline',
-    color: '#EF4444',
-    icon: '🔥',
-    count: '6,581 zones',
-  },
 ];
 
 export default function IntelHub() {
@@ -66,7 +58,7 @@ export default function IntelHub() {
         ))}
       </div>
       <div className="px-4 pt-2 font-mono text-[10px] text-[#475569]">
-        Each tab loads its own data only. The main Map stays focused on live scanner audio + cameras.
+        Each tab loads its own data only. Crime got promoted to its own bottom-nav tab — see 🔥 CRIME.
       </div>
     </main>
   );
