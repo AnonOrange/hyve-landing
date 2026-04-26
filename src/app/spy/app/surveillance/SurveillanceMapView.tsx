@@ -13,6 +13,7 @@ import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import MapHeader from '../MapHeader';
+import MapLoadingOverlay from '../MapLoadingOverlay';
 
 const API_BASE = 'https://hyve-api.vercel.app';
 
@@ -130,6 +131,7 @@ export default function SurveillanceMapView() {
       />
 
       <div className="relative flex-1">
+        <MapLoadingOverlay visible={loading} expectedCount={164733} layerName="surveillance" accent="#F59E0B" />
         <MapContainer
           center={[39.8, -98.5]}
           zoom={4}

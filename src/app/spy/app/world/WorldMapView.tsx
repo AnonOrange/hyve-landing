@@ -14,6 +14,7 @@ import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import { CameraOverlay, type Camera } from '../CameraOverlay'
 import MapHeader from '../MapHeader'
+import MapLoadingOverlay from '../MapLoadingOverlay'
 
 const API_BASE = 'https://hyve-api.vercel.app'
 
@@ -63,6 +64,7 @@ export default function WorldMapView() {
       />
 
       <div className="relative flex-1">
+        <MapLoadingOverlay visible={loading} expectedCount={24410} layerName="worldwide camera" accent="#22C55E" />
         <MapContainer
           center={[20, 0]}
           zoom={2}
