@@ -12,6 +12,7 @@ import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import { CameraOverlay, type Camera } from '../../app/CameraOverlay'
+import MapHeader from '../../app/MapHeader'
 
 function MapInvalidator() {
   const map = useMap()
@@ -77,21 +78,25 @@ export default function ReconMapView({ initial }: { initial: Camera[] }) {
   }
 
   return (
-    <div className="relative h-[80vh] w-full overflow-hidden rounded-lg border border-[#FF2D2D]/40">
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-[1000] flex items-start justify-between gap-3 px-4 py-3">
-        <div className="pointer-events-auto rounded-lg border border-[#FF2D2D] bg-[#020D14]/95 px-3 py-1.5 backdrop-blur">
-          <div className="text-[10px] font-black tracking-[0.4em] text-[#FF2D2D]">RECON · INTERNAL</div>
-          <div className="font-mono text-[10px] text-[#94A3B8]">
-            {cams.length.toLocaleString()} cams · DO NOT SHARE
-          </div>
-        </div>
-        <button
-          onClick={() => setFormOpen((v) => !v)}
-          className="pointer-events-auto rounded border border-[#FF2D2D] bg-[#020D14]/95 px-3 py-1.5 text-[10px] font-black tracking-widest text-[#FF2D2D] backdrop-blur hover:bg-[#FF2D2D]/10"
-        >
-          {formOpen ? '✕ CLOSE' : '+ ADD CAMERA'}
-        </button>
-      </div>
+    <div className="flex h-[85vh] w-full flex-col overflow-hidden rounded-lg border border-[#FF2D2D]/40">
+      <MapHeader
+        accent="#FF2D2D"
+        subtitle="RECON · INTERNAL"
+        rightSlot={
+          <>
+            <div className="hidden font-mono text-[10px] text-[#94A3B8] sm:block">
+              {cams.length.toLocaleString()} cams · DO NOT SHARE
+            </div>
+            <button
+              onClick={() => setFormOpen((v) => !v)}
+              className="rounded border border-[#FF2D2D] px-3 py-1.5 text-[10px] font-black tracking-widest text-[#FF2D2D] hover:bg-[#FF2D2D]/10"
+            >
+              {formOpen ? '✕ CLOSE' : '+ ADD CAMERA'}
+            </button>
+          </>
+        }
+      />
+      <div className="relative flex-1">
 
       {formOpen && (
         <form
@@ -195,6 +200,7 @@ export default function ReconMapView({ initial }: { initial: Camera[] }) {
         </MarkerClusterGroup>
       </MapContainer>
       {selected && <CameraOverlay cam={selected} onClose={() => setSelected(null)} />}
+      </div>
     </div>
   )
 }

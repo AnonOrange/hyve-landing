@@ -9,6 +9,7 @@ import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import { useRouter } from 'next/navigation';
 import { CameraOverlay, type Camera } from './CameraOverlay';
+import MapHeader from './MapHeader';
 
 const API_BASE = 'https://hyve-api.vercel.app';
 
@@ -202,16 +203,25 @@ export default function MapView() {
   };
 
   return (
-    <main className="relative h-screen w-screen overflow-hidden bg-[#020D14] text-[#E2E8F0]">
+    <main className="flex h-screen w-screen flex-col overflow-hidden bg-[#020D14] text-[#E2E8F0]">
+      <MapHeader
+        subtitle="LIVE NATIONWIDE"
+        rightSlot={
+          <div className="font-mono text-[10px] text-[#94A3B8]">
+            {loading ? 'loading…' : `${counts.feeds.toLocaleString()} feeds · ${counts.cameras.toLocaleString()} cams`}
+          </div>
+        }
+      />
+      <div className="relative flex-1">
       <MapContainer
         center={[39.8, -98.5]}
         zoom={4}
         minZoom={3}
-        maxZoom={18}
+        maxZoom={20}
         maxBounds={usBounds}
         maxBoundsViscosity={0.4}
         worldCopyJump={false}
-        zoomControl={false}
+        zoomControl={true}
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
@@ -405,6 +415,8 @@ export default function MapView() {
       >
         ◎ NEAR ME
       </button>
+
+      </div>
 
       {/* Camera overlay */}
       {selectedCam && (

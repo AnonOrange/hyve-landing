@@ -11,6 +11,7 @@ import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import { CameraOverlay, type Camera } from '../CameraOverlay'
+import MapHeader from '../MapHeader'
 
 // Forces Leaflet to measure its container after mount — fixes the well-known
 // "tiles never appear" bug when the container's parent uses 100vh/100% sizing.
@@ -50,19 +51,17 @@ export default function WorldMapView() {
   }, [])
 
   return (
-    <main className="relative h-screen w-screen overflow-hidden bg-[#020D14] text-[#E2E8F0]">
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-[1000] flex items-center justify-between px-4 py-3"
-        style={{ paddingTop: 'env(safe-area-inset-top)' }}
-      >
-        <div className="pointer-events-auto rounded-lg border border-[#0D2235] bg-[#020D14]/90 px-3 py-1.5 backdrop-blur">
-          <div className="text-[10px] font-black tracking-[0.4em] text-[#22C55E]">GLOBAL · PRO</div>
+    <main className="flex h-screen w-screen flex-col overflow-hidden bg-[#020D14] text-[#E2E8F0]">
+      <MapHeader
+        accent="#22C55E"
+        subtitle="GLOBAL · PRO"
+        rightSlot={
           <div className="font-mono text-[10px] text-[#94A3B8]">
-            {loading ? 'loading…' : `${count.toLocaleString()} live cameras worldwide`}
+            {loading ? 'loading…' : `${count.toLocaleString()} cameras worldwide`}
           </div>
-        </div>
-      </div>
-
+        }
+      />
+      <div className="relative flex-1">
       <MapContainer
         center={[20, 0]}
         zoom={2}
@@ -116,6 +115,7 @@ export default function WorldMapView() {
         )}
       </MapContainer>
 
+      </div>
       {selected && <CameraOverlay cam={selected} onClose={() => setSelected(null)} />}
     </main>
   )
