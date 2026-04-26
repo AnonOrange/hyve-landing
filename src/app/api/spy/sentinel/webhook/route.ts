@@ -25,10 +25,19 @@ export async function POST(req: NextRequest) {
 
   let event: Stripe.Event
   try {
-    if (WEBHOOK_SECRET && sig) {
+    if (WEBHOOK_SECRET) {
+      // Production path: secret configured → signature is REQUIRED.
+      // Refuse anything that isn't a verified Stripe delivery, otherwise an
+      // attacker could forge checkout.session.completed events to create fake
+      // audit rows and spam Resend confirmation emails to arbitrary addresses.
+      if (!sig) {
+        return NextResponse.json({ error: 'stripe-signature header required' }, { status: 400 })
+      }
       event = stripe.webhooks.constructEvent(body, sig, WEBHOOK_SECRET)
     } else {
-      // Dev/test: parse without signature verification (NEVER use in prod)
+      // Local dev only: secret not configured at all, parse unverified.
+      // In Vercel preview/prod the env var is set, so this branch is dead.
+      console.warn('[sentinel] STRIPE_SENTINEL_WEBHOOK_SECRET not set — accepting unsigned event (dev only)')
       event = JSON.parse(body)
     }
   } catch (e: any) {
