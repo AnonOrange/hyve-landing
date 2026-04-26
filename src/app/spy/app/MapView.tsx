@@ -560,12 +560,43 @@ export default function MapView() {
         <CameraOverlay cam={selectedCam} onClose={() => setSelectedCam(null)} />
       )}
 
-      {/* Sex offender info card — full registry details */}
+      {/* Sex offender info card — full registry details + photo lookup links */}
       {selectedOffender && (() => {
         const o = selectedOffender as any;
         const d = (o.details || {}) as Record<string, string | undefined>;
         const row = (label: string, value?: string | null) =>
           value ? <div key={label} className="flex justify-between gap-3 border-b border-[#0D2235]/50 py-1.5"><span className="font-mono text-[10px] uppercase tracking-widest text-[#64748B]">{label}</span><span className="text-right text-xs text-white">{value}</span></div> : null;
+
+        // Build official-source lookup URLs that prefill name. These open the user's
+        // browser at the authoritative registry — we don't proxy or republish, the
+        // photo loads from the official source where the user can verify.
+        const fullName = o.label || '';
+        const nameParts = fullName.replace(/,/g, '').trim().split(/\s+/);
+        // Naive last/first split — handles "LASTNAME, FIRST" and "First Last" forms.
+        let last = d.last || '';
+        let first = d.first || '';
+        if (!last && fullName.includes(',')) {
+          last = fullName.split(',')[0].trim();
+          first = (fullName.split(',')[1] || '').trim().split(/\s+/)[0];
+        } else if (!last && nameParts.length >= 2) {
+          last = nameParts[nameParts.length - 1];
+          first = nameParts[0];
+        }
+        const state = (d.state || o.state || '').toUpperCase();
+        const STATE_REGISTRY_URLS: Record<string, string> = {
+          CA: `https://www.meganslaw.ca.gov/Search.aspx?Type=NameSearch&LastName=${encodeURIComponent(last)}&FirstName=${encodeURIComponent(first)}`,
+          FL: `https://offender.fdle.state.fl.us/offender/sops/searchByName.action?lastName=${encodeURIComponent(last)}&firstName=${encodeURIComponent(first)}`,
+          TX: `https://records.txdps.state.tx.us/SexOffender/PublicSite/Index.aspx`,
+          IL: `https://sor.isp.illinois.gov/?lastName=${encodeURIComponent(last)}&firstName=${encodeURIComponent(first)}`,
+          NY: `https://criminaljustice.ny.gov/SomsSUBDirectory/search_index.jsp`,
+          OH: `https://services.dps.ohio.gov/SOR/Public/Reports/PersonByName?lastName=${encodeURIComponent(last)}&firstName=${encodeURIComponent(first)}`,
+          GA: `https://gbi.georgia.gov/services/sex-offender-registry-search`,
+          MI: `https://mspsor.com/Search.aspx`,
+        };
+        const stateRegUrl = STATE_REGISTRY_URLS[state];
+        const nsopwUrl = `https://www.nsopw.gov/SearchByName?lastName=${encodeURIComponent(last)}&firstName=${encodeURIComponent(first)}`;
+        const googleImg = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(fullName + ' ' + (state || '') + ' sex offender registry')}`;
+
         return (
           <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/80 p-4 backdrop-blur" onClick={() => setSelectedOffender(null)}>
             <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg border border-[#A855F7] bg-[#020D14] p-5" onClick={(e) => e.stopPropagation()}>
@@ -574,11 +605,29 @@ export default function MapView() {
                 <button onClick={() => setSelectedOffender(null)} className="rounded border border-[#0D2235] px-2 py-0.5 text-xs text-[#64748B] hover:text-[#E2E8F0]">✕</button>
               </div>
 
-              {d.photo_url && (
+              {d.photo_url ? (
                 <img src={d.photo_url} alt={o.label} className="mb-3 h-48 w-full rounded border border-[#0D2235] object-cover" onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')} />
+              ) : (
+                <div className="mb-3 rounded border border-dashed border-[#A855F7]/40 bg-[#A855F7]/5 p-3 text-center">
+                  <div className="mb-2 text-[10px] font-black tracking-widest text-[#A855F7]">NO PHOTO IN SOURCE FEED</div>
+                  <div className="mb-3 text-[11px] text-[#94A3B8]">Look up photo on the official registry:</div>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {stateRegUrl && (
+                      <a href={stateRegUrl} target="_blank" rel="noreferrer" className="rounded bg-[#A855F7] px-3 py-1.5 text-[10px] font-black tracking-widest text-white hover:bg-[#C084FC]">
+                        {state} REGISTRY ↗
+                      </a>
+                    )}
+                    <a href={nsopwUrl} target="_blank" rel="noreferrer" className="rounded border border-[#A855F7] px-3 py-1.5 text-[10px] font-black tracking-widest text-[#A855F7] hover:bg-[#A855F7]/10">
+                      NSOPW ↗
+                    </a>
+                    <a href={googleImg} target="_blank" rel="noreferrer" className="rounded border border-[#0D2235] px-3 py-1.5 text-[10px] font-black tracking-widest text-[#94A3B8] hover:text-white">
+                      IMAGES ↗
+                    </a>
+                  </div>
+                </div>
               )}
 
-              <div className="mb-3 text-lg font-bold text-white">{o.label || 'Registered offender'}</div>
+              <div className="mb-3 text-lg font-bold text-white">{fullName || 'Registered offender'}</div>
 
               <div className="space-y-0">
                 {row('DOB', d.dob)}
@@ -594,7 +643,7 @@ export default function MapView() {
                 {row('Charge', d.charge)}
                 {row('Address', d.address)}
                 {row('City', d.city || o.county)}
-                {row('State', d.state)}
+                {row('State', state)}
                 {row('ZIP', d.zip)}
                 {row('Registered', d.registered)}
                 {row('Case #', d.case_number)}
@@ -602,8 +651,19 @@ export default function MapView() {
                 {row('Coords', `${o.lat?.toFixed(5)}, ${o.lng?.toFixed(5)}`)}
               </div>
 
-              <p className="mt-4 text-[10px] text-[#475569]">
-                Data from public state/county/city registry feeds. Offender locations are public record under the federal Adam Walsh Act. Verify at the official source: <a href="https://www.nsopw.gov" target="_blank" rel="noreferrer" className="text-[#A855F7] hover:underline">nsopw.gov</a>
+              <div className="mt-4 flex gap-2 border-t border-[#0D2235] pt-3">
+                {stateRegUrl && (
+                  <a href={stateRegUrl} target="_blank" rel="noreferrer" className="flex-1 rounded border border-[#A855F7] bg-[#A855F7]/10 px-3 py-2 text-center text-[10px] font-black tracking-widest text-[#A855F7] hover:bg-[#A855F7]/20">
+                    OPEN {state} REGISTRY ↗
+                  </a>
+                )}
+                <a href={nsopwUrl} target="_blank" rel="noreferrer" className="flex-1 rounded border border-[#0D2235] px-3 py-2 text-center text-[10px] font-black tracking-widest text-[#94A3B8] hover:text-white">
+                  NSOPW ↗
+                </a>
+              </div>
+
+              <p className="mt-3 text-[10px] text-[#475569]">
+                Data from public state/county/city ArcGIS registry feeds. Offender locations are public record under the federal Adam Walsh Act. Verify at the official source.
               </p>
             </div>
           </div>
