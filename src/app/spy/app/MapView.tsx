@@ -58,10 +58,12 @@ export default function MapView() {
   const router = useRouter();
   const [feeds, setFeeds] = useState<Feed[]>([]);
   const [cameras, setCameras] = useState<Camera[]>([]);
+  const [alpr, setAlpr] = useState<Camera[]>([]);
+  const [selectedAlpr, setSelectedAlpr] = useState<Camera | null>(null);
   const [loading, setLoading] = useState(true);
   const [flyTo, setFlyTo] = useState<[number, number] | null>(null);
   const [selectedCam, setSelectedCam] = useState<Camera | null>(null);
-  const [counts, setCounts] = useState<{ feeds: number; cameras: number }>({ feeds: 0, cameras: 0 });
+  const [counts, setCounts] = useState<{ feeds: number; cameras: number; alpr: number }>({ feeds: 0, cameras: 0, alpr: 0 });
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -71,6 +73,7 @@ export default function MapView() {
     ems: true,
     aviation: true,
     cameras: true,
+    alpr: false,  // off by default — adds ~50k markers, opt-in
   });
 
   // Load feeds + cameras
@@ -78,22 +81,24 @@ export default function MapView() {
     let cancelled = false;
     (async () => {
       try {
-        const [fRes, cRes] = await Promise.all([
+        const [fRes, cRes, aRes] = await Promise.all([
           fetch(`${API_BASE}/feeds/trending?limit=2000`),
           fetch(`${API_BASE}/cameras/nearby?lat=39.8&lng=-98.5&radius=5000`),
+          fetch(`${API_BASE}/cameras/alpr`),
         ]);
         const fJson = await fRes.json();
         const cJson = await cRes.json();
+        const aJson = await aRes.json();
         if (cancelled) return;
 
         const fArr: Feed[] = Array.isArray(fJson) ? fJson : (fJson?.feeds ?? fJson?.data ?? []);
         const cArr: Camera[] = Array.isArray(cJson) ? cJson : (cJson?.cameras ?? cJson?.data ?? []);
+        const aArr: Camera[] = Array.isArray(aJson) ? aJson : (aJson?.cameras ?? aJson?.data ?? []);
 
         setFeeds(fArr.filter((f) => normalizeLat(f) != null && normalizeLng(f) != null));
-        // No slice — all 49k+ cameras render via marker clustering. Tested: 50k markers
-        // through MarkerClusterGroup hits ~70 cluster bubbles at country zoom, ~500 at state zoom.
         setCameras(cArr.filter((c) => normalizeLat(c) != null && normalizeLng(c) != null));
-        setCounts({ feeds: fArr.length, cameras: cArr.length });
+        setAlpr(aArr.filter((c) => normalizeLat(c) != null && normalizeLng(c) != null));
+        setCounts({ feeds: fArr.length, cameras: cArr.length, alpr: aArr.length });
       } catch (e) {
         console.error('Failed to load map data', e);
       } finally {
@@ -288,6 +293,56 @@ export default function MapView() {
           </MarkerClusterGroup>
         )}
 
+        {/* Flock ALPR markers — locations only, no live feed (Flock data is law-enforcement-only).
+            Clicking opens an info card explaining what these are + linking to consumer rights wiki. */}
+        {typeVisibility.alpr && (
+          <MarkerClusterGroup
+            chunkedLoading
+            chunkInterval={50}
+            chunkDelay={20}
+            maxClusterRadius={70}
+            disableClusteringAtZoom={15}
+            spiderfyOnMaxZoom={true}
+            removeOutsideVisibleBounds={true}
+            iconCreateFunction={(cluster: any) => {
+              const count = cluster.getChildCount();
+              const size = count < 100 ? 30 : count < 1000 ? 38 : 50;
+              return L.divIcon({
+                html: `<div style="
+                  width:${size}px;height:${size}px;
+                  display:flex;align-items:center;justify-content:center;
+                  background:rgba(245,158,11,0.85);
+                  color:#020D14;font-weight:900;font-family:'Courier New',monospace;
+                  font-size:${count < 100 ? 11 : count < 1000 ? 12 : 13}px;
+                  border:2px solid #F59E0B;border-radius:4px;
+                  box-shadow:0 0 12px rgba(245,158,11,0.6);
+                ">${count.toLocaleString()}</div>`,
+                className: 'hyve-alpr-cluster',
+                iconSize: [size, size],
+              });
+            }}
+          >
+            {alpr.map((c, idx) => {
+              const lat = normalizeLat(c)!;
+              const lng = normalizeLng(c)!;
+              return (
+                <CircleMarker
+                  key={`alpr-${idx}-${lat}-${lng}`}
+                  center={[lat, lng]}
+                  radius={3}
+                  pathOptions={{
+                    color: '#F59E0B',
+                    fillColor: '#F59E0B',
+                    fillOpacity: 0.85,
+                    weight: 0,
+                  }}
+                  eventHandlers={{ click: () => setSelectedAlpr(c) }}
+                />
+              );
+            })}
+          </MarkerClusterGroup>
+        )}
+
         {/* Feed pins */}
         {visibleFeeds.map((f) => {
           const lat = normalizeLat(f)!;
@@ -375,6 +430,7 @@ export default function MapView() {
             { key: 'ems', label: 'EMS', color: FEED_COLORS.ems },
             { key: 'aviation', label: 'Aviation', color: FEED_COLORS.aviation },
             { key: 'cameras', label: 'Cameras', color: '#22C55E' },
+            { key: 'alpr', label: 'Flock ALPR', color: '#F59E0B' },
           ].map((c) => {
             const on = typeVisibility[c.key];
             return (
@@ -428,6 +484,38 @@ export default function MapView() {
       {/* Camera overlay */}
       {selectedCam && (
         <CameraOverlay cam={selectedCam} onClose={() => setSelectedCam(null)} />
+      )}
+
+      {/* ALPR info modal — these aren't watchable cameras, just locations of surveillance infrastructure */}
+      {selectedAlpr && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/80 p-4 backdrop-blur" onClick={() => setSelectedAlpr(null)}>
+          <div className="w-full max-w-md rounded-lg border border-[#F59E0B] bg-[#020D14] p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-2 flex items-center justify-between">
+              <div className="text-[10px] font-black tracking-[0.4em] text-[#F59E0B]">⚠ FLOCK ALPR</div>
+              <button onClick={() => setSelectedAlpr(null)} className="rounded border border-[#0D2235] px-2 py-0.5 text-xs text-[#64748B] hover:text-[#E2E8F0]">✕</button>
+            </div>
+            <div className="mb-4 text-lg font-bold text-white">License-plate reader detected</div>
+            <div className="mb-4 space-y-1 font-mono text-xs text-[#94A3B8]">
+              <div>Lat/Lng: <span className="text-white">{selectedAlpr.lat?.toFixed(5)}, {selectedAlpr.lng?.toFixed(5)}</span></div>
+              {selectedAlpr.county && <div>Direction: <span className="text-white">{selectedAlpr.county}</span></div>}
+              <div>Operator: <span className="text-white">{selectedAlpr.agency || 'Flock Safety'}</span></div>
+              <div>Source: <span className="text-white">DeFlock community DB</span></div>
+            </div>
+            <p className="mb-3 text-xs text-[#94A3B8]">
+              Flock cameras photograph every license plate that passes them, store the data for 30 days,
+              and share it across the entire Flock network. There is no live feed available — Flock data
+              is restricted to law enforcement contracts.
+            </p>
+            <a
+              href={selectedAlpr.feedUrl || 'https://consumerrights.wiki/w/Flock_Safety'}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-block rounded bg-[#F59E0B] px-3 py-1.5 text-[10px] font-black tracking-widest text-[#020D14] hover:bg-white"
+            >
+              LEARN MORE ↗
+            </a>
+          </div>
+        </div>
       )}
     </main>
   );
