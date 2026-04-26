@@ -33,6 +33,7 @@ type Feed = {
 type Camera = {
   id?: string;
   name?: string;
+  label?: string;
   lat?: number;
   lng?: number;
   latitude?: number;
@@ -41,6 +42,8 @@ type Camera = {
   url?: string;
   streamUrl?: string;
   snapshotUrl?: string;
+  feedUrl?: string;
+  agency?: string;
 };
 
 function normalizeLat(o: any): number | undefined {
@@ -393,7 +396,8 @@ export default function MapView() {
 }
 
 function CameraOverlay({ cam, onClose }: { cam: Camera; onClose: () => void }) {
-  const url = cam.snapshotUrl || cam.streamUrl || cam.url || '';
+  const url = cam.snapshotUrl || cam.streamUrl || cam.feedUrl || cam.url || '';
+  const camName = cam.name || cam.label || cam.agency || 'Live Camera';
   const type = (cam.feedType || '').toLowerCase();
   const [tick, setTick] = useState(0);
 
@@ -409,7 +413,7 @@ function CameraOverlay({ cam, onClose }: { cam: Camera; onClose: () => void }) {
       <div className="relative w-full max-w-2xl rounded-lg border border-[#0D2235] bg-[#020D14] p-3" onClick={(e) => e.stopPropagation()}>
         <div className="mb-2 flex items-center justify-between">
           <div className="truncate text-sm font-bold text-[#E2E8F0]">
-            {cam.name || 'Live Camera'}
+            {camName}
           </div>
           <button onClick={onClose} className="rounded border border-[#0D2235] px-2 py-0.5 text-xs text-[#64748B] hover:text-[#E2E8F0]">
             ✕
@@ -426,7 +430,7 @@ function CameraOverlay({ cam, onClose }: { cam: Camera; onClose: () => void }) {
             ) : (
               <img
                 src={`${url}${url.includes('?') ? '&' : '?'}_t=${tick}`}
-                alt={cam.name || 'camera'}
+                alt={camName}
                 className="aspect-video w-full object-contain"
                 onError={(e) => ((e.target as HTMLImageElement).style.opacity = '0.3')}
               />

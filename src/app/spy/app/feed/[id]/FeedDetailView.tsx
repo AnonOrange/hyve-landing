@@ -53,6 +53,7 @@ type NewsItem = {
 type Camera = {
   id?: string;
   name?: string;
+  label?: string;        // backend uses `label`
   lat?: number;
   lng?: number;
   latitude?: number;
@@ -61,6 +62,8 @@ type Camera = {
   url?: string;
   streamUrl?: string;
   snapshotUrl?: string;
+  feedUrl?: string;      // backend uses `feedUrl` as the actual stream/image URL
+  agency?: string;
 };
 
 function nlat(o: any): number | undefined {
@@ -654,7 +657,8 @@ export default function FeedDetailView() {
 }
 
 function CameraTile({ cam }: { cam: Camera }) {
-  const url = cam.snapshotUrl || cam.streamUrl || cam.url || '';
+  const url = cam.snapshotUrl || cam.streamUrl || cam.feedUrl || cam.url || '';
+  const camName = cam.name || cam.label || cam.agency || '';
   const type = (cam.feedType || '').toLowerCase();
   const [tick, setTick] = useState(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -711,7 +715,7 @@ function CameraTile({ cam }: { cam: Camera }) {
       >
         ▶ YouTube
         <br />
-        {cam.name?.slice(0, 30)}
+        {camName.slice(0, 30)}
       </a>
     );
   }
@@ -720,7 +724,7 @@ function CameraTile({ cam }: { cam: Camera }) {
     return (
       <iframe
         src={url}
-        title={cam.name || 'cam'}
+        title={camName || 'cam'}
         className="aspect-video w-full rounded border border-[#0D2235] bg-black"
         sandbox="allow-scripts allow-same-origin"
       />
@@ -738,7 +742,7 @@ function CameraTile({ cam }: { cam: Camera }) {
           muted
           playsInline
         />
-        {cam.name && <div className="truncate px-2 py-1 text-[10px] text-[#64748B]">{cam.name}</div>}
+        {camName && <div className="truncate px-2 py-1 text-[10px] text-[#64748B]">{camName}</div>}
       </div>
     );
   }
@@ -748,11 +752,11 @@ function CameraTile({ cam }: { cam: Camera }) {
     <div className="overflow-hidden rounded border border-[#0D2235] bg-black">
       <img
         src={`${url}${url.includes('?') ? '&' : '?'}_t=${tick}`}
-        alt={cam.name || 'camera'}
+        alt={camName || 'camera'}
         className="aspect-video w-full object-cover"
         onError={(e) => ((e.target as HTMLImageElement).style.opacity = '0.3')}
       />
-      {cam.name && <div className="truncate px-2 py-1 text-[10px] text-[#64748B]">{cam.name}</div>}
+      {camName && <div className="truncate px-2 py-1 text-[10px] text-[#64748B]">{camName}</div>}
     </div>
   );
 }
