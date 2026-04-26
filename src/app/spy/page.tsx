@@ -77,7 +77,7 @@ const FEATURES = [
   {
     title: 'HYVE RESIDENTIAL — distressed-property intel (Pro Intel tool)',
     body:
-      "A self-hosted Windows desktop app that auto-scrapes county property records and surfaces every distress signal real-estate investors care about: foreclosure pipeline (filed → notice → hearing → sale → sold/dismissed), tax-delinquent properties (years owed, amount due, penalties), HOA / mechanic / contractor / judgment liens, and combined property-profile cards (parcel + owner + tax + lien history). Auto-generates Word docs (cash-offer letter, lien-negotiation memo, owner-finance proposal) pre-filled with owner + property data. Same data PropStream / DealMachine / BatchLeads charge $200-$1,000/mo for — yours, $0/mo, running locally. Wake + Mecklenburg + more NC counties on launch.",
+      "Browse every distressed property in your county directly in the Spy app — no download. Foreclosure pipeline (filed → notice → hearing → sale → sold/dismissed), tax-delinquent properties (years owed, amount due, penalties), HOA / mechanic / contractor / judgment liens, and combined property-profile cards (parcel + owner + tax + lien history). Each property gets a 0-100 distress score so the highest-stress targets sort to the top. One-click cross-link to Sleuth on the owner — instantly check court / corrections / OSINT records on the person. Same data PropStream / DealMachine / BatchLeads charge $200-$1,000/mo for, included with Pro. Wake + Mecklenburg + more NC counties on launch.",
     accent: '#F59E0B',
     tag: 'RESIDENTIAL',
   },
@@ -537,7 +537,7 @@ export default function SpyPage() {
               '🆕 TICKER — hyperlocal scrolling event ticker (geo-radius selectable)',
               '🆕 PANOPTICON — drop a pin, get a 0-100 surveillance density score',
               '🆕 HYVE SLEUTH — Pro OSINT smart-launcher (100+ public databases)',
-              '🆕 HYVE RESIDENTIAL — Pro real-estate distress-property desktop app',
+              '🆕 HYVE RESIDENTIAL — Pro real-estate distress intel (in-tab, no download)',
               'AI summaries on any LLM key (Anthropic, OpenAI, Gemini, Groq, Ollama)',
               'Cameras auto-refresh every 4 hours (dead URLs culled, new cams added)',
               'Push alerts for incidents within your radius (1-50 mi)',

@@ -1,30 +1,76 @@
 'use client'
 
-// HYVE Residential — distressed-property intelligence for real estate
-// investors. PyQt6 + SQLAlchemy + Playwright desktop app (~195MB Windows
-// installer), so we can't iframe it like Sleuth — this page is a pro-gated
-// download portal with system requirements + quick-start guide.
+// HYVE Residential — in-tab distressed-property intel web app.
 //
-// Hosting: the installer .exe is too big for Vercel public/ (100MB limit).
-// We pull the download URL from NEXT_PUBLIC_RESIDENTIAL_DOWNLOAD_URL so
-// the operator can host on GitHub Releases / Supabase Storage / R2 / etc.
-// without code changes. If unset we surface a "coming soon" state.
+// Replaces the previous "download Windows installer" gate with a fully
+// browser-native experience built on the same data shapes as the desktop
+// app's Pydantic models. See src/lib/residential.ts for the schema and
+// sample data.
 //
-// Pro gate: same cookie pattern as Sleuth. `hyve_spy_tier=pro` cookie
-// → grants access. Anything else → upgrade prompt.
+// Tabs (sub-views via local state, not separate routes — keeps URL clean):
+//   - DASHBOARD: top-N distressed properties sorted by distress score
+//   - FORECLOSURES: filtered foreclosure pipeline view
+//   - TAX DELINQUENT: properties with unpaid taxes
+//   - LIENS: HOA / mechanic / judgment liens
+//   - PROFILE: drill-down per property when a row is clicked
+//
+// Pro tier gate via hyve_spy_tier=pro cookie (set by /api/spy/verify-session
+// when the user's active sub uses STRIPE_SPY_PRO_PRICE_ID or the annual one).
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import {
+  loadDistressProfiles,
+  formatCurrency,
+  stageLabel,
+  stageColor,
+  type DistressProfile,
+} from '@/lib/residential'
 
-const DOWNLOAD_URL = process.env.NEXT_PUBLIC_RESIDENTIAL_DOWNLOAD_URL || ''
-const VERSION = process.env.NEXT_PUBLIC_RESIDENTIAL_VERSION || 'v0.1.0'
+type Tab = 'dashboard' | 'foreclosures' | 'tax' | 'liens'
 
 export default function ResidentialPage() {
   const [tier, setTier] = useState<'pro' | 'basic' | null>(null)
+  const [tab, setTab] = useState<Tab>('dashboard')
+  const [query, setQuery] = useState('')
+  const [countyFilter, setCountyFilter] = useState<string>('all')
+  const [openProfile, setOpenProfile] = useState<DistressProfile | null>(null)
 
   useEffect(() => {
     const m = document.cookie.match(/(?:^|; )hyve_spy_tier=([^;]+)/)
     setTier(m && m[1] === 'pro' ? 'pro' : 'basic')
   }, [])
+
+  const profiles = useMemo(() => loadDistressProfiles(), [])
+
+  const counties = useMemo(
+    () => Array.from(new Set(profiles.map((p) => p.property.county))).sort(),
+    [profiles],
+  )
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return profiles.filter((p) => {
+      if (countyFilter !== 'all' && p.property.county !== countyFilter) return false
+      if (q) {
+        const hay = [
+          p.property.address,
+          p.property.city,
+          p.property.parcelId,
+          p.owner.name,
+          p.owner.mailingAddress,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+        if (!hay.includes(q)) return false
+      }
+      // Tab-specific filters
+      if (tab === 'foreclosures' && !p.foreclosure) return false
+      if (tab === 'tax' && p.tax.every((t) => t.amountDue <= t.amountPaid)) return false
+      if (tab === 'liens' && p.liens.filter((l) => l.status === 'active').length === 0) return false
+      return true
+    })
+  }, [profiles, query, countyFilter, tab])
 
   if (tier === null) {
     return (
@@ -33,10 +79,7 @@ export default function ResidentialPage() {
       </main>
     )
   }
-
-  if (tier !== 'pro') {
-    return <UpgradeGate />
-  }
+  if (tier !== 'pro') return <UpgradeGate />
 
   return (
     <main className="min-h-screen bg-[#020D14] pb-32 text-[#E2E8F0]">
@@ -44,163 +87,306 @@ export default function ResidentialPage() {
         className="sticky top-0 z-20 border-b border-[#0D2235] bg-[#020D14]/95 backdrop-blur"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
           <div className="flex items-center gap-2">
             <span className="text-base">🏚️</span>
             <div>
-              <div className="text-[10px] font-black tracking-[0.4em] text-[#F59E0B]">HYVE RESIDENTIAL</div>
+              <div className="text-[10px] font-black tracking-[0.4em] text-[#F59E0B]">RESIDENTIAL</div>
               <div className="font-mono text-[10px] text-[#64748B]">
-                Distressed-property intel · desktop · pro
+                {profiles.length} properties · {counties.length} counties · sample data
               </div>
             </div>
           </div>
+          <div className="ml-auto flex items-center gap-2">
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Address, owner, parcel…"
+              className="rounded border border-[#0D2235] bg-black/60 px-3 py-1.5 text-xs text-white placeholder-[#334155] outline-none focus:border-[#F59E0B]"
+            />
+            <select
+              value={countyFilter}
+              onChange={(e) => setCountyFilter(e.target.value)}
+              className="rounded border border-[#0D2235] bg-black/60 px-2 py-1.5 text-xs text-white focus:border-[#F59E0B]"
+            >
+              <option value="all">All counties</option>
+              {counties.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto px-4 pb-3">
+          {(
+            [
+              { id: 'dashboard', label: '🏘 ALL DISTRESS', count: profiles.length },
+              { id: 'foreclosures', label: '🏛 FORECLOSURES', count: profiles.filter((p) => p.foreclosure).length },
+              { id: 'tax', label: '💸 TAX DELINQUENT', count: profiles.filter((p) => p.tax.some((t) => t.amountDue > t.amountPaid)).length },
+              { id: 'liens', label: '⛓ LIENS', count: profiles.filter((p) => p.liens.some((l) => l.status === 'active')).length },
+            ] as const
+          ).map((t) => {
+            const active = tab === t.id
+            return (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className="shrink-0 rounded border px-3 py-1 text-[10px] font-bold tracking-widest transition"
+                style={{
+                  borderColor: active ? '#F59E0B' : '#0D2235',
+                  background: active ? '#F59E0B1F' : 'transparent',
+                  color: active ? '#F59E0B' : '#64748B',
+                }}
+              >
+                {t.label} <span className="opacity-70">({t.count})</span>
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      <div className="mx-auto max-w-3xl px-6 pt-12">
-        <h1 className="text-4xl font-black md:text-5xl">
-          Find every <span style={{ color: '#F59E0B' }}>distressed property</span> in your county.
-        </h1>
-        <p className="mt-5 text-lg text-[#94A3B8]">
-          A self-hosted real-estate intel app that auto-scrapes county records and surfaces every
-          distress signal an investor cares about — foreclosures, tax delinquencies, HOA liens,
-          mechanic liens, judgments — into one searchable interface with property-profile cards
-          and pre-formatted outreach documents.
-        </p>
-
-        {/* Download CTA */}
-        <div className="mt-10 rounded-xl border border-[#F59E0B]/40 bg-[#F59E0B]/5 p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className="text-[10px] font-bold tracking-[0.3em] text-[#F59E0B]">WINDOWS INSTALLER · {VERSION.toUpperCase()}</div>
-              <div className="mt-1 text-xl font-black">HYVEResidential_Setup.exe</div>
-              <div className="mt-1 font-mono text-[11px] text-[#64748B]">
-                ~195MB · Windows 10+ (64-bit) · includes scrapers + SQLite DB
-              </div>
-            </div>
-            {DOWNLOAD_URL ? (
-              <a
-                href={DOWNLOAD_URL}
-                download
-                className="shrink-0 rounded px-6 py-3 text-sm font-black tracking-widest text-[#020D14]"
-                style={{
-                  background: 'linear-gradient(135deg, #F59E0B, #FBBF24)',
-                  boxShadow: '0 0 60px -10px rgba(245,158,11,0.5)',
-                }}
-              >
-                ⬇ DOWNLOAD
-              </a>
-            ) : (
-              <div className="shrink-0 rounded border border-[#0D2235] bg-black/40 px-4 py-3 text-center font-mono text-[10px] text-[#64748B]">
-                build pending
-                <br />
-                <span className="text-[8px]">operator setup required</span>
-              </div>
-            )}
-          </div>
-          {!DOWNLOAD_URL && (
-            <div className="mt-4 rounded bg-black/40 px-3 py-2 text-[11px] text-[#94A3B8]">
-              Set <code className="rounded bg-black px-1 text-[#F59E0B]">NEXT_PUBLIC_RESIDENTIAL_DOWNLOAD_URL</code> in Vercel env to publish the installer.
-              Recommended host: GitHub Releases (no size cap, works for anyone with a free GitHub account).
-            </div>
-          )}
+      <div className="mx-auto max-w-6xl px-4 pt-4">
+        <div className="mb-2 font-mono text-[10px] text-[#475569]">
+          Showing {filtered.length} of {profiles.length} · sorted by distress score (desc)
         </div>
+        <ul className="grid gap-2">
+          {filtered.map((p) => (
+            <PropertyRow key={p.property.parcelId} profile={p} onOpen={() => setOpenProfile(p)} />
+          ))}
+          {filtered.length === 0 && (
+            <li className="rounded border border-[#0D2235] bg-black/30 px-4 py-8 text-center font-mono text-[11px] text-[#64748B]">
+              No matches. Try a different filter.
+            </li>
+          )}
+        </ul>
+      </div>
 
-        {/* Feature grid */}
-        <div className="mt-12">
-          <h2 className="text-2xl font-black">What it indexes</h2>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            {[
-              {
-                title: 'Foreclosure pipeline',
-                emoji: '🏛',
-                body: 'Filed → Notice of Hearing → Hearing Scheduled → Sale Scheduled → Sold/Dismissed. Every stage timestamped, deduped across county sites, and indexed for full-text search.',
-              },
-              {
-                title: 'Tax-delinquent properties',
-                emoji: '💸',
-                body: 'Years owed, principal due, penalty + interest, payment history. Filter by county, owed-amount range, or how delinquent (1yr, 2-3yr, 3yr+).',
-              },
-              {
-                title: 'HOA + mechanic + judgment liens',
-                emoji: '⛓',
-                body: 'Encumbrances on title that signal financial stress. Type, amount, plaintiff, filing date — sortable, exportable to CSV.',
-              },
-              {
-                title: 'Property profiles',
-                emoji: '🏘',
-                body: 'Combined view per parcel: owner record + assessed value + zoning + acreage + sq ft + tax history + every lien + foreclosure status. One screen.',
-              },
-              {
-                title: 'Auto-scheduled scrapers',
-                emoji: '🤖',
-                body: 'APScheduler runs Playwright-based scrapers nightly per county adapter (Wake, Mecklenburg, more). New filings appear in your DB by morning.',
-              },
-              {
-                title: 'Outreach document generator',
-                emoji: '📄',
-                body: 'Pre-formatted Word docs: cash-offer letter, lien-negotiation memo, owner-finance proposal. Auto-fills owner name, property, parcel, owed amounts.',
-              },
-            ].map((f) => (
-              <div key={f.title} className="rounded-lg border border-[#0D2235] bg-black/30 p-5">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">{f.emoji}</span>
-                  <h3 className="font-black">{f.title}</h3>
-                </div>
-                <p className="mt-2 text-sm text-[#94A3B8]">{f.body}</p>
-              </div>
+      {/* Sample-data banner — replaced when Supabase scraper output is wired */}
+      <div className="mx-auto mt-8 max-w-6xl px-4">
+        <div className="rounded border border-[#0D2235] bg-black/30 px-4 py-3 text-[11px] text-[#64748B]">
+          <strong className="text-[#F59E0B]">Demo dataset:</strong> 6 sample distress profiles across Wake & Mecklenburg counties.
+          Phase 2 wires the same UI to live Supabase tables populated by scheduled scrapers (Wake County, Mecklenburg County, then nationwide).
+          Schema in <code className="rounded bg-black px-1 text-[#F59E0B]">src/lib/residential.ts</code> already matches what the Python engine produces.
+        </div>
+      </div>
+
+      {openProfile && <ProfileDrawer profile={openProfile} onClose={() => setOpenProfile(null)} />}
+    </main>
+  )
+}
+
+function PropertyRow({ profile, onOpen }: { profile: DistressProfile; onOpen: () => void }) {
+  const { property, owner, distressScore, signals, foreclosure } = profile
+  const scoreColor = distressScore >= 80 ? '#EF4444' : distressScore >= 50 ? '#F59E0B' : distressScore >= 20 ? '#FBBF24' : '#22C55E'
+  return (
+    <li>
+      <button
+        onClick={onOpen}
+        className="flex w-full items-center gap-4 rounded border border-[#0D2235] bg-black/30 px-4 py-3 text-left transition hover:border-[#F59E0B]"
+      >
+        <div className="shrink-0 text-center">
+          <div className="text-2xl font-black" style={{ color: scoreColor }}>
+            {distressScore}
+          </div>
+          <div className="font-mono text-[8px] tracking-widest text-[#475569]">DISTRESS</div>
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-2">
+            <h3 className="truncate text-sm font-black">{property.address}</h3>
+            <span className="font-mono text-[10px] text-[#64748B]">
+              {property.city}, {property.state} · {property.county} Co · {property.parcelId}
+            </span>
+          </div>
+          <div className="mt-0.5 truncate text-[11px] text-[#94A3B8]">
+            {owner.name} <span className="text-[#475569]">({owner.ownerType})</span>
+            {property.assessedValue ? ` · assessed ${formatCurrency(property.assessedValue)}` : ''}
+            {property.yearBuilt ? ` · built ${property.yearBuilt}` : ''}
+            {property.sqFt ? ` · ${property.sqFt.toLocaleString()} sqft` : ''}
+          </div>
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {foreclosure && (
+              <span
+                className="rounded px-2 py-0.5 text-[9px] font-bold tracking-widest"
+                style={{ background: stageColor(foreclosure.stage), color: '#020D14' }}
+              >
+                {stageLabel(foreclosure.stage).toUpperCase()}
+              </span>
+            )}
+            {signals.map((s, i) => (
+              <span key={i} className="rounded border border-[#0D2235] bg-black/40 px-2 py-0.5 text-[9px] text-[#94A3B8]">
+                {s}
+              </span>
             ))}
           </div>
         </div>
+        <div className="shrink-0 text-2xl text-[#475569] transition group-hover:text-[#F59E0B]">→</div>
+      </button>
+    </li>
+  )
+}
 
-        {/* Why self-hosted */}
-        <div className="mt-12 rounded-lg border border-[#0D2235] bg-black/40 p-6">
-          <div className="text-[10px] font-bold tracking-[0.3em] text-[#22C55E]">VS PROPSTREAM / DEALMACHINE / BATCHLEADS</div>
-          <h3 className="mt-1 text-xl font-black">$0/month vs $200-1,000/month</h3>
-          <p className="mt-3 text-sm text-[#94A3B8]">
-            Commercial distress-data aggregators charge a monthly subscription for what is fundamentally public-record data. HYVE Residential ships you the same data layer (foreclosures + tax delinquencies + liens) by running scrapers locally on your machine. Your county's public records, in a private SQLite database that never leaves your laptop. No subscription. No upload of your leads to a SaaS. No data handed off to anyone.
-          </p>
+function ProfileDrawer({ profile, onClose }: { profile: DistressProfile; onClose: () => void }) {
+  const { property, owner, tax, liens, foreclosure, distressScore } = profile
+  const totalOwed = tax.reduce((acc, t) => acc + Math.max(0, t.amountDue - t.amountPaid + (t.penalty || 0) + (t.interest || 0)), 0)
+  const totalLiens = liens.filter((l) => l.status === 'active').reduce((a, l) => a + l.amount, 0)
+
+  return (
+    <div className="fixed inset-0 z-[2000] flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl border border-[#F59E0B]/40 bg-[#020D14] sm:rounded-2xl">
+        <div className="sticky top-0 flex items-center justify-between border-b border-[#0D2235] bg-[#020D14] px-5 py-3">
+          <div>
+            <div className="text-[10px] font-bold tracking-[0.3em] text-[#F59E0B]">
+              PROPERTY PROFILE · {property.parcelId}
+            </div>
+            <h2 className="text-lg font-black">{property.address}</h2>
+            <div className="font-mono text-[10px] text-[#64748B]">
+              {property.city}, {property.state} {property.zip} · {property.county} County
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded border border-[#0D2235] px-2 py-1 text-[10px] font-bold tracking-widest text-[#94A3B8] hover:border-[#F59E0B] hover:text-[#F59E0B]"
+          >
+            ✕
+          </button>
         </div>
 
-        {/* System requirements */}
-        <div className="mt-10">
-          <h2 className="text-2xl font-black">System requirements</h2>
-          <ul className="mt-4 space-y-2 text-sm text-[#94A3B8]">
-            <li className="flex gap-3"><span className="text-[#F59E0B]">·</span> Windows 10 or 11 (64-bit)</li>
-            <li className="flex gap-3"><span className="text-[#F59E0B]">·</span> 500MB free disk space (app + database growth)</li>
-            <li className="flex gap-3"><span className="text-[#F59E0B]">·</span> Internet connection for scheduled scrapers (no constant connection needed)</li>
-            <li className="flex gap-3"><span className="text-[#F59E0B]">·</span> No Python install required (PyInstaller bundles everything)</li>
-          </ul>
-        </div>
+        <div className="px-5 py-4">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded border border-[#0D2235] bg-black/40 p-3">
+              <div className="text-[9px] font-bold tracking-widest text-[#475569]">DISTRESS</div>
+              <div className="mt-1 text-3xl font-black" style={{ color: distressScore >= 50 ? '#EF4444' : '#F59E0B' }}>
+                {distressScore}
+              </div>
+            </div>
+            <div className="rounded border border-[#0D2235] bg-black/40 p-3">
+              <div className="text-[9px] font-bold tracking-widest text-[#475569]">ASSESSED</div>
+              <div className="mt-1 text-lg font-black">{property.assessedValue ? formatCurrency(property.assessedValue) : '—'}</div>
+            </div>
+            <div className="rounded border border-[#0D2235] bg-black/40 p-3">
+              <div className="text-[9px] font-bold tracking-widest text-[#475569]">YEAR / SQFT</div>
+              <div className="mt-1 text-sm font-bold">
+                {property.yearBuilt || '—'} · {property.sqFt ? `${property.sqFt.toLocaleString()} sqft` : '—'}
+              </div>
+            </div>
+          </div>
 
-        {/* Quick start */}
-        <div className="mt-10">
-          <h2 className="text-2xl font-black">Quick start</h2>
-          <ol className="mt-4 space-y-3 text-sm text-[#94A3B8]">
-            <li>
-              <span className="font-bold text-white">1.</span> Download <span className="font-mono text-[#F59E0B]">HYVEResidential_Setup.exe</span> above.
-            </li>
-            <li>
-              <span className="font-bold text-white">2.</span> Run the installer. Windows SmartScreen may flag it (unsigned executable) — click "More info" → "Run anyway".
-            </li>
-            <li>
-              <span className="font-bold text-white">3.</span> Launch HYVE Residential from the Start menu. The first run initializes the SQLite database and registers county adapters (Wake, Mecklenburg, etc.).
-            </li>
-            <li>
-              <span className="font-bold text-white">4.</span> Open Settings → Counties → enable the counties you operate in. Scrapers will run on the configured schedule (default: nightly at 2 AM local).
-            </li>
-            <li>
-              <span className="font-bold text-white">5.</span> Use the Search view to filter by distress type, address, or owner. Click any property to open its profile + generate outreach documents.
-            </li>
-          </ol>
-        </div>
+          {/* Owner */}
+          <div className="mt-5">
+            <div className="text-[10px] font-bold tracking-[0.3em] text-[#F59E0B]">OWNER</div>
+            <div className="mt-1 rounded border border-[#0D2235] bg-black/30 p-3 text-sm">
+              <div className="font-bold">{owner.name}</div>
+              <div className="font-mono text-[10px] text-[#94A3B8]">
+                {owner.ownerType.toUpperCase()}
+                {owner.mailingAddress && ` · ${owner.mailingAddress}`}
+                {owner.mailingCity && `, ${owner.mailingCity}`}
+                {owner.mailingState && ` ${owner.mailingState}`}
+                {owner.mailingZip && ` ${owner.mailingZip}`}
+              </div>
+            </div>
+          </div>
 
-        <div className="mt-12 rounded border border-[#0D2235] bg-black/30 px-4 py-3 text-[11px] text-[#64748B]">
-          <strong className="text-[#F59E0B]">Disclaimer:</strong> HYVE Residential indexes public-record data published by county governments. Always verify
-          a property's current status with the source county registry before making an offer or sending mail. Scraped data may lag the live registry by up to 24 hours.
+          {/* Foreclosure */}
+          {foreclosure && (
+            <div className="mt-5">
+              <div className="text-[10px] font-bold tracking-[0.3em] text-[#F59E0B]">FORECLOSURE · {foreclosure.caseNumber}</div>
+              <div className="mt-1 rounded border-2 p-3 text-sm" style={{ borderColor: stageColor(foreclosure.stage), background: `${stageColor(foreclosure.stage)}10` }}>
+                <div className="font-bold" style={{ color: stageColor(foreclosure.stage) }}>{stageLabel(foreclosure.stage).toUpperCase()}</div>
+                <div className="mt-1 font-mono text-[10px] text-[#94A3B8]">
+                  Filed {foreclosure.filedDate}
+                  {foreclosure.hearingDate && ` · Hearing ${foreclosure.hearingDate}`}
+                  {foreclosure.saleDate && ` · Sale ${foreclosure.saleDate}`}
+                  {foreclosure.trustee && ` · Trustee ${foreclosure.trustee}`}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tax history */}
+          {tax.length > 0 && (
+            <div className="mt-5">
+              <div className="flex items-baseline justify-between">
+                <div className="text-[10px] font-bold tracking-[0.3em] text-[#F59E0B]">TAX HISTORY</div>
+                {totalOwed > 0 && (
+                  <div className="font-mono text-[10px] text-[#EF4444]">
+                    {formatCurrency(totalOwed)} owed
+                  </div>
+                )}
+              </div>
+              <ul className="mt-1 grid gap-1">
+                {tax
+                  .slice()
+                  .sort((a, b) => b.taxYear - a.taxYear)
+                  .map((t) => {
+                    const owed = Math.max(0, t.amountDue - t.amountPaid)
+                    return (
+                      <li
+                        key={`${t.parcelId}-${t.taxYear}`}
+                        className="flex items-center justify-between rounded border border-[#0D2235] bg-black/30 px-3 py-1.5 text-xs"
+                      >
+                        <span className="font-mono text-[10px] text-[#94A3B8]">{t.taxYear}</span>
+                        <span>
+                          {formatCurrency(t.amountPaid)} <span className="text-[#475569]">/ {formatCurrency(t.amountDue)}</span>
+                        </span>
+                        <span className={owed > 0 ? 'font-mono text-[10px] text-[#EF4444]' : 'font-mono text-[10px] text-[#22C55E]'}>
+                          {owed > 0 ? `+${formatCurrency(owed + (t.penalty || 0) + (t.interest || 0))} due` : 'paid'}
+                        </span>
+                      </li>
+                    )
+                  })}
+              </ul>
+            </div>
+          )}
+
+          {/* Liens */}
+          {liens.length > 0 && (
+            <div className="mt-5">
+              <div className="flex items-baseline justify-between">
+                <div className="text-[10px] font-bold tracking-[0.3em] text-[#F59E0B]">LIENS</div>
+                {totalLiens > 0 && (
+                  <div className="font-mono text-[10px] text-[#EF4444]">{formatCurrency(totalLiens)} active</div>
+                )}
+              </div>
+              <ul className="mt-1 grid gap-1">
+                {liens.map((l) => (
+                  <li
+                    key={l.id}
+                    className="flex items-center justify-between gap-3 rounded border border-[#0D2235] bg-black/30 px-3 py-1.5 text-xs"
+                  >
+                    <span className="font-mono text-[10px] uppercase text-[#F59E0B]">{l.type}</span>
+                    <span className="min-w-0 flex-1 truncate text-[#94A3B8]">{l.plaintiff}</span>
+                    <span>{formatCurrency(l.amount)}</span>
+                    <span className="font-mono text-[9px] text-[#475569]">{l.filingDate}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Outreach */}
+          <div className="mt-6 grid gap-2 sm:grid-cols-3">
+            <button
+              onClick={() => alert('Word doc generation comes online when scrapers are wired in Phase 2 — uses python-docx server-side via the same templates as the desktop app.')}
+              className="rounded border border-[#F59E0B] bg-[#F59E0B]/10 px-3 py-2 text-[10px] font-bold tracking-widest text-[#F59E0B]"
+            >
+              📄 CASH OFFER
+            </button>
+            <button
+              onClick={() => alert('Lien-negotiation memo coming in Phase 2.')}
+              className="rounded border border-[#F59E0B] bg-[#F59E0B]/10 px-3 py-2 text-[10px] font-bold tracking-widest text-[#F59E0B]"
+            >
+              📄 LIEN MEMO
+            </button>
+            <a
+              href={`/spy/app/sleuth?subject=${encodeURIComponent(owner.name)}`}
+              className="rounded border border-[#C8A227] bg-[#C8A227]/10 px-3 py-2 text-center text-[10px] font-bold tracking-widest text-[#C8A227]"
+            >
+              🕵️ SLEUTH OWNER →
+            </a>
+          </div>
         </div>
       </div>
-    </main>
+    </div>
   )
 }
 
@@ -213,21 +399,21 @@ function UpgradeGate() {
           HYVE <span style={{ color: '#F59E0B' }}>Residential</span>
         </h1>
         <div className="mt-2 font-mono text-[11px] tracking-widest text-[#64748B]">
-          DISTRESSED-PROPERTY INTEL · DESKTOP · PRO
+          DISTRESSED-PROPERTY INTEL · IN-TAB · PRO
         </div>
         <p className="mt-5 text-sm leading-relaxed text-[#94A3B8]">
-          A self-hosted desktop app that auto-scrapes <span className="text-white">county property records</span> and
-          surfaces every distress signal investors care about — foreclosures, tax delinquencies, HOA liens,
-          mechanic liens, judgments — with property-profile cards and outreach document generation.
+          Browse <span className="text-white">every distressed property</span> in your county — foreclosures (filed → sale scheduled), tax delinquencies (years owed),
+          HOA / mechanic / judgment liens — with a per-property profile, distress score, and one-click outreach docs.
+          Lives inside the Spy app. No download.
         </p>
 
         <ul className="mt-6 grid gap-2 text-left text-xs text-[#94A3B8]">
-          <li className="flex gap-2"><span className="text-[#F59E0B]">✓</span> Foreclosure pipeline (filed → sale scheduled → sold)</li>
+          <li className="flex gap-2"><span className="text-[#F59E0B]">✓</span> Foreclosure pipeline (filed → notice → sale → sold)</li>
           <li className="flex gap-2"><span className="text-[#F59E0B]">✓</span> Tax-delinquent properties (years owed, amount due)</li>
           <li className="flex gap-2"><span className="text-[#F59E0B]">✓</span> HOA / mechanic / contractor / judgment liens</li>
-          <li className="flex gap-2"><span className="text-[#F59E0B]">✓</span> Property profiles with full owner + tax + lien history</li>
-          <li className="flex gap-2"><span className="text-[#F59E0B]">✓</span> Auto-generated cash-offer / lien-negotiation Word docs</li>
-          <li className="flex gap-2"><span className="text-[#F59E0B]">✓</span> Same data PropStream charges $200/mo for. Yours, $0/mo.</li>
+          <li className="flex gap-2"><span className="text-[#F59E0B]">✓</span> Distress score 0-100 per property</li>
+          <li className="flex gap-2"><span className="text-[#F59E0B]">✓</span> One-click cross-link to Sleuth on the owner</li>
+          <li className="flex gap-2"><span className="text-[#F59E0B]">✓</span> Same data PropStream charges $200/mo for. Yours included.</li>
         </ul>
 
         <a

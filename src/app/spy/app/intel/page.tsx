@@ -51,11 +51,11 @@ const TILES: Tile[] = [
   {
     href: '/spy/app/residential',
     label: 'HYVE RESIDENTIAL',
-    subtitle: 'Distressed-property intel for real-estate investors. Auto-scrapes county records: foreclosures, tax delinquencies, HOA / mechanic / judgment liens, with outreach-doc generator. Same data PropStream charges $200/mo for.',
+    subtitle: 'Distressed-property intel for real-estate investors. County records: foreclosures, tax delinquencies, HOA / mechanic / judgment liens. Per-property profile + distress score + one-click outreach. Same data PropStream charges $200/mo for.',
     color: '#F59E0B',
     icon: '🏚️',
-    count: 'desktop · NC counties',
-    badge: 'PRO · DESKTOP',
+    count: 'in-tab · Wake + Mecklenburg + more',
+    badge: 'PRO · INLINE',
   },
 ];
 
