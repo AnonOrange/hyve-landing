@@ -20,8 +20,8 @@ const STATS = [
   { value: '73,898', label: 'Live cameras' },
   { value: '164,733', label: 'Surveillance markers' },
   { value: '97,061', label: 'Offender pins' },
-  { value: '53,519', label: 'Live crime reports' },
-  { value: '15', label: 'Cities w/ daily crime' },
+  { value: '57,260', label: 'Live crime reports' },
+  { value: '20', label: 'Cities w/ daily crime' },
 ];
 
 const FEATURES = [
@@ -54,9 +54,9 @@ const FEATURES = [
     tag: 'OFFENDERS',
   },
   {
-    title: '53,519 live crime reports — 15 cities, refreshed daily',
+    title: '57,260 live crime reports — 20 cities, refreshed daily',
     body:
-      'Real incident pins (not heatmaps) refreshed daily at 9am UTC from city open-data portals: Chicago, NYC, LA, Philadelphia, San Francisco, Seattle, Minneapolis, Raleigh, Dallas, Washington DC, Tucson, Montgomery County MD, Gainesville FL, Buffalo, Marin County CA. 12 category icons (🔫 shooting, 💀 homicide, 👊 assault, 💰 robbery, 🏚 burglary, 🚗 vehicle theft, 🛒 theft, 💊 drug, 🎨 vandalism, 🔥 arson, 💳 fraud, ⚠ sex offense). Click any pin → 🎙 SCANNER AUDIO section with the 3 closest live scanner feeds + Broadcastify Premium archive deep-link + OpenMHz public calls.',
+      'Real incident pins (not heatmaps) refreshed daily at 9am UTC from city open-data portals: NYC · LA · Chicago · Philadelphia · Minneapolis · SF · Seattle · Raleigh · Dallas · Lewisville TX · DC · Tucson · Houston · Montgomery County MD · Valdosta GA · Gainesville FL · Buffalo · Boulder CO · Marin County CA · Halifax NS. 12 category icons (🔫 shooting, 💀 homicide, 👊 assault, 💰 robbery, 🏚 burglary, 🚗 vehicle theft, 🛒 theft, 💊 drug, 🎨 vandalism, 🔥 arson, 💳 fraud, ⚠ sex offense). Click any pin → 🎙 SCANNER AUDIO with 3 closest live feeds + Broadcastify Premium archive deep-link + OpenMHz public calls.',
     accent: '#EF4444',
     tag: 'CRIME',
   },
@@ -380,7 +380,7 @@ export default function SpyPage() {
           </div>
           <p className="mb-6 text-center text-xs text-[#64748B]">
             Pro tier unlocks the <span className="text-[#22C55E]">Global view</span> (24,491 worldwide cams) +
-            the <span className="text-[#F59E0B]">Intel suite</span> (164k surveillance · 97k offenders · 53k live crime reports).
+            the <span className="text-[#F59E0B]">Intel suite</span> (164k surveillance · 97k offenders · 57k live crime reports).
           </p>
           <ul className="grid gap-3 md:grid-cols-2">
             {[
