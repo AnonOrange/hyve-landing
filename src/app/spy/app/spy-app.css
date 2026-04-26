@@ -1,0 +1,31 @@
+/* Leaflet styles inlined here so the route works without a global import */
+@import 'leaflet/dist/leaflet.css';
+
+.leaflet-container {
+  background: #020D14;
+  font-family: inherit;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #0D2235;
+  color: #E2E8F0;
+  border-radius: 8px;
+}
+
+.leaflet-control-attribution {
+  background: rgba(2, 13, 20, 0.6) !important;
+  color: #64748B !important;
+  font-size: 9px !important;
+}
+
+.leaflet-control-attribution a {
+  color: #00D4FF !important;
+}
+
+/* Hide default zoom control on mobile to keep space for our UI */
+@media (max-width: 640px) {
+  .leaflet-control-zoom {
+    display: none;
+  }
+}

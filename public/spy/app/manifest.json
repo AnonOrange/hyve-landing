@@ -1,0 +1,14 @@
+{
+  "name": "Hyve Spy",
+  "short_name": "Hyve Spy",
+  "description": "Real-time public-safety scanner intelligence",
+  "start_url": "/spy/app",
+  "scope": "/spy/app",
+  "display": "standalone",
+  "background_color": "#020D14",
+  "theme_color": "#020D14",
+  "orientation": "portrait",
+  "icons": [
+    {"src": "/spy-logo/hyve-spy-logo.png", "sizes": "1536x1024", "type": "image/png", "purpose": "any"}
+  ]
+}

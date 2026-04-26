@@ -25,3 +25,4 @@ Thumbs.db
 
 # Git worktrees (isolated branches for feature work)
 .worktrees/
+tsconfig.tsbuildinfo
