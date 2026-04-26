@@ -63,71 +63,107 @@ export default function TickerPage() {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    Promise.all([
-      fetch(`${API}/feeds/trending?limit=200`).then((r) => r.json()).catch(() => []),
-      fetch(`${API}/crime/incidents?limit=500`).then((r) => r.json()).catch(() => []),
-    ])
-      .then(([feedsRaw, crimeRaw]) => {
-        if (cancelled) return
-        const feeds: any[] = Array.isArray(feedsRaw) ? feedsRaw : feedsRaw?.feeds || []
-        const crimes: any[] = Array.isArray(crimeRaw) ? crimeRaw : crimeRaw?.incidents || []
 
-        // Top 50 most-listened-to feeds become live incident tickers.
-        // Listener count is the proxy for "this is happening right now."
-        const feedItems: TickerItem[] = feeds
-          .filter((f) => (f.listeners || 0) >= 30)
-          .slice(0, 50)
-          .map((f): TickerItem => {
-            const type = (f.type || f.feedType || 'other').toLowerCase()
-            return {
-              id: `f:${f.id || f.feedId}`,
-              emoji: FEED_TYPE_EMOJI[type] || '📡',
-              label: (f.name || f.displayName || 'Live').toUpperCase(),
-              detail: `${(f.listeners || 0).toLocaleString()} listeners · ${type}`,
-              city: f.county || '',
-              state: f.state || '',
-              ageSec: 0, // live = 0
-              source: 'feed',
-              href: `/spy/app/feed/${f.id || f.feedId}`,
-              accent: type === 'fire' ? '#FF2D2D' : type === 'ems' ? '#F59E0B' : type === 'aviation' ? '#A855F7' : type === 'marine' ? '#3B82F6' : '#00D4FF',
-            }
-          })
+    // Two independent fetches — render whichever comes back first instead
+    // of blocking on Promise.all. Crime is heavier (~150ms + render), feeds
+    // are lighter (~80ms). Showing the marquee partially-populated feels
+    // more alive than a 200ms empty state.
+    const buildFeedItems = (raw: any): TickerItem[] => {
+      const feeds: any[] = Array.isArray(raw) ? raw : raw?.feeds || []
+      // Top 60 by listener count, NO threshold filter (most feeds report 0
+      // listeners most of the time; the previous >=30 filter killed the
+      // entire marquee). Sort desc, take top 60. Leftover quiet feeds still
+      // make the bar long enough to scroll continuously.
+      return feeds
+        .slice()
+        .sort((a, b) => (b.listeners || 0) - (a.listeners || 0))
+        .slice(0, 60)
+        .map((f): TickerItem => {
+          const type = (f.type || f.feedType || 'other').toLowerCase()
+          return {
+            id: `f:${f.id || f.feedId}`,
+            emoji: FEED_TYPE_EMOJI[type] || '📡',
+            label: (f.name || f.displayName || 'Live').toUpperCase(),
+            detail: `${(f.listeners || 0).toLocaleString()} listeners · ${type}`,
+            city: f.county || '',
+            state: f.state || '',
+            ageSec: 0,
+            source: 'feed',
+            href: `/spy/app/feed/${f.id || f.feedId}`,
+            accent: type === 'fire' ? '#FF2D2D' : type === 'ems' ? '#F59E0B' : type === 'aviation' ? '#A855F7' : type === 'marine' ? '#3B82F6' : '#00D4FF',
+          }
+        })
+    }
 
-        // Recent crime: last 100 sorted by recency
-        const now = Date.now()
-        const crimeItems: TickerItem[] = crimes
-          .map((c): TickerItem | null => {
-            const ts = c.occurred_at ? new Date(c.occurred_at).getTime() : 0
-            if (!ts) return null
-            const ageSec = Math.floor((now - ts) / 1000)
-            if (ageSec > 24 * 3600) return null // 24h max
-            const cat = (c.category || c.offense || '').toLowerCase().replace(/[\s-]/g, '_')
-            return {
-              id: `c:${c.id || `${ts}-${c.lat}`}`,
-              emoji: CRIME_EMOJI[cat] || '🚨',
-              label: (c.offense || c.category || 'INCIDENT').toUpperCase(),
-              detail: c.address || c.description || '',
-              city: c.city || '',
-              state: c.state || '',
-              ageSec,
-              source: 'crime',
-              accent: '#EF4444',
-            }
-          })
-          .filter((x): x is TickerItem => !!x)
-          .sort((a, b) => a.ageSec - b.ageSec)
-          .slice(0, 80)
+    const buildCrimeItems = (raw: any): TickerItem[] => {
+      const crimes: any[] = Array.isArray(raw) ? raw : raw?.incidents || []
+      const now = Date.now()
+      return crimes
+        .map((c): TickerItem | null => {
+          const ts = c.occurred_at ? new Date(c.occurred_at).getTime() : 0
+          if (!ts) return null
+          const ageSec = Math.floor((now - ts) / 1000)
+          if (ageSec > 24 * 3600) return null
+          // Real crime payload uses subcategory (e.g. "robbery") and
+          // description, not offense/address. The previous code looked at
+          // missing fields → labels read just "OTHER" or fell back to
+          // "INCIDENT" with no detail.
+          const cat = (c.subcategory || c.category || '').toLowerCase().replace(/[\s-]/g, '_')
+          return {
+            id: `c:${c.id || `${ts}-${c.lat}`}`,
+            emoji: CRIME_EMOJI[cat] || '🚨',
+            label: (c.subcategory || c.category || 'INCIDENT').toUpperCase(),
+            detail: c.description || '',
+            city: c.city || '',
+            state: '',
+            ageSec,
+            source: 'crime',
+            accent: '#EF4444',
+          }
+        })
+        .filter((x): x is TickerItem => !!x)
+        .sort((a, b) => a.ageSec - b.ageSec)
+        .slice(0, 80)
+    }
 
-        // Interleave so the marquee mixes feeds + crime
-        const merged: TickerItem[] = []
-        const max = Math.max(feedItems.length, crimeItems.length)
-        for (let i = 0; i < max; i++) {
-          if (feedItems[i]) merged.push(feedItems[i])
-          if (crimeItems[i]) merged.push(crimeItems[i])
-        }
-        setItems(merged)
+    let feedItems: TickerItem[] = []
+    let crimeItems: TickerItem[] = []
+    let pending = 2
+
+    const interleaveAndRender = () => {
+      const merged: TickerItem[] = []
+      const max = Math.max(feedItems.length, crimeItems.length)
+      for (let i = 0; i < max; i++) {
+        if (feedItems[i]) merged.push(feedItems[i])
+        if (crimeItems[i]) merged.push(crimeItems[i])
+      }
+      if (!cancelled) setItems(merged)
+    }
+
+    fetch(`${API}/feeds/trending?limit=200`)
+      .then((r) => r.json())
+      .then((raw) => {
+        feedItems = buildFeedItems(raw)
+        interleaveAndRender()
       })
-      .finally(() => !cancelled && setLoading(false))
+      .catch(() => {})
+      .finally(() => {
+        pending--
+        if (pending === 0 && !cancelled) setLoading(false)
+      })
+
+    fetch(`${API}/crime/incidents?limit=500`)
+      .then((r) => r.json())
+      .then((raw) => {
+        crimeItems = buildCrimeItems(raw)
+        interleaveAndRender()
+      })
+      .catch(() => {})
+      .finally(() => {
+        pending--
+        if (pending === 0 && !cancelled) setLoading(false)
+      })
+
     return () => {
       cancelled = true
     }

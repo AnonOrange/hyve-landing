@@ -1,26 +1,52 @@
 'use client'
 
-// ROULETTE — One button → random teleport into live reality somewhere on Earth.
+// ROULETTE — One button → truly random teleport into live reality on Earth.
 //
-// Picks a random scanner feed (weighted by listener count so popular feeds are
-// more likely than dead ones, but every feed has nonzero chance), then assembles
-// "what's happening right there right now":
-//   - Scanner audio (we link out to the feed page rather than embedding to keep
-//     this view lightweight; scanner audio playback already works on /feed/[id])
-//   - 4 nearest cameras tiled (live snapshots auto-refresh every 5s)
-//   - Closest local TV / radio station from our curated catalog
-//   - Recent crime in 25mi radius
+// Source pool combines THREE globally-distributed inventories so the dice
+// can land anywhere on the planet, not just on the few US scanner feeds
+// reporting current listeners:
+//   1. ALL US scanner feeds (~2000) — listener count is unreliable
+//      (most feeds report 0 most of the time), so we no longer filter by it.
+//      Listeners just SOFT-WEIGHT the pick: feeds with traffic come up more
+//      often, but a 0-listener volunteer fire department in Wyoming is
+//      still reachable.
+//   2. Worldwide cameras (~24K via /cameras/world) — every Windy webcam +
+//      cruise-cam + landmark we know about. Means rolls land on Tokyo,
+//      Reykjavik, Cairo, the deck of a cruise ship in the Pacific.
+//   3. Curated TV + radio broadcasts (~50) from our catalog — broadcaster
+//      HQ cities (NHK Tokyo, BBC London, NASA Houston, etc.).
 //
-// Chatroulette for live data — but you can stay as long as you want.
+// On each roll we land at one destination, then ALWAYS show the closest
+// scanner feed + 4 nearest cameras + closest local TV + closest radio +
+// recent crime in 25mi (regardless of which inventory we landed in).
+// "What's actually here right now" is the same question regardless of pin
+// type, so the surrounding-context fetch is unified.
 
 import { useEffect, useMemo, useState } from 'react'
 import { BROADCASTS } from '@/lib/liveBroadcasts'
 
 const API = 'https://hyve-api.vercel.app'
 
+type Destination = {
+  id: string
+  name: string
+  lat: number
+  lng: number
+  source: 'scanner' | 'camera' | 'broadcast'
+  weight: number // soft weighting for pick probability
+  // Display fields (vary by source)
+  agency?: string
+  county?: string
+  state?: string
+  country?: string
+  type?: string
+  listeners?: number
+  scannerFeedId?: string // if source='scanner', the feed id for /spy/app/feed/...
+}
+
 type Feed = { id: string; name: string; lat: number; lng: number; listeners: number; county?: string; state?: string; type?: string }
 type Cam = { id: string; name?: string; agency?: string; snapshotUrl?: string; url?: string; lat?: number; lng?: number; latitude?: number; longitude?: number }
-type Crime = { id: string; lat: number; lng: number; category?: string; offense?: string; occurred_at?: string; address?: string }
+type Crime = { id: string; lat: number; lng: number; category?: string; subcategory?: string; description?: string; occurred_at?: string; city?: string }
 
 function haversine(a: [number, number], b: [number, number]) {
   const toR = (x: number) => (x * Math.PI) / 180
@@ -33,50 +59,123 @@ function haversine(a: [number, number], b: [number, number]) {
 }
 
 export default function RoulettePage() {
-  const [feeds, setFeeds] = useState<Feed[]>([])
-  const [pick, setPick] = useState<Feed | null>(null)
+  const [destinations, setDestinations] = useState<Destination[]>([])
+  const [feedById, setFeedById] = useState<Map<string, Feed>>(new Map())
+  const [pick, setPick] = useState<Destination | null>(null)
   const [cams, setCams] = useState<Cam[]>([])
   const [crime, setCrime] = useState<Crime[]>([])
   const [allCrime, setAllCrime] = useState<Crime[]>([])
   const [spinning, setSpinning] = useState(false)
   const [snapTick, setSnapTick] = useState(0)
 
-  // Bootstrap: feeds + entire crime dataset (so each roll is instant).
+  // Bootstrap: 3 globally-distributed inventories + entire crime dataset.
+  // The crime fetch is the heaviest (~2.4MB at limit=10000) so don't block
+  // the dice on it — we set it asynchronously after destinations are ready.
   useEffect(() => {
     Promise.all([
       fetch(`${API}/feeds/trending?limit=2000`).then((r) => r.json()).catch(() => []),
-      fetch(`${API}/crime/incidents?limit=10000`).then((r) => r.json()).catch(() => []),
-    ]).then(([fRaw, cRaw]) => {
+      fetch(`${API}/cameras/world`).then((r) => r.json()).catch(() => []),
+    ]).then(([fRaw, camRaw]) => {
       const fs: any[] = Array.isArray(fRaw) ? fRaw : fRaw?.feeds || []
-      const cs: any[] = Array.isArray(cRaw) ? cRaw : cRaw?.incidents || []
-      setFeeds(
-        fs
-          .map((f) => ({
-            id: f.id || f.feedId,
-            name: f.name || f.displayName || 'Scanner',
-            lat: f.lat ?? f.latitude,
-            lng: f.lng ?? f.lon ?? f.longitude,
-            listeners: f.listeners || 0,
-            county: f.county,
-            state: f.state,
-            type: f.type || f.feedType,
-          }))
-          .filter((f) => Number.isFinite(f.lat) && Number.isFinite(f.lng) && f.listeners > 0),
-      )
-      setAllCrime(
-        cs
-          .map((c) => ({
-            id: c.id,
-            lat: c.lat ?? c.latitude,
-            lng: c.lng ?? c.lon ?? c.longitude,
-            category: c.category,
-            offense: c.offense,
-            occurred_at: c.occurred_at,
-            address: c.address,
-          }))
-          .filter((c) => Number.isFinite(c.lat) && Number.isFinite(c.lng)),
-      )
+      const cams: any[] = Array.isArray(camRaw) ? camRaw : camRaw?.cameras || camRaw?.data || []
+
+      const map = new Map<string, Feed>()
+      const dests: Destination[] = []
+
+      // 1. Scanner feeds — soft-weighted by listener count (log + 2 floor so
+      //    even 0-listener feeds have a real shot at being picked)
+      for (const f of fs) {
+        const lat = f.lat ?? f.latitude
+        const lng = f.lng ?? f.lon ?? f.longitude
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue
+        const id = f.id || f.feedId
+        const feed: Feed = {
+          id,
+          name: f.name || f.displayName || 'Scanner',
+          lat,
+          lng,
+          listeners: f.listeners || 0,
+          county: f.county,
+          state: f.state,
+          type: f.type || f.feedType,
+        }
+        map.set(id, feed)
+        dests.push({
+          id: `s:${id}`,
+          name: feed.name,
+          lat,
+          lng,
+          source: 'scanner',
+          weight: Math.log10((feed.listeners || 0) + 2) + 0.5,
+          county: feed.county,
+          state: feed.state,
+          type: feed.type,
+          listeners: feed.listeners,
+          scannerFeedId: id,
+        })
+      }
+
+      // 2. World cameras — uniform weight 0.7 (slightly under a typical
+      //    scanner so the US doesn't overwhelm; still globally numerous so
+      //    most rolls actually land somewhere on Earth that isn't the US).
+      for (const c of cams) {
+        const lat = c.lat ?? c.latitude
+        const lng = c.lng ?? c.lon ?? c.longitude
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue
+        dests.push({
+          id: `c:${c.id || `${lat}-${lng}`}`,
+          name: c.name || c.title || 'Live Camera',
+          lat,
+          lng,
+          source: 'camera',
+          weight: 0.7,
+          agency: c.agency,
+          country: c.country,
+          type: c.feedType,
+        })
+      }
+
+      // 3. Curated broadcasts — high weight (1.5) since these are flagship
+      //    locations (NYC studios, Tokyo, London, NASA Houston, etc.)
+      for (const b of BROADCASTS) {
+        dests.push({
+          id: `b:${b.id}`,
+          name: b.name,
+          lat: b.lat,
+          lng: b.lng,
+          source: 'broadcast',
+          weight: 1.5,
+          agency: b.agency,
+          country: b.flag,
+          type: b.category,
+        })
+      }
+
+      setFeedById(map)
+      setDestinations(dests)
     })
+
+    // Background: fetch crime separately so the heavy payload doesn't block.
+    fetch(`${API}/crime/incidents?limit=10000`)
+      .then((r) => r.json())
+      .then((cRaw) => {
+        const cs: any[] = Array.isArray(cRaw) ? cRaw : cRaw?.incidents || []
+        setAllCrime(
+          cs
+            .map((c) => ({
+              id: c.id,
+              lat: c.lat ?? c.latitude,
+              lng: c.lng ?? c.lon ?? c.longitude,
+              category: c.category,
+              subcategory: c.subcategory,
+              description: c.description,
+              occurred_at: c.occurred_at,
+              city: c.city,
+            }))
+            .filter((c) => Number.isFinite(c.lat) && Number.isFinite(c.lng)),
+        )
+      })
+      .catch(() => {})
   }, [])
 
   // Refresh camera snapshots every 5s while a pick is active.
@@ -86,33 +185,34 @@ export default function RoulettePage() {
     return () => clearInterval(i)
   }, [pick])
 
-  // Weighted-random feed pick: weight = log(listeners+1) so popular feeds are
-  // picked more often, but a 5-listener feed in nowhere Idaho still has a
-  // ~5% shot at landing. That's the magic — sometimes you get NYC, sometimes
-  // you get a single-truck volunteer fire department in Wyoming.
+  // Weighted-random pick across the merged 3-source pool. Spinner animation
+  // cycles through 8 random uniform picks for theatre, then the FINAL
+  // selection respects the per-destination weights.
   const roll = async () => {
-    if (feeds.length === 0) return
+    if (destinations.length === 0) return
     setSpinning(true)
     setCams([])
     setCrime([])
-    // Spinner animation: cycle through 8 random picks visually
+
+    // Pre-spin theatre: uniform random across the pool for visual flicker
     for (let i = 0; i < 8; i++) {
-      const r = feeds[Math.floor(Math.random() * feeds.length)]
+      const r = destinations[Math.floor(Math.random() * destinations.length)]
       setPick(r)
       await new Promise((res) => setTimeout(res, 90 + i * 25))
     }
-    const weights = feeds.map((f) => Math.log10(f.listeners + 1))
-    const total = weights.reduce((a, b) => a + b, 0)
+
+    // Final pick: weighted-random
+    const total = destinations.reduce((a, d) => a + d.weight, 0)
     let r = Math.random() * total
-    let chosen = feeds[0]
-    for (let i = 0; i < feeds.length; i++) {
-      r -= weights[i]
-      if (r <= 0) { chosen = feeds[i]; break }
+    let chosen = destinations[Math.floor(Math.random() * destinations.length)]
+    for (const d of destinations) {
+      r -= d.weight
+      if (r <= 0) { chosen = d; break }
     }
     setPick(chosen)
     setSpinning(false)
 
-    // Fetch surrounding context
+    // Surrounding context fetch — cameras within 25mi
     const camRes = await fetch(`${API}/cameras/nearby?lat=${chosen.lat}&lng=${chosen.lng}&radius=25`).catch(() => null)
     if (camRes?.ok) {
       const camRaw: any = await camRes.json()
@@ -128,6 +228,20 @@ export default function RoulettePage() {
         .map((x) => x.c),
     )
   }
+
+  // If we landed somewhere outside the US, scanner feed link won't help.
+  // Surface the nearest feed when one exists; else just hide the audio CTA.
+  const nearestScanner = useMemo(() => {
+    if (!pick) return null
+    if (pick.scannerFeedId) return feedById.get(pick.scannerFeedId) || null
+    let best: Feed | null = null
+    let bestD = Infinity
+    for (const f of feedById.values()) {
+      const d = haversine([pick.lat, pick.lng], [f.lat, f.lng])
+      if (d < bestD) { bestD = d; best = f }
+    }
+    return best && bestD < 100 ? best : null // only surface if within 100mi
+  }, [pick, feedById])
 
   // Closest curated TV + radio (pulled from our hand-picked broadcast catalog;
   // gives a deterministic local-station pick without an extra fetch)
@@ -155,13 +269,13 @@ export default function RoulettePage() {
             <div>
               <div className="text-[10px] font-black tracking-[0.4em] text-[#A855F7]">ROULETTE</div>
               <div className="font-mono text-[10px] text-[#64748B]">
-                {feeds.length === 0 ? 'loading reality…' : `${feeds.length.toLocaleString()} live destinations · roll the dice`}
+                {destinations.length === 0 ? 'loading reality…' : `${destinations.length.toLocaleString()} live destinations across the planet`}
               </div>
             </div>
           </div>
           <button
             onClick={roll}
-            disabled={spinning || feeds.length === 0}
+            disabled={spinning || destinations.length === 0}
             className="rounded border-2 px-4 py-2 text-xs font-black tracking-widest transition disabled:opacity-50"
             style={{
               borderColor: '#A855F7',
@@ -188,17 +302,27 @@ export default function RoulettePage() {
       ) : (
         <div className="mx-auto max-w-5xl px-4 pt-6">
           <div className="rounded-xl border border-[#A855F7]/40 bg-[#A855F7]/5 p-5">
-            <div className="text-[10px] font-bold tracking-[0.3em] text-[#A855F7]">YOU LANDED IN</div>
+            <div className="text-[10px] font-bold tracking-[0.3em] text-[#A855F7]">
+              YOU LANDED · {pick.source.toUpperCase()}
+            </div>
             <h2 className="mt-1 text-2xl font-black">{pick.name}</h2>
             <div className="font-mono text-xs text-[#94A3B8]">
-              {pick.county || ''} {pick.state ? `· ${pick.state}` : ''} · {pick.listeners.toLocaleString()} listeners · {pick.type || 'scanner'}
+              {[pick.county, pick.state, pick.country, pick.agency].filter(Boolean).join(' · ')}
+              {pick.listeners ? ` · ${pick.listeners.toLocaleString()} listeners` : ''}
+              {pick.type ? ` · ${pick.type}` : ''}
+              {' · '}
+              <span className="text-[#475569]">
+                {pick.lat.toFixed(3)}, {pick.lng.toFixed(3)}
+              </span>
             </div>
-            <a
-              href={`/spy/app/feed/${pick.id}`}
-              className="mt-3 inline-block rounded bg-[#A855F7] px-4 py-2 text-xs font-bold tracking-widest text-white"
-            >
-              ▶ OPEN LIVE AUDIO →
-            </a>
+            {nearestScanner && (
+              <a
+                href={`/spy/app/feed/${nearestScanner.id}`}
+                className="mt-3 inline-block rounded bg-[#A855F7] px-4 py-2 text-xs font-bold tracking-widest text-white"
+              >
+                ▶ {pick.scannerFeedId ? 'OPEN LIVE AUDIO' : 'NEAREST SCANNER'} →
+              </a>
+            )}
           </div>
 
           {/* Camera tiles — auto-refreshing snapshots */}
@@ -245,8 +369,9 @@ export default function RoulettePage() {
               <ul className="grid gap-1.5 text-xs">
                 {crime.map((c) => (
                   <li key={c.id} className="rounded border border-[#0D2235] bg-black/30 px-3 py-1.5 font-mono text-[#94A3B8]">
-                    <span className="text-[#FF2D2D]">{c.category || c.offense || 'incident'}</span>
-                    {c.address ? ` · ${c.address}` : ''}
+                    <span className="text-[#FF2D2D]">{c.subcategory || c.category || 'incident'}</span>
+                    {c.city ? ` · ${c.city}` : ''}
+                    {c.description ? ` · ${c.description}` : ''}
                   </li>
                 ))}
               </ul>

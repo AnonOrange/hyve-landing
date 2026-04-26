@@ -32,11 +32,16 @@ const API = 'https://hyve-api.vercel.app'
 
 export type Surveillance = {
   id: string
-  type: string
+  // Real values seen in the API response: 'alpr-flock', 'public-cctv',
+  // 'alpr-other', 'body-worn-cameras', 'alpr', 'drones',
+  // 'third-party-platforms', 'face-recognition', 'camera-registry',
+  // 'gunshot-detection', 'real-time-crime-center', 'predictive-policing',
+  // 'guard-camera', 'cell-site-simulator', 'video-analytics', 'fusion-center'
+  surveillanceType: string
   lat: number
   lng: number
-  name?: string
   agency?: string
+  label?: string
 }
 
 type Score = {
@@ -44,17 +49,23 @@ type Score = {
   breakdown: { type: string; count: number; weight: number; emoji: string }[]
 }
 
+// Categories keyed by the canonical bucket name produced by classify(). Each
+// has a privacy-invasiveness weight (heuristic, not science).
 const WEIGHTS: Record<string, { weight: number; emoji: string; label: string }> = {
   flock: { weight: 12, emoji: '🔍', label: 'Flock LPR readers' },
-  alpr: { weight: 12, emoji: '🔍', label: 'License-plate readers' },
+  alpr: { weight: 10, emoji: '🔍', label: 'Other LPR readers' },
   shotspotter: { weight: 5, emoji: '🎙', label: 'ShotSpotter microphones' },
   drone: { weight: 8, emoji: '🛸', label: 'Police drone deployments' },
   face_recognition: { weight: 15, emoji: '👤', label: 'Face-recognition systems' },
-  facial: { weight: 15, emoji: '👤', label: 'Face-recognition systems' },
   stingray: { weight: 20, emoji: '📡', label: 'Cell-site simulators' },
   fusion_center: { weight: 25, emoji: '🏛', label: 'Fusion centers' },
   rtcc: { weight: 18, emoji: '🏢', label: 'Real-time crime centers' },
+  predictive: { weight: 8, emoji: '🧠', label: 'Predictive policing systems' },
+  third_party: { weight: 6, emoji: '🤝', label: 'Third-party intel platforms' },
+  video_analytics: { weight: 7, emoji: '🤖', label: 'Video-analytics deployments' },
   cctv: { weight: 2, emoji: '📹', label: 'Public CCTV cameras' },
+  guard_camera: { weight: 2, emoji: '📹', label: 'Guard cameras' },
+  camera_registry: { weight: 1, emoji: '📋', label: 'Registered private CCTV' },
   body_camera: { weight: 1, emoji: '🎥', label: 'Body-worn cam programs' },
 }
 
@@ -67,17 +78,26 @@ function dist([la1, lo1]: [number, number], [la2, lo2]: [number, number]) {
   return 2 * 3958.8 * Math.asin(Math.sqrt(h))
 }
 
+// Maps the API's `surveillance_type` strings to our internal weight bucket.
+// Order matters — more-specific matches first (alpr-flock before alpr).
 function classify(t: string): string {
   const s = (t || '').toLowerCase()
-  if (s.includes('flock') || s.includes('alpr') || s.includes('license')) return 'flock'
-  if (s.includes('shotspotter')) return 'shotspotter'
+  if (s.includes('alpr-flock') || s === 'flock') return 'flock'
+  if (s.includes('alpr')) return 'alpr'
+  if (s.includes('gunshot') || s.includes('shotspotter')) return 'shotspotter'
   if (s.includes('drone')) return 'drone'
-  if (s.includes('face') || s.includes('biometric')) return 'face_recognition'
-  if (s.includes('stingray') || s.includes('imsi') || s.includes('cell-site')) return 'stingray'
+  if (s.includes('face')) return 'face_recognition'
+  if (s.includes('cell-site') || s.includes('stingray') || s.includes('imsi')) return 'stingray'
   if (s.includes('fusion')) return 'fusion_center'
-  if (s.includes('rtcc') || s.includes('crime center')) return 'rtcc'
+  if (s.includes('crime-center') || s.includes('rtcc')) return 'rtcc'
+  if (s.includes('predictive')) return 'predictive'
+  if (s.includes('third-party')) return 'third_party'
+  if (s.includes('video-analytics') || s.includes('analytics')) return 'video_analytics'
   if (s.includes('body')) return 'body_camera'
-  return 'cctv'
+  if (s.includes('camera-registry') || s.includes('registry')) return 'camera_registry'
+  if (s.includes('guard')) return 'guard_camera'
+  if (s.includes('cctv')) return 'cctv'
+  return 'cctv' // unknown defaults to CCTV (lowest weight)
 }
 
 function colorForScore(s: number): string {
@@ -113,14 +133,15 @@ export default function PanopticonPage() {
         setAll(
           arr
             .map((m: any) => ({
-              id: m.id || `${m.type}-${m.lat}-${m.lng}`,
-              type: m.type || m.category || 'cctv',
+              id: m.id || `${m.surveillance_type || m.feedType}-${m.lat}-${m.lng}`,
+              // Read the real field. Fallbacks for older shapes.
+              surveillanceType: m.surveillance_type || m.surveillanceType || m.feedType || m.type || m.category || '',
               lat: m.lat ?? m.latitude,
               lng: m.lng ?? m.lon ?? m.longitude,
-              name: m.name,
+              label: m.label || m.name,
               agency: m.agency,
             }))
-            .filter((m: any) => Number.isFinite(m.lat) && Number.isFinite(m.lng)),
+            .filter((m: Surveillance) => Number.isFinite(m.lat) && Number.isFinite(m.lng)),
         )
       })
       .catch((e) => setErr(e?.message || 'Surveillance load failed'))
@@ -132,7 +153,7 @@ export default function PanopticonPage() {
     const counts: Record<string, number> = {}
     for (const m of all) {
       if (dist(pin, [m.lat, m.lng]) > 1) continue
-      const c = classify(m.type)
+      const c = classify(m.surveillanceType)
       counts[c] = (counts[c] || 0) + 1
     }
     let total = 0

@@ -75,17 +75,24 @@ export default function PanopMap({
         </>
       )}
 
+      {/*
+        interactive:false on the dots so map clicks pass through to the
+        ClickHandler — without this the user can only set a pin in the
+        gaps between markers, which feels like the click "isn't working".
+      */}
       <MarkerClusterGroup chunkedLoading showCoverageOnHover={false} maxClusterRadius={45}>
         {markers.map((m) => (
           <CircleMarker
             key={m.id}
             center={[m.lat, m.lng]}
             radius={3}
+            interactive={false}
             pathOptions={{
               color: '#94A3B8',
               weight: 1,
               fillColor: '#94A3B8',
               fillOpacity: 0.55,
+              interactive: false,
             }}
           />
         ))}
