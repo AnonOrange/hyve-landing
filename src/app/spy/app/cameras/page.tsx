@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CameraOverlay, camName, camUrl, youtubeId, type Camera } from '../CameraOverlay'
+import FreshnessBadge from '../FreshnessBadge'
 
 const API_BASE = 'https://hyve-api.vercel.app'
 const PAGE_SIZE = 60
@@ -71,11 +72,14 @@ export default function CamerasPage() {
         className="sticky top-0 z-20 border-b border-[#0D2235] bg-[#020D14]/95 backdrop-blur"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
-        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
-          <div className="text-[10px] font-black tracking-[0.4em] text-[#00D4FF]">CAMERAS</div>
-          <span className="font-mono text-[10px] text-[#64748B]">
-            {loading ? 'loading…' : `${filtered.length.toLocaleString()} live`}
-          </span>
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="text-[10px] font-black tracking-[0.4em] text-[#00D4FF]">CAMERAS</div>
+            <span className="font-mono text-[10px] text-[#64748B]">
+              {loading ? 'loading…' : `${filtered.length.toLocaleString()} live`}
+            </span>
+          </div>
+          <FreshnessBadge accent="#00D4FF" />
         </div>
         <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 pb-3">
           <input

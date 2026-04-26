@@ -110,6 +110,13 @@ const FEATURES = [
     tag: 'APPS',
   },
   {
+    title: 'Cameras refresh + repopulate every 4 hours',
+    body:
+      "Every 4 hours, an automated validator HEAD-requests every camera URL we know about, marks dead ones inactive, and pulls fresh inventory from upstream sources (state DOTs, NPS parks, USGS volcanoes, Windy, EarthCam, port authorities). New cams added by upstream providers appear in the next sweep; rotted URLs get culled within a day. The site you load tomorrow has different cameras than today — always live, always trimmed.",
+    accent: '#22C55E',
+    tag: 'FRESH',
+  },
+  {
     title: 'Tactical radar loading — never silent',
     body:
       "Every page transition shows a tactical radar sweep: concentric rings with subtle pulses, rotating arm with a fading trail, blip-spawns simulating target detection, and an indeterminate progress bar. Color matches each tab's accent. So you always know the app is working — even when pulling 100k+ markers across the wire.",
@@ -380,6 +387,7 @@ export default function SpyPage() {
               'All 6,500+ live scanner feeds (police, fire, EMS, aviation, marine)',
               'All 49,488 US live cameras (DOT, USGS, EarthCam, NYC TMC, Windy)',
               'AI summaries on any LLM key (Anthropic, OpenAI, Gemini, Groq, Ollama)',
+              'Cameras auto-refresh every 4 hours (dead URLs culled, new cams added)',
               'Push alerts for incidents within your radius (1-50 mi)',
               'Per-channel community chat (sign-in required)',
               'Real-time incident detection (Whisper STT + listener-spike)',

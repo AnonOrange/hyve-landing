@@ -1,0 +1,36 @@
+name: Refresh cameras (every 4 hours)
+
+# Validates 1000 cameras per run — HEAD-requests each URL, marks dead ones
+# inactive, bumps last_validated_at on the survivors. With ~73k total cameras
+# at 1k/run, each camera is re-validated every ~12 days. New cameras come
+# from the daily seed scripts; this workflow is the kill-switch for dead URLs.
+
+on:
+  schedule:
+    - cron: '15 */4 * * *'  # 00:15, 04:15, 08:15, 12:15, 16:15, 20:15 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Hit /cron/refresh-cameras
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET not set in repo Actions secrets"
+            exit 1
+          fi
+          response=$(curl -sS -w "\nHTTP_CODE:%{http_code}" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            --max-time 360 \
+            "https://hyve-api.vercel.app/cron/refresh-cameras")
+          http_code=$(echo "$response" | tail -1 | sed 's/HTTP_CODE://')
+          body=$(echo "$response" | sed '$d')
+          echo "$body"
+          if [ "$http_code" != "200" ]; then
+            echo "::error::Endpoint returned $http_code"
+            exit 1
+          fi
