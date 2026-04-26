@@ -3,13 +3,13 @@ import type { Metadata } from 'next';
 import OpenWebAppButton from './OpenWebAppButton';
 
 export const metadata: Metadata = {
-  title: 'Hyve Spy — Public-safety + surveillance intelligence',
+  title: 'Hyve Spy — Tactical scanner + surveillance + crime intelligence',
   description:
-    'Live police/fire/EMS scanner audio. 49,000+ traffic + city cameras. 24,000+ worldwide cameras. 164,000+ surveillance markers (Flock ALPR, ShotSpotter, drones, face recognition). Real-time incident detection. $5.99/month.',
+    'Live police/fire/EMS scanner audio. 49,000+ US cameras + 24,000+ worldwide. 164,000+ surveillance markers (Flock ALPR, ShotSpotter, drones, face rec). 97,000+ sex offender pins. 31,000+ live crime incidents. AI summaries with any LLM key. Push alerts. $5.99/mo.',
   openGraph: {
-    title: 'Hyve Spy — Public-safety + surveillance intelligence',
+    title: 'Hyve Spy — Tactical scanner + surveillance + crime intelligence',
     description:
-      '6,500+ scanner feeds. 73,000+ live cameras. 164,000+ surveillance markers. Real-time incident detection. $5.99/mo, 72h free trial.',
+      '6,500+ scanner feeds · 73,000+ cameras · 164,000+ surveillance markers · 97,000+ offender pins · 31,000+ live crime reports. $5.99/mo, 72h free.',
     siteName: 'Hyve Spy',
     images: ['/spy-logo/hyve-spy-logo.png'],
   },
@@ -19,14 +19,16 @@ const STATS = [
   { value: '6,500+', label: 'Scanner feeds' },
   { value: '73,000+', label: 'Live cameras' },
   { value: '164,000+', label: 'Surveillance markers' },
-  { value: '199', label: 'Countries covered' },
+  { value: '97,000+', label: 'Offender pins' },
+  { value: '31,000+', label: 'Live crime reports' },
+  { value: '199', label: 'Countries' },
 ];
 
 const FEATURES = [
   {
     title: 'Every police, fire & EMS scanner in America',
     body:
-      '6,500+ verified live audio feeds — direct Broadcastify streams, OpenMHz trunked systems, aviation, marine, weather. Tap any pin, hear the dispatch live. Skip-ahead controls so you go straight to the live edge instead of catching up on backlog.',
+      '6,500+ verified live audio feeds — direct Broadcastify streams, OpenMHz trunked systems, aviation, marine, weather. Tap any pin, hear the dispatch live. Skip-ahead controls so you go straight to the live edge instead of catching up on backlog. Auto-summary panel transcribes recent activity in plain English.',
     accent: '#00D4FF',
     tag: 'AUDIO',
   },
@@ -38,53 +40,81 @@ const FEATURES = [
     tag: 'VIDEO',
   },
   {
-    title: '164,000 surveillance markers — Pro tier',
+    title: '164,733 surveillance markers — Pro Intel tab',
     body:
-      'See where Flock Safety license-plate readers (99,683), ShotSpotter mics, police drones, face recognition deployments, Stingrays, fusion centers, real-time crime centers, body-worn cam programs, and 26,000+ public CCTV cameras live. Sourced from EFF Atlas of Surveillance, DeFlock community DB, and OpenStreetMap. 16 toggleable layers.',
+      'See where Flock Safety license-plate readers (99,683), ShotSpotter mics (243), police drones (1,804), face recognition deployments (975), Stingrays (83), fusion centers, real-time crime centers, body-worn cam programs, and 26,000+ public CCTV cameras live. Sourced from EFF Atlas of Surveillance, DeFlock community DB, and OpenStreetMap. 16 toggleable layers grouped by category.',
     accent: '#F59E0B',
     tag: 'SURVEILLANCE',
   },
   {
-    title: 'Per-channel community chat',
+    title: '97,061 sex offender pins — Pro Intel tab',
     body:
-      'Listeners on the same scanner feed can chat in real time. Collapsible side panel inside every incident detail. Sign in once, your handle and history sync across all your devices.',
-    accent: '#EC4899',
-    tag: 'CHAT',
+      "Every registered sex offender from public state and county registries — including all 100 NC counties from the official NC SBI bulk dump (17,744 records) plus aggregated county ArcGIS feeds nationwide. Click any pin: full registry detail (DOB, race, classification, charge, conviction date) plus deep-link buttons that prefill the offender's name on the official state registry where their photo lives.",
+    accent: '#A855F7',
+    tag: 'OFFENDERS',
   },
   {
-    title: 'Real-time incident detection',
+    title: '31,000+ live crime reports — Pro Intel tab',
     body:
-      'On-device Whisper STT listens for keyword bursts. Listener-spike + transmission-burst detection surfaces incidents before the news catches them. The map literally shows where things are unfolding right now.',
+      'Real incident pins (not heatmaps) sourced daily from city open-data portals: Chicago, NYC, Los Angeles, San Francisco, Seattle, Washington DC, Buffalo. 12 category icons (🔫 shooting, 💀 homicide, 👊 assault, 💰 robbery, 🏚 burglary, 🚗 vehicle theft, 🛒 theft, 💊 drug, 🎨 vandalism, 🔥 arson, 💳 fraud, ⚠ sex offense). Filter chips per category. Click pin → offense, time-ago, source.',
+    accent: '#EF4444',
+    tag: 'CRIME',
+  },
+  {
+    title: 'Push alerts within X miles of you',
+    body:
+      'Opt in once in Settings, set your radius (1–50 mi), grant location + notification permission. Whisper STT keyword detection + listener-spike + transmission-burst → instant push to your phone or browser when an incident fires near you. The same feature that built Citizen into a billion-dollar company.',
     accent: '#FF2D2D',
     tag: 'ALERTS',
   },
   {
-    title: 'FOIA request generator',
+    title: 'Multi-provider AI summaries (BYOK)',
     body:
-      "Tap any incident, download a fillable PDF pre-formatted with the agency's records office, the exact incident timestamp, the talkgroup, and 8 enumerated request items. Sign and send.",
-    accent: '#A855F7',
+      'Bring your own API key from any provider — Anthropic Claude, OpenAI GPT, Google Gemini, OpenRouter, Groq, or Ollama (self-hosted). Auto-detects provider from key prefix. Optional model override. Summarizes recent radio traffic in 2-3 sentences for the public-safety listener. Keys stored locally on your device only.',
+    accent: '#EC4899',
+    tag: 'AI',
+  },
+  {
+    title: 'FOIA request generator — every feed',
+    body:
+      "Tap any incident, download a fillable PDF pre-formatted with the agency's records office, the exact incident timestamp, talkgroup, and 8 enumerated request items. Now works for ANY scanner feed — not just the ones with formal FOIA contacts. Generic [Agency] Records Office fallback uses agency name + state when no formal contact is configured.",
+    accent: '#9333EA',
     tag: 'RECORDS',
   },
   {
     title: 'Cross-device account + cloud sync',
     body:
-      'Magic-link or password sign-in. Your watchlist, FOIA log, and chat handle sync between web (any browser), Android app, and PWA on iOS. No tracking — Ghost Mode is on by default.',
+      'Magic-link or password sign-in. Your watchlist, FOIA log, and chat handle sync between web (any browser), Android app, and PWA on iOS. Sign in once on web, the Android hybrid app inherits your session via cookie injection. No tracking — Ghost Mode is on by default.',
     accent: '#E2E8F0',
     tag: 'ACCOUNT',
   },
   {
-    title: 'Tactical dark map',
+    title: 'Tactical dark map + dedicated tabs',
     body:
-      'Custom dark CARTO tiles. Color-coded pins by feed type (cyan = police, red = fire, amber = EMS/ALPR, purple = aviation, green = camera). Pinch-zoom from country-wide down to street level. 49k+ cameras render via marker clustering — no browser melt.',
+      'Bottom nav: Map (live operations) · Feeds (audio list) · Cams (camera grid) · Intel (Pro: surveillance / offenders / crime) · World (Pro: global cams) · Watch · Settings. Each tab loads only its own data — no monolithic loads, no slow tabs. Custom dark CARTO tiles. Marker clustering keeps 100k+ pin layers responsive.',
     accent: '#06B6D4',
-    tag: 'MAP',
+    tag: 'NAVIGATION',
+  },
+  {
+    title: 'Per-channel community chat',
+    body:
+      'Listeners on the same scanner feed can chat in real time. Collapsible side panel inside every feed detail. Sign in once, your handle and history sync across all your devices.',
+    accent: '#F472B6',
+    tag: 'CHAT',
+  },
+  {
+    title: 'Native Android app + PWA',
+    body:
+      'Hybrid Android APK with native scanner audio playback (background, lock-screen controls, no autoplay restrictions) and WebView for everything else (auto-inherits your sign-in via cookie sharing). Installable PWA on iOS. Tester APK at hyveapp.co/spy/downloads.',
+    accent: '#10B981',
+    tag: 'APPS',
   },
 ];
 
 const SHOTS = [
   { src: '/spy-screenshots/1-map.png', alt: 'Map with scanner pins and camera dots', caption: 'Tactical map — 6,500 scanner pins + 49K camera dots' },
   { src: '/spy-screenshots/2-feeds.png', alt: 'Feeds list', caption: '6,500+ feeds, sorted by live listener count' },
-  { src: '/spy-screenshots/3-incident.png', alt: 'Incident detail with audio + camera', caption: 'Tap a feed → audio + live cameras within 30 miles' },
+  { src: '/spy-screenshots/3-incident.png', alt: 'Incident detail with audio + camera', caption: 'Tap a feed → audio + AI summary + live cameras within 30 miles' },
   { src: '/spy-screenshots/4-foia.png', alt: 'FOIA download + cameras', caption: 'Live DOT cameras, auto-refreshing every 2 seconds' },
 ];
 
@@ -143,7 +173,7 @@ export default function SpyPage() {
               <span className="text-[#E2E8F0]"> right now.</span>
             </h1>
             <p className="mt-6 max-w-xl text-lg text-[#64748B]">
-              Real-time public-safety scanner audio + 73,000 live cameras + 164,000 surveillance markers. Police/fire/EMS scanners across all 50 states. Globe view (Pro). One tap on a map.
+              Real-time scanner audio · 73,000 live cameras · 164,000 surveillance markers · 97,000 sex offender pins · 31,000 live crime reports. Push alerts within X miles. AI summaries on any LLM key. One tap on a map.
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <a href="#pricing" className="rounded bg-[#00D4FF] px-6 py-3 text-sm font-black tracking-widest text-[#020D14] transition hover:bg-white" style={{ boxShadow: '0 0 60px -10px rgba(0,212,255,0.4),0 0 140px -40px rgba(0,212,255,0.6)' }}>
@@ -180,6 +210,26 @@ export default function SpyPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Voicey "from the toilet" hook — captures the casual reality of what
+          24,000+ worldwide cams + 49,000+ US cams unlock. Sets the tone before
+          the technical feature grid. */}
+      <section className="relative z-10 mx-auto max-w-5xl px-6 py-12">
+        <div className="rounded-2xl border border-[#22C55E]/40 bg-gradient-to-br from-[#22C55E]/5 to-transparent p-8 text-center">
+          <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.4em] text-[#22C55E]">// also a thing</div>
+          <p className="mx-auto max-w-3xl text-xl font-bold leading-snug text-[#E2E8F0] md:text-2xl">
+            Have you ever watched 3 zebras around a watering hole live, and then watched live bridge cameras
+            on a cruise ship from the comfort of your toilet?
+          </p>
+          <p className="mt-4 text-sm font-bold tracking-widest text-[#22C55E]">
+            WELL NOW YOU CAN.
+          </p>
+          <p className="mx-auto mt-3 max-w-2xl text-xs text-[#64748B]">
+            73,000+ live cameras across 199 countries. African watering holes (Africam). Cruise-ship bridge cams.
+            NPS national parks. NYC traffic. Times Square. Bourbon Street. Whatever you want, from wherever you are.
+          </p>
         </div>
       </section>
 
@@ -308,20 +358,21 @@ export default function SpyPage() {
             all plans include
           </div>
           <p className="mb-6 text-center text-xs text-[#64748B]">
-            Pro tier adds the <span className="text-[#22C55E]">Global view</span> (24,410 worldwide cams) +
-            the <span className="text-[#F59E0B]">Surveillance overlay</span> (164,733 ALPR/drone/face-rec/ShotSpotter markers).
+            Pro tier unlocks the <span className="text-[#22C55E]">Global view</span> (24,410 worldwide cams) +
+            the <span className="text-[#F59E0B]">Intel suite</span> (164k surveillance · 97k offenders · 31k live crime reports).
           </p>
           <ul className="grid gap-3 md:grid-cols-2">
             {[
               'All 6,500+ live scanner feeds (police, fire, EMS, aviation, marine)',
               'All 49,488 US live cameras (DOT, USGS, EarthCam, NYC TMC, Windy)',
+              'AI summaries on any LLM key (Anthropic, OpenAI, Gemini, Groq, Ollama)',
+              'Push alerts for incidents within your radius (1-50 mi)',
               'Per-channel community chat (sign-in required)',
               'Real-time incident detection (Whisper STT + listener-spike)',
-              'FOIA fillable-PDF generator',
-              'Custom keyword alerts with quiet hours',
-              'Cross-device sync (web + Android + iOS PWA)',
+              'FOIA fillable-PDF generator (works on every feed)',
+              'Cross-device sync (web + Android hybrid + iOS PWA)',
               'Unlimited watchlists',
-              'No ads, no tracking',
+              'No ads, no tracking, Ghost Mode by default',
             ].map((item) => (
               <li key={item} className="flex items-start gap-3">
                 <span className="mt-1 text-[#00D4FF]">▸</span>
