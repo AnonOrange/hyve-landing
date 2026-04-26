@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet.markercluster/dist/leaflet.markercluster.js'
@@ -15,31 +15,126 @@ function lng(o: any) { return o?.lng ?? o?.longitude }
 export default function ReconMapView({ initial }: { initial: Camera[] }) {
   const [cams, setCams] = useState<Camera[]>(initial)
   const [selected, setSelected] = useState<Camera | null>(null)
+  const [formOpen, setFormOpen] = useState(false)
+  const [form, setForm] = useState({ url: '', label: '', lat: '', lng: '', type: 'snapshot' })
+  const [adding, setAdding] = useState(false)
+  const [addErr, setAddErr] = useState<string | null>(null)
+
+  const refresh = async () => {
+    try {
+      const r = await fetch('/api/spy/admin/recon', { cache: 'no-store' })
+      if (r.ok) {
+        const j = await r.json()
+        setCams((j.cameras || []).filter((c: any) => lat(c) != null && lng(c) != null))
+      }
+    } catch {}
+  }
 
   useEffect(() => {
-    // Refresh every 60s while page open
-    const i = setInterval(async () => {
-      try {
-        const r = await fetch('/api/spy/admin/recon', { cache: 'no-store' })
-        if (r.ok) {
-          const j = await r.json()
-          setCams((j.cameras || []).filter((c: any) => lat(c) != null && lng(c) != null))
-        }
-      } catch {}
-    }, 60_000)
+    const i = setInterval(refresh, 60_000)
     return () => clearInterval(i)
   }, [])
 
+  const submitAdd = async (e: FormEvent) => {
+    e.preventDefault()
+    setAdding(true)
+    setAddErr(null)
+    try {
+      const r = await fetch('/api/spy/admin/recon/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: form.url,
+          label: form.label,
+          lat: parseFloat(form.lat),
+          lng: parseFloat(form.lng),
+          type: form.type,
+        }),
+      })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j.error || 'failed')
+      setForm({ url: '', label: '', lat: '', lng: '', type: 'snapshot' })
+      setFormOpen(false)
+      await refresh()
+    } catch (e: any) {
+      setAddErr(e.message || 'failed')
+    } finally {
+      setAdding(false)
+    }
+  }
+
   return (
     <div className="relative h-[80vh] w-full overflow-hidden rounded-lg border border-[#FF2D2D]/40">
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-[1000] flex items-center justify-between px-4 py-3">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-[1000] flex items-start justify-between gap-3 px-4 py-3">
         <div className="pointer-events-auto rounded-lg border border-[#FF2D2D] bg-[#020D14]/95 px-3 py-1.5 backdrop-blur">
           <div className="text-[10px] font-black tracking-[0.4em] text-[#FF2D2D]">RECON · INTERNAL</div>
           <div className="font-mono text-[10px] text-[#94A3B8]">
-            {cams.length.toLocaleString()} unsecured cams · DO NOT SHARE
+            {cams.length.toLocaleString()} cams · DO NOT SHARE
           </div>
         </div>
+        <button
+          onClick={() => setFormOpen((v) => !v)}
+          className="pointer-events-auto rounded border border-[#FF2D2D] bg-[#020D14]/95 px-3 py-1.5 text-[10px] font-black tracking-widest text-[#FF2D2D] backdrop-blur hover:bg-[#FF2D2D]/10"
+        >
+          {formOpen ? '✕ CLOSE' : '+ ADD CAMERA'}
+        </button>
       </div>
+
+      {formOpen && (
+        <form
+          onSubmit={submitAdd}
+          className="absolute right-3 top-16 z-[1100] w-80 space-y-2 rounded-lg border border-[#FF2D2D] bg-[#020D14]/95 p-3 backdrop-blur"
+        >
+          <div className="text-[10px] font-black tracking-widest text-[#FF2D2D]">ADD RECON CAMERA</div>
+          <input
+            required
+            placeholder="snapshot URL (jpg / mjpg / hls)"
+            value={form.url}
+            onChange={(e) => setForm({ ...form, url: e.target.value })}
+            className="w-full rounded border border-[#0D2235] bg-black/60 px-2 py-1.5 font-mono text-xs text-white outline-none focus:border-[#FF2D2D]"
+          />
+          <input
+            placeholder="label (optional)"
+            value={form.label}
+            onChange={(e) => setForm({ ...form, label: e.target.value })}
+            className="w-full rounded border border-[#0D2235] bg-black/60 px-2 py-1.5 text-xs text-white outline-none focus:border-[#FF2D2D]"
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              required
+              placeholder="lat"
+              value={form.lat}
+              onChange={(e) => setForm({ ...form, lat: e.target.value })}
+              className="w-full rounded border border-[#0D2235] bg-black/60 px-2 py-1.5 font-mono text-xs text-white outline-none focus:border-[#FF2D2D]"
+            />
+            <input
+              required
+              placeholder="lng"
+              value={form.lng}
+              onChange={(e) => setForm({ ...form, lng: e.target.value })}
+              className="w-full rounded border border-[#0D2235] bg-black/60 px-2 py-1.5 font-mono text-xs text-white outline-none focus:border-[#FF2D2D]"
+            />
+          </div>
+          <select
+            value={form.type}
+            onChange={(e) => setForm({ ...form, type: e.target.value })}
+            className="w-full rounded border border-[#0D2235] bg-black/60 px-2 py-1.5 text-xs text-white outline-none focus:border-[#FF2D2D]"
+          >
+            <option value="snapshot">snapshot (jpg/mjpg)</option>
+            <option value="hls">hls (.m3u8)</option>
+            <option value="webview">webview (iframe)</option>
+            <option value="youtube">youtube</option>
+          </select>
+          <button
+            type="submit"
+            disabled={adding}
+            className="w-full rounded bg-[#FF2D2D] py-1.5 text-[10px] font-black tracking-widest text-white hover:bg-[#FF5555] disabled:opacity-50"
+          >
+            {adding ? 'ADDING…' : 'ADD'}
+          </button>
+          {addErr && <div className="font-mono text-[10px] text-[#FF2D2D]">{addErr}</div>}
+        </form>
+      )}
       <MapContainer
         center={[20, 0]}
         zoom={2}
