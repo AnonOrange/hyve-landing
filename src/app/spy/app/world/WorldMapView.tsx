@@ -53,9 +53,13 @@ export default function WorldMapView() {
         center={[20, 0]}
         zoom={2}
         minZoom={2}
-        maxZoom={18}
+        maxZoom={20}
         worldCopyJump
-        zoomControl={false}
+        zoomControl={true}
+        scrollWheelZoom
+        doubleClickZoom
+        touchZoom
+        dragging
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
@@ -70,7 +74,7 @@ export default function WorldMapView() {
             chunkInterval={50}
             chunkDelay={20}
             maxClusterRadius={70}
-            disableClusteringAtZoom={13}
+            disableClusteringAtZoom={15}
             spiderfyOnMaxZoom
             removeOutsideVisibleBounds
             iconCreateFunction={(cluster: any) => {

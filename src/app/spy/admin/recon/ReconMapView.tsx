@@ -139,20 +139,24 @@ export default function ReconMapView({ initial }: { initial: Camera[] }) {
         center={[20, 0]}
         zoom={2}
         minZoom={2}
-        maxZoom={18}
+        maxZoom={20}
         worldCopyJump
-        zoomControl={false}
+        zoomControl={true}
+        scrollWheelZoom
+        doubleClickZoom
+        touchZoom
+        dragging
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
           url="https://basemaps.cartocdn.com/dark_matter/{z}/{x}/{y}{r}.png"
-          attribution="© CARTO"
+          attribution="© CARTO © OpenStreetMap"
           maxZoom={20}
         />
         <MarkerClusterGroup
           chunkedLoading
           maxClusterRadius={70}
-          disableClusteringAtZoom={13}
+          disableClusteringAtZoom={15}
           spiderfyOnMaxZoom
           iconCreateFunction={(cluster: any) => {
             const c = cluster.getChildCount()
