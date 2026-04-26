@@ -27,6 +27,14 @@ export async function GET(req: NextRequest) {
     )
   }
 
+  // Comp-access bypass: hyve-spy-accounts sets `comp:<email>` for allowlisted users.
+  if (sessionId.startsWith('comp:')) {
+    return NextResponse.json(
+      { active: true, status: 'comp', currentPeriodEnd: null, cancelAtPeriodEnd: false },
+      { status: 200, headers: { 'Cache-Control': 'no-store' } },
+    )
+  }
+
   if (!stripeKey) {
     return NextResponse.json(
       { active: false, reason: 'stripe_not_configured' },
