@@ -43,9 +43,13 @@ export type RadioStation = {
 // We hit the round-robin DNS, which Cloudflare-loadbalances to a healthy mirror
 const RB_BASE = 'https://de1.api.radio-browser.info'
 
-// Pull most-clicked 5k stations — covers virtually every recognizable station
-// without making the JSON download enormous.
-const STATIONS_URL = `${RB_BASE}/json/stations/topclick/5000`
+// Two endpoints, fetched in parallel and deduped:
+//   - topclick/5000: most-clicked stations globally (covers every recognizable
+//     international station without the long-tail bloat of all 54k entries)
+//   - bycountrycodeexact/US: every working US station (~7,000) so domestic
+//     coverage is complete — no missing local AM/FM affiliates.
+const URL_TOP = `${RB_BASE}/json/stations/topclick/5000`
+const URL_US = `${RB_BASE}/json/stations/bycountrycodeexact/US?hidebroken=true&order=clickcount&reverse=true`
 
 export default function RadioPage() {
   const [stations, setStations] = useState<RadioStation[]>([])
@@ -57,15 +61,19 @@ export default function RadioPage() {
 
   useEffect(() => {
     let cancelled = false
-    fetch(STATIONS_URL, {
-      headers: { 'User-Agent': 'HyveSpy/1.0 (+https://www.hyveapp.co)' },
-    })
-      .then((r) => {
-        if (!r.ok) throw new Error(`radio-browser HTTP ${r.status}`)
-        return r.json()
-      })
-      .then((data: any[]) => {
+    Promise.all([
+      fetch(URL_TOP, { headers: { 'User-Agent': 'HyveSpy/1.0 (+https://www.hyveapp.co)' } })
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`top HTTP ${r.status}`)))),
+      fetch(URL_US, { headers: { 'User-Agent': 'HyveSpy/1.0 (+https://www.hyveapp.co)' } })
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`US HTTP ${r.status}`)))),
+    ])
+      .then(([topData, usData]: [any[], any[]]) => {
         if (cancelled) return
+        // Dedup by stationuuid — overlap of top-clicked and US is significant.
+        const merged = new Map<string, any>()
+        for (const s of topData) if (s.stationuuid) merged.set(s.stationuuid, s)
+        for (const s of usData) if (s.stationuuid) merged.set(s.stationuuid, s)
+        const data = [...merged.values()]
         const out: RadioStation[] = []
         for (const s of data) {
           if (!s.url_resolved && !s.url) continue

@@ -40,6 +40,20 @@ const FEATURES = [
     tag: 'VIDEO',
   },
   {
+    title: '39,457 free TV channels — every one on a real map',
+    body:
+      "Every public broadcaster's 24/7 stream, plotted at its actual studio HQ. ABC News Live, NBC News NOW, CBS, Bloomberg, Sky News, Al Jazeera, France 24, DW, NHK, CNA, Reuters — pinned exactly where they're broadcast from. Plus the entire iptv-org open dataset: 14,298 US channels (every state's local ABC/NBC/CBS/Fox affiliates that publish a free stream) and 39,457 channels worldwide across 199 countries. Click any pin → full-screen player (YouTube live for curated, native HLS for everything else). Government feeds (C-SPAN, White House, UK Parliament, EU Council, UN), space (NASA TV, ISS Earth-view, SpaceX), iconic webcams (Times Square, Shibuya, Eiffel, Venice St Mark's), nature cams (Yellowstone, aurora, African watering hole). Every subscriber gets all of it — not pro-gated. Live now at /spy/app/tv.",
+    accent: '#EF4444',
+    tag: 'TV',
+  },
+  {
+    title: '53,719 free radio stations — radio.garden but better',
+    body:
+      "Every internet radio station from radio-browser.info's community database, dropped onto a global dark map at the station's real geographic location. 6,969 US stations (every working AM/FM/online affiliate) plus the most-clicked 5,000 worldwide — covers virtually every recognizable global station. Tap any pin: instant audio playback (HTML5 native for MP3/AAC, hls.js for streaming HLS), genre/language tags, station favicon, bitrate, codec, link to homepage. Genre quick-filters (news, talk, jazz, rock, classical, dance) auto-built from the most-common tags in the loaded set. Pause/resume, no ads, no app. Every subscriber gets all of it. Live now at /spy/app/radio.",
+    accent: '#22C55E',
+    tag: 'RADIO',
+  },
+  {
     title: '164,733 surveillance markers — Pro Intel tab',
     body:
       'See where Flock Safety license-plate readers (99,683), ShotSpotter mics (243), police drones (1,804), face recognition deployments (975), Stingrays (83), fusion centers, real-time crime centers, body-worn cam programs, and 26,000+ public CCTV cameras live. Sourced from EFF Atlas of Surveillance, DeFlock community DB, and OpenStreetMap. 16 toggleable layers grouped by category.',
@@ -89,9 +103,9 @@ const FEATURES = [
     tag: 'ACCOUNT',
   },
   {
-    title: 'Tactical dark map + dedicated tabs',
+    title: 'Tactical dark map + 11 dedicated tabs',
     body:
-      'Bottom nav: Map (live operations) · Feeds (audio list) · Cams (camera grid) · Intel (Pro: surveillance / offenders / crime) · World (Pro: global cams) · Watch · Settings. Each tab loads only its own data — no monolithic loads, no slow tabs. Custom dark CARTO tiles. Marker clustering keeps 100k+ pin layers responsive.',
+      'Bottom nav (2 rows of 6): Map (live operations) · Feeds (audio list) · Cams (US camera grid) · Crime (incident pins) · Intel (Pro: surveillance / offenders) · Globe (Pro: world map) · W-Cams (worldwide cameras) · TV (39K free TV channels) · Radio (54K free radio stations) · Watch · Settings. Each tab loads only its own data — no monolithic loads, no slow tabs. Custom dark CARTO tiles. Marker clustering keeps 100k+ pin layers responsive.',
     accent: '#06B6D4',
     tag: 'NAVIGATION',
   },
@@ -147,7 +161,7 @@ const FEATURES = [
 ];
 
 const SHOTS = [
-  { src: '/spy-screenshots/1-map.png', alt: 'Map with scanner pins and camera dots', caption: 'Tactical map — 6,500 scanner pins + 49K camera dots' },
+  { src: '/spy-screenshots/1-map.png', alt: 'Map with scanner pins and camera dots', caption: 'Tactical map — 6,500 scanner pins + 73K camera dots + 39K TV + 54K radio stations' },
   { src: '/spy-screenshots/2-feeds.png', alt: 'Feeds list', caption: '6,500+ feeds, sorted by live listener count' },
   { src: '/spy-screenshots/3-incident.png', alt: 'Incident detail with audio + camera', caption: 'Tap a feed → audio + AI summary + live cameras within 30 miles' },
   { src: '/spy-screenshots/4-foia.png', alt: 'FOIA download + cameras', caption: 'Live DOT cameras, auto-refreshing every 2 seconds' },
@@ -209,7 +223,7 @@ export default function SpyPage() {
               <span className="text-[#E2E8F0]"> right now.</span>
             </h1>
             <p className="mt-6 max-w-xl text-lg text-[#64748B]">
-              Real-time scanner audio · 73,000 live cameras · 164,000 surveillance markers · 97,000 sex offender pins · 48,000 live crime reports across 13 cities. Whisper-STT push alerts within X miles. AI summaries on any LLM key. One tap on a map.
+              Real-time scanner audio · 73,000 live cameras · 39,000 free TV channels · 54,000 free radio stations · 164,000 surveillance markers · 97,000 sex offender pins · 57,000 live crime reports across 20 cities. Whisper-STT push alerts within X miles. AI summaries on any LLM key. One tap on a map.
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <a href="#pricing" className="rounded bg-[#00D4FF] px-6 py-3 text-sm font-black tracking-widest text-[#020D14] transition hover:bg-white" style={{ boxShadow: '0 0 60px -10px rgba(0,212,255,0.4),0 0 140px -40px rgba(0,212,255,0.6)' }}>
@@ -466,13 +480,16 @@ export default function SpyPage() {
             all plans include
           </div>
           <p className="mb-6 text-center text-xs text-[#64748B]">
-            Pro tier unlocks the <span className="text-[#22C55E]">Global view</span> (24,491 worldwide cams) +
+            <span className="text-[#EF4444]">TV</span> &amp; <span className="text-[#22C55E]">Radio</span> tabs (39K channels + 54K stations on a real map) are free for every subscriber.
+            Pro tier additionally unlocks the <span className="text-[#22C55E]">Global view</span> (24,491 worldwide cams) +
             the <span className="text-[#F59E0B]">Intel suite</span> (164k surveillance · 97k offenders · 57k live crime reports).
           </p>
           <ul className="grid gap-3 md:grid-cols-2">
             {[
               'All 6,500+ live scanner feeds (police, fire, EMS, aviation, marine)',
               'All 49,488 US live cameras (DOT, USGS, EarthCam, NYC TMC, Windy)',
+              '🆕 39,457 free TV channels worldwide on a real map (14,298 US)',
+              '🆕 53,719 free radio stations worldwide on a real map (6,969 US)',
               'AI summaries on any LLM key (Anthropic, OpenAI, Gemini, Groq, Ollama)',
               'Cameras auto-refresh every 4 hours (dead URLs culled, new cams added)',
               'Push alerts for incidents within your radius (1-50 mi)',
