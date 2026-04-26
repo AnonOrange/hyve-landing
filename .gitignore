@@ -19,3 +19,9 @@ Thumbs.db
 .idea/
 
 .env*.local
+
+# Brainstorm visual companion mockups (local only)
+.superpowers/
+
+# Git worktrees (isolated branches for feature work)
+.worktrees/
