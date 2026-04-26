@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { CameraOverlay, CameraThumb, type Camera as SharedCamera } from '../../CameraOverlay';
+import ChatPanel from './ChatPanel';
 
 const API_BASE = 'https://hyve-api.vercel.app';
 
@@ -661,6 +662,7 @@ export default function FeedDetailView() {
       {selectedCam && (
         <CameraOverlay cam={selectedCam as SharedCamera} onClose={() => setSelectedCam(null)} />
       )}
+      <ChatPanel feedId={feedId} feedName={feed?.name} />
     </main>
   );
 }
