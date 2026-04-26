@@ -1,5 +1,5 @@
 /* Hyve Spy PWA — app-shell cache + push notifications */
-const CACHE = 'hyve-spy-shell-v7';
+const CACHE = 'hyve-spy-shell-v8';
 
 // Push event: render an OS-level notification when the backend sends an alert.
 // Payload shape: { title, body, icon, badge, feedId, lat, lng, severity }
