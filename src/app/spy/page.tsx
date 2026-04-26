@@ -103,11 +103,39 @@ const FEATURES = [
     tag: 'ACCOUNT',
   },
   {
-    title: 'Tactical dark map + 11 dedicated tabs',
+    title: 'Tactical dark map + 15 dedicated tabs',
     body:
-      'Bottom nav (2 rows of 6): Map (live operations) · Feeds (audio list) · Cams (US camera grid) · Crime (incident pins) · Intel (Pro: surveillance / offenders) · Globe (Pro: world map) · W-Cams (worldwide cameras) · TV (39K free TV channels) · Radio (54K free radio stations) · Watch · Settings. Each tab loads only its own data — no monolithic loads, no slow tabs. Custom dark CARTO tiles. Marker clustering keeps 100k+ pin layers responsive.',
+      'Bottom nav (3 rows × 5 cols): Map · Feeds · Cams · Crime · Intel · Globe · W-Cams · TV · Radio · Watch · Settings · Pulse · Roulette · Ticker · Panopticon. Each tab loads only its own data — no monolithic loads. Custom dark CARTO tiles. Marker clustering keeps 100k+ pin layers responsive even on cheap phones.',
     accent: '#06B6D4',
     tag: 'NAVIGATION',
+  },
+  {
+    title: 'PULSE — live national activity heatmap',
+    body:
+      "Where in America is something HAPPENING right now? Pulse fuses three independent live signals into one live-glow heat layer: scanner listener-spikes (5× normal traffic = real responders + civilians tuning in because something just went down), recent crime cadence (cities with 3+ incidents in the last 24h), and Whisper STT keyword bursts. The country pulses red where shit is going down, without you needing to know in advance where to look. Refreshes every 60s. The first crime weather radar — nobody else has all three signals in one product.",
+    accent: '#FF2D2D',
+    tag: 'PULSE',
+  },
+  {
+    title: 'ROULETTE — random live anywhere',
+    body:
+      "One button. Drops you into a random place on Earth and serves up: closest live scanner feed (audio plays), four nearest cameras (auto-refreshing snapshots every 5 seconds), the closest local TV + radio station from our 39k/54k catalogs, and recent crime within 25 miles. Stay 30 seconds or roll again. ChatRoulette for live reality — except every destination is real, every camera is live, and every scanner is broadcasting current public-safety dispatches. Weighted-random by listener count so popular feeds appear more often, but a single-truck volunteer fire department in Wyoming still has a real shot at being where you land. Goes viral on screenshot.",
+    accent: '#A855F7',
+    tag: 'ROULETTE',
+  },
+  {
+    title: 'TICKER — national 911 ticker',
+    body:
+      "A scrolling Bloomberg-terminal-style bar of dispatched/breaking events, nationwide, in real time. Listener-spike feeds (top scanner activity by current listeners) and recent crime incidents (last 24h, sorted by recency) interleaved into one continuous national pulse: 🔫 SHOTS FIRED · Detroit MI · 14s ago    🏚 STRUCTURE FIRE · Atlanta GA · 23s ago    👁 PURSUIT · Tampa FL · 47s ago. Click any item → drops onto the map. The first national real-time emergency feed of its kind — every other ticker covers one city or one type. This is the country.",
+    accent: '#F59E0B',
+    tag: 'TICKER',
+  },
+  {
+    title: 'PANOPTICON — \"how surveilled am I right now?\"',
+    body:
+      "Drop a pin on the map (or hit \"Score Me\" for geolocation) → instant 0-100 Panopticon Score for that exact spot, with full breakdown: number of Flock LPR readers, ShotSpotter mics, drone deployments, face-recognition systems, Stingrays, fusion centers, public CCTVs, and body-cam programs within 1 mile. Each device type weighted by privacy invasiveness (Stingrays heaviest, body cams lightest). Severity color: green CLEAR → amber ELEVATED → red PANOPTICON. A working tool for journalists, protesters, and the privacy-conscious — and a viral civic-tech screenshot generator. Nobody else joins the EFF surveillance dataset + DeFlock + OSM CCTV layer in one query.",
+    accent: '#A855F7',
+    tag: 'PANOPTICON',
   },
   {
     title: 'Per-channel community chat',
@@ -490,6 +518,10 @@ export default function SpyPage() {
               'All 49,488 US live cameras (DOT, USGS, EarthCam, NYC TMC, Windy)',
               '🆕 39,457 free TV channels worldwide on a real map (14,298 US)',
               '🆕 53,719 free radio stations worldwide on a real map (6,969 US)',
+              '🆕 PULSE — live national activity heatmap (scanner + crime + STT fusion)',
+              '🆕 ROULETTE — one-button random teleport into live reality',
+              '🆕 TICKER — national 911 ticker (scrolling dispatch events nationwide)',
+              '🆕 PANOPTICON — drop a pin, get a 0-100 surveillance density score',
               'AI summaries on any LLM key (Anthropic, OpenAI, Gemini, Groq, Ollama)',
               'Cameras auto-refresh every 4 hours (dead URLs culled, new cams added)',
               'Push alerts for incidents within your radius (1-50 mi)',

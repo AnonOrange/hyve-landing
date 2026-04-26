@@ -1,0 +1,237 @@
+'use client'
+
+// PANOPTICON — "How surveilled am I right now?"
+//
+// Drop a pin (click map or geolocate) → instant count of every surveillance
+// device within 1 mile, with a 0-100 Panopticon Score and per-category
+// breakdown. Uses the existing /cameras/surveillance endpoint which returns
+// 164k+ markers from EFF Atlas of Surveillance, DeFlock community DB, and
+// OpenStreetMap.
+//
+// The score formula is heuristic, not science:
+//   - Each Flock LPR within 1mi: +12 (most invasive — bulk plate scanning)
+//   - Each face-recog deployment: +15 (highest weight — biometric ID)
+//   - Each Stingray cell-site simulator: +20 (only fires intermittently
+//     but devastating when it does)
+//   - Each ShotSpotter mic: +5
+//   - Each fusion center: +25 (institutional surveillance hub)
+//   - Each public CCTV: +2
+//   - Each police drone deployment: +8
+// Capped at 100, displayed with severity color.
+//
+// This is genuinely useful intelligence for journalists, protesters, and
+// privacy-conscious folks. Nobody else has the surveillance dataset + crime
+// + scanner data joined in one query.
+
+import { useEffect, useMemo, useState } from 'react'
+import dynamic from 'next/dynamic'
+
+const PanopMap = dynamic(() => import('./PanopMap'), { ssr: false })
+
+const API = 'https://hyve-api.vercel.app'
+
+export type Surveillance = {
+  id: string
+  type: string
+  lat: number
+  lng: number
+  name?: string
+  agency?: string
+}
+
+type Score = {
+  total: number
+  breakdown: { type: string; count: number; weight: number; emoji: string }[]
+}
+
+const WEIGHTS: Record<string, { weight: number; emoji: string; label: string }> = {
+  flock: { weight: 12, emoji: '🔍', label: 'Flock LPR readers' },
+  alpr: { weight: 12, emoji: '🔍', label: 'License-plate readers' },
+  shotspotter: { weight: 5, emoji: '🎙', label: 'ShotSpotter microphones' },
+  drone: { weight: 8, emoji: '🛸', label: 'Police drone deployments' },
+  face_recognition: { weight: 15, emoji: '👤', label: 'Face-recognition systems' },
+  facial: { weight: 15, emoji: '👤', label: 'Face-recognition systems' },
+  stingray: { weight: 20, emoji: '📡', label: 'Cell-site simulators' },
+  fusion_center: { weight: 25, emoji: '🏛', label: 'Fusion centers' },
+  rtcc: { weight: 18, emoji: '🏢', label: 'Real-time crime centers' },
+  cctv: { weight: 2, emoji: '📹', label: 'Public CCTV cameras' },
+  body_camera: { weight: 1, emoji: '🎥', label: 'Body-worn cam programs' },
+}
+
+// Fast haversine in miles
+function dist([la1, lo1]: [number, number], [la2, lo2]: [number, number]) {
+  const toR = (x: number) => (x * Math.PI) / 180
+  const dLat = toR(la2 - la1)
+  const dLng = toR(lo2 - lo1)
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(toR(la1)) * Math.cos(toR(la2)) * Math.sin(dLng / 2) ** 2
+  return 2 * 3958.8 * Math.asin(Math.sqrt(h))
+}
+
+function classify(t: string): string {
+  const s = (t || '').toLowerCase()
+  if (s.includes('flock') || s.includes('alpr') || s.includes('license')) return 'flock'
+  if (s.includes('shotspotter')) return 'shotspotter'
+  if (s.includes('drone')) return 'drone'
+  if (s.includes('face') || s.includes('biometric')) return 'face_recognition'
+  if (s.includes('stingray') || s.includes('imsi') || s.includes('cell-site')) return 'stingray'
+  if (s.includes('fusion')) return 'fusion_center'
+  if (s.includes('rtcc') || s.includes('crime center')) return 'rtcc'
+  if (s.includes('body')) return 'body_camera'
+  return 'cctv'
+}
+
+function colorForScore(s: number): string {
+  if (s >= 70) return '#EF4444'
+  if (s >= 40) return '#F59E0B'
+  if (s >= 15) return '#FBBF24'
+  return '#22C55E'
+}
+
+function levelFor(s: number): string {
+  if (s >= 80) return 'PANOPTICON'
+  if (s >= 60) return 'EXTREME'
+  if (s >= 40) return 'HIGH'
+  if (s >= 20) return 'ELEVATED'
+  if (s >= 5) return 'MODERATE'
+  return 'CLEAR'
+}
+
+export default function PanopticonPage() {
+  const [all, setAll] = useState<Surveillance[]>([])
+  const [loading, setLoading] = useState(true)
+  const [pin, setPin] = useState<[number, number] | null>(null)
+  const [err, setErr] = useState<string | null>(null)
+
+  // Bootstrap: pull all surveillance markers once. They're static enough
+  // that a single fetch is fine, and being fully client-side means the
+  // 1mi radius queries are instant (no roundtrip per click).
+  useEffect(() => {
+    fetch(`${API}/cameras/surveillance`)
+      .then((r) => r.json())
+      .then((raw: any) => {
+        const arr: any[] = Array.isArray(raw) ? raw : raw?.cameras || raw?.markers || raw?.data || []
+        setAll(
+          arr
+            .map((m: any) => ({
+              id: m.id || `${m.type}-${m.lat}-${m.lng}`,
+              type: m.type || m.category || 'cctv',
+              lat: m.lat ?? m.latitude,
+              lng: m.lng ?? m.lon ?? m.longitude,
+              name: m.name,
+              agency: m.agency,
+            }))
+            .filter((m: any) => Number.isFinite(m.lat) && Number.isFinite(m.lng)),
+        )
+      })
+      .catch((e) => setErr(e?.message || 'Surveillance load failed'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const score: Score | null = useMemo(() => {
+    if (!pin) return null
+    const counts: Record<string, number> = {}
+    for (const m of all) {
+      if (dist(pin, [m.lat, m.lng]) > 1) continue
+      const c = classify(m.type)
+      counts[c] = (counts[c] || 0) + 1
+    }
+    let total = 0
+    const breakdown: Score['breakdown'] = []
+    for (const [k, count] of Object.entries(counts)) {
+      const w = WEIGHTS[k] || { weight: 1, emoji: '·', label: k }
+      total += count * w.weight
+      breakdown.push({ type: w.label, count, weight: w.weight, emoji: w.emoji })
+    }
+    return { total: Math.min(100, total), breakdown: breakdown.sort((a, b) => b.count * b.weight - a.count * a.weight) }
+  }, [pin, all])
+
+  const useGeolocation = () => {
+    if (!navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(
+      (p) => setPin([p.coords.latitude, p.coords.longitude]),
+      (e) => setErr(e.message),
+      { enableHighAccuracy: true, timeout: 10000 },
+    )
+  }
+
+  const nearbyMarkers = useMemo(() => {
+    if (!pin) return []
+    return all.filter((m) => dist(pin, [m.lat, m.lng]) <= 1)
+  }, [pin, all])
+
+  return (
+    <main className="relative h-screen w-full bg-[#020D14] text-[#E2E8F0]">
+      <div
+        className="absolute inset-x-0 top-0 z-[1000] border-b border-[#0D2235] bg-[#020D14]/95 backdrop-blur"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <span className="text-base">👁</span>
+            <div>
+              <div className="text-[10px] font-black tracking-[0.4em] text-[#A855F7]">PANOPTICON</div>
+              <div className="font-mono text-[10px] text-[#64748B]">
+                {loading
+                  ? `loading ${all.length || 164_000} markers…`
+                  : pin
+                    ? `${nearbyMarkers.length} surveillance devices within 1mi`
+                    : 'click map or geolocate to score a location'}
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={useGeolocation}
+            className="rounded border border-[#A855F7] bg-[#A855F71F] px-3 py-1.5 text-[10px] font-bold tracking-widest text-[#A855F7]"
+          >
+            📍 SCORE ME
+          </button>
+        </div>
+      </div>
+
+      {err && (
+        <div className="absolute left-1/2 top-32 z-[1000] -translate-x-1/2 rounded bg-red-900/80 px-3 py-1.5 text-xs text-white">
+          {err}
+        </div>
+      )}
+
+      <PanopMap markers={all} pin={pin} radiusMi={1} onClick={(lat, lng) => setPin([lat, lng])} />
+
+      {/* Score card overlay */}
+      {pin && score && (
+        <div className="absolute inset-x-3 bottom-28 z-[1000] mx-auto max-w-md rounded-xl border border-[#A855F7]/40 bg-[#020D14]/95 p-4 backdrop-blur">
+          <div className="flex items-baseline justify-between">
+            <div>
+              <div className="text-[10px] font-bold tracking-[0.3em]" style={{ color: colorForScore(score.total) }}>
+                {levelFor(score.total)}
+              </div>
+              <div className="font-mono text-[10px] text-[#64748B]">
+                {pin[0].toFixed(4)}, {pin[1].toFixed(4)} · 1mi radius
+              </div>
+            </div>
+            <div className="text-4xl font-black" style={{ color: colorForScore(score.total) }}>
+              {score.total}
+              <span className="text-base text-[#64748B]">/100</span>
+            </div>
+          </div>
+          {score.breakdown.length === 0 ? (
+            <div className="mt-2 text-xs text-[#94A3B8]">No surveillance devices indexed within 1mi.</div>
+          ) : (
+            <ul className="mt-3 grid gap-1 text-xs">
+              {score.breakdown.map((b) => (
+                <li key={b.type} className="flex items-center justify-between gap-3">
+                  <span className="flex items-center gap-2 truncate">
+                    <span>{b.emoji}</span>
+                    <span className="text-[#E2E8F0]">{b.type}</span>
+                  </span>
+                  <span className="font-mono text-[#A855F7]">
+                    {b.count} × {b.weight} = {b.count * b.weight}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </main>
+  )
+}

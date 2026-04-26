@@ -112,6 +112,57 @@ const NAV = [
     ),
   },
   {
+    href: '/spy/app/pulse',
+    label: 'Pulse',
+    match: (p: string) => p.startsWith('/spy/app/pulse'),
+    // Heartbeat / activity pulse glyph
+    icon: (active: boolean) => (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#FF2D2D' : '#64748B'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+      </svg>
+    ),
+  },
+  {
+    href: '/spy/app/roulette',
+    label: 'Roulette',
+    match: (p: string) => p.startsWith('/spy/app/roulette'),
+    // Dice / random target glyph
+    icon: (active: boolean) => (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#A855F7' : '#64748B'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="3" />
+        <circle cx="8" cy="8" r="1.2" fill="currentColor" />
+        <circle cx="16" cy="16" r="1.2" fill="currentColor" />
+        <circle cx="12" cy="12" r="1.2" fill="currentColor" />
+      </svg>
+    ),
+  },
+  {
+    href: '/spy/app/ticker',
+    label: 'Ticker',
+    match: (p: string) => p.startsWith('/spy/app/ticker'),
+    // Newspaper / ticker tape glyph
+    icon: (active: boolean) => (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#F59E0B' : '#64748B'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 4h16v16H4z" />
+        <line x1="4" y1="9" x2="20" y2="9" />
+        <line x1="8" y1="13" x2="16" y2="13" />
+        <line x1="8" y1="17" x2="14" y2="17" />
+      </svg>
+    ),
+  },
+  {
+    href: '/spy/app/panopticon',
+    label: 'Panop',
+    match: (p: string) => p.startsWith('/spy/app/panopticon'),
+    // Big eye glyph
+    icon: (active: boolean) => (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#A855F7' : '#64748B'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+    ),
+  },
+  {
     href: '/spy/app/watchlist',
     label: 'Watch',
     match: (p: string) => p.startsWith('/spy/app/watchlist'),
@@ -145,10 +196,10 @@ export default function SpyBottomNav() {
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       {/*
-        11 tabs split across 2 rows (6 + 5). Keeps tap targets large + full
-        icon/label size, no horizontal scrolling required.
+        15 tabs in a clean 3 rows × 5 cols grid. Same icon/label size as the
+        old 9-tab nav — every cell stays a comfortable tap target.
       */}
-      <ul className="mx-auto grid max-w-3xl grid-cols-6">
+      <ul className="mx-auto grid max-w-3xl grid-cols-5">
         {NAV.map((item) => {
           const active = item.match(pathname);
           return (
