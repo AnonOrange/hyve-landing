@@ -24,7 +24,7 @@ export default function HeroSection() {
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/HYVEComIcon.png"
+          src="/hyve-logo/hyve-messenger-emblem.png"
           alt=""
           className="w-[700px] h-[700px] md:w-[900px] md:h-[900px] object-contain opacity-[0.04]"
           aria-hidden="true"
@@ -43,16 +43,15 @@ export default function HeroSection() {
         <div className="orbit w-[740px] h-[740px] rounded-full border border-gold/4 absolute" />
       </div>
 
-      {/* Center hexagon icon */}
+      {/* Hyve Messenger lockup logo (replaces the small hex icon — now a
+          proper branded mark since Messenger has its own dedicated page) */}
       <div className="relative mb-8 reveal">
-        <div className="flex items-center justify-center w-28 h-28 gold-glow rounded-2xl">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/HYVEComIcon.png"
-            alt="HYVE"
-            className="w-28 h-28 object-contain"
-          />
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/hyve-logo/hyve-messenger.png"
+          alt="HYVE Messenger"
+          className="w-full max-w-md object-contain drop-shadow-[0_0_40px_rgba(200,162,39,0.4)]"
+        />
       </div>
 
       {/* Badge */}

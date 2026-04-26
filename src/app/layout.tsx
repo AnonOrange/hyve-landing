@@ -1,14 +1,21 @@
 import type { Metadata } from 'next'
 import './globals.css'
 
+// Root metadata reflects the new umbrella positioning — / is the hub for
+// every Hyve app + site, not a single product. Per-route pages override
+// title/description (see /messenger/page.tsx, /spy/page.tsx).
 export const metadata: Metadata = {
-  title: 'HYVE — Encrypted Messaging',
+  title: 'HYVE — One ecosystem, every app',
   description:
-    'HYVE uses five breakthrough cryptographic protocols to make your messages mathematically impossible to intercept — even by us.',
-  keywords: ['encrypted messaging', 'privacy', 'end-to-end encryption', 'HYVE', 'secure communication'],
+    'Hyve Spy · Hyve Messenger · Hyve Sleuth · Hyve Residential · Hyve Sentinel · Hyve Alpha · Hyve Cares. The whole Hyve ecosystem.',
+  keywords: ['HYVE', 'Hyve Spy', 'Hyve Messenger', 'Hyve Alpha', 'privacy', 'OSINT', 'public safety'],
+  icons: {
+    icon: '/hyve-logo/hyve-messenger-emblem.png',
+    apple: '/hyve-logo/hyve-messenger-emblem.png',
+  },
   openGraph: {
-    title: 'HYVE — Encrypted Messaging',
-    description: 'Privacy isn\'t a feature. It\'s the architecture.',
+    title: 'HYVE — One ecosystem, every app',
+    description: 'Privacy-first apps for messaging, public-safety intel, OSINT, real-estate distress, and security audits.',
     siteName: 'HYVE',
     type: 'website',
   },

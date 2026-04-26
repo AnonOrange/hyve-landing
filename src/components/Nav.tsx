@@ -22,37 +22,38 @@ export default function Nav() {
       }`}
     >
       <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-        {/* Logo */}
-        <a href="#" className="flex items-center group">
+        {/* Logo — clicks back to the umbrella hub at /, not the messenger root */}
+        <a href="/" className="flex items-center gap-2 group">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/hyvelloo.png"
-            alt="HYVE"
+            src="/hyve-logo/hyve-messenger.png"
+            alt="HYVE Messenger"
             className="h-10 w-auto object-contain"
           />
         </a>
 
-        {/* Nav links */}
-        <div className="hidden md:flex items-center gap-8 text-sm text-white/60 font-medium">
+        {/* Nav links — section anchors first, then ecosystem links */}
+        <div className="hidden md:flex items-center gap-6 text-sm text-white/60 font-medium">
           <a href="#technology" className="hover:text-gold transition-colors">Technology</a>
-          <a href="#location" className="hover:text-gold transition-colors">Location</a>
           <a href="#pricing" className="hover:text-gold transition-colors">Pricing</a>
           <a href="#disclaimer" className="hover:text-gold transition-colors">Beta Info</a>
+          <span className="text-white/20">·</span>
+          <a href="/" className="hover:text-gold transition-colors">All Apps</a>
           <a
             href="/spy"
-            className="flex items-center gap-1.5 rounded-md border border-cyan-400/40 bg-cyan-400/5 px-3 py-1 font-bold tracking-wide text-cyan-300 hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-cyan-200 transition-all"
+            className="flex items-center gap-1.5 rounded-md border border-amber-400/40 bg-amber-400/5 px-3 py-1 font-bold tracking-wide text-amber-300 hover:border-amber-400 hover:bg-amber-400/10 hover:text-amber-200 transition-all"
           >
             <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-cyan-400" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-400" />
             </span>
             HYVE SPY
           </a>
-          <a href="/whitepaper" className="hover:text-gold transition-colors flex items-center gap-1.5">
-            <svg className="w-3.5 h-3.5 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-            </svg>
-            White Paper
+          <a href="https://www.hyvealpha.com" target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors">
+            Alpha ↗
+          </a>
+          <a href="https://www.hyvecares.org" target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors">
+            Cares ↗
           </a>
         </div>
 
