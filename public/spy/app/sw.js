@@ -1,5 +1,5 @@
 /* Hyve Spy PWA — minimal app-shell cache */
-const CACHE = 'hyve-spy-shell-v3';
+const CACHE = 'hyve-spy-shell-v4';
 const SHELL = [
   '/spy/app/manifest.json',
   '/spy-logo/hyve-spy-logo.png',
