@@ -140,16 +140,6 @@ const ECOSYSTEM: App[] = [
       "World's first hybrid Quantum · Neural · AI operating system. Native Windows desktop integrating quantum circuit simulation, persistent neural memory, and 69 AI providers — locally, encrypted, sovereign.",
   },
   {
-    name: 'HYVE Suite',
-    tagline: 'Twelve products. One standard.',
-    href: `${VSS_BASE}/hyve-suite`,
-    external: true,
-    icon: '📦',
-    accent: '#06B6D4',
-    blurb:
-      'Twelve integrated security + AI products unified by a single engineering standard. Encrypted communications, AI capabilities, cybersecurity, compliance, and monitoring — all built to the same rigorous spec.',
-  },
-  {
     name: 'HYVE Scope',
     tagline: 'Encrypted operational intelligence',
     href: `${VSS_BASE}/hyve-scope`,
@@ -323,8 +313,8 @@ export default function HomePage() {
             </p>
             <p className="mt-2 max-w-2xl text-[11px] text-[#6b5e3a]">
               Hyve apps are part of a larger product portfolio at vibesoftwaresolutions.com — including
-              Overlord, Raptor, Shield, OS, Suite, Scope, Social, VUE, and CUI. Plus the
-              community network at <a href="https://www.hyvetribe.com" target="_blank" rel="noopener" className="text-[#E8C456] underline-offset-4 hover:underline">hyvetribe.com</a>.
+              Overlord, Raptor, Shield, OS, Scope, Social, VUE, and CUI. Plus the community network at{' '}
+              <a href="https://www.hyvetribe.com" target="_blank" rel="noopener" className="text-[#E8C456] underline-offset-4 hover:underline">hyvetribe.com</a>.
             </p>
           </div>
 
@@ -350,7 +340,7 @@ export default function HomePage() {
           <p className="mx-auto mt-6 max-w-3xl text-center text-[10px] leading-relaxed text-[#475569]">
             © {new Date().getFullYear()} Anthony S. Owens / Vibe Software Solutions. All rights reserved.
             HYVE™, Hyve Spy, Hyve Messenger, Hyve Sleuth, Hyve Residential, Hyve Sentinel, Hyve Alpha,
-            Hyve Cares, Hyve Tribe, Hyve Overlord, Hyve Raptor, Hyve Shield, Hyve OS, Hyve Suite, Hyve Scope,
+            Hyve Cares, Hyve Tribe, Hyve Overlord, Hyve Raptor, Hyve Shield, Hyve OS, Hyve Scope,
             Hyve Social, Hyve VUE, and Hyve-CUI are trademarks of Vibe Software Solutions.
           </p>
         </div>
