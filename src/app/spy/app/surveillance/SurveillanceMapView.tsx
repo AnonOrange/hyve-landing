@@ -88,7 +88,24 @@ export default function SurveillanceMapView() {
   const counts: Record<string, number> = {};
   for (const c of data) counts[c.surveillance_type || 'unknown'] = (counts[c.surveillance_type || 'unknown'] || 0) + 1;
 
-  const toggle = (k: string) => setVisible((v) => ({ ...v, [k]: !v[k] }));
+  // When a layer toggle flips on, show a brief "applying" overlay while React
+  // re-renders the cluster. For categories with thousands of pins (e.g. Flock
+  // ALPR with 99k), the cluster rebuild can take ~300-800ms — without feedback,
+  // the click feels stuck.
+  const [filterApplying, setFilterApplying] = useState<string | null>(null);
+  const toggle = (k: string) => {
+    const turningOn = !visible[k];
+    setVisible((v) => ({ ...v, [k]: !v[k] }));
+    if (turningOn) {
+      const layer = LAYERS.find((l) => l.key === k);
+      const count = counts[k] || 0;
+      if (count > 1000) {
+        setFilterApplying(layer?.label || k);
+        // Cluster rebuild is sync'd with React's commit phase; clear after a tick.
+        setTimeout(() => setFilterApplying(null), Math.min(2000, 200 + count / 10));
+      }
+    }
+  };
   const enableGroup = (g: string) => setVisible((v) => {
     const next = { ...v };
     for (const l of LAYERS) if (l.group === g) next[l.key] = true;
@@ -132,6 +149,7 @@ export default function SurveillanceMapView() {
 
       <div className="relative flex-1">
         <MapLoadingOverlay visible={loading} expectedCount={164733} layerName="surveillance" accent="#F59E0B" />
+        <MapLoadingOverlay visible={!!filterApplying} layerName={filterApplying || 'layer'} accent="#F59E0B" />
         <MapContainer
           center={[39.8, -98.5]}
           zoom={4}

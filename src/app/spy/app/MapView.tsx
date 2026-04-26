@@ -10,6 +10,7 @@ import MarkerClusterGroup from 'react-leaflet-cluster';
 import { useRouter } from 'next/navigation';
 import { CameraOverlay, type Camera } from './CameraOverlay';
 import MapHeader from './MapHeader';
+import MapLoadingOverlay from './MapLoadingOverlay';
 
 const API_BASE = 'https://hyve-api.vercel.app';
 
@@ -229,6 +230,7 @@ export default function MapView() {
         }
       />
       <div className="relative flex-1">
+      <MapLoadingOverlay visible={loading} expectedCount={55000} layerName="feed + camera" accent="#00D4FF" />
       <MapContainer
         center={[39.8, -98.5]}
         zoom={4}
