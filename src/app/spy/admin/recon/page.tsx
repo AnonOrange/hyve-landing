@@ -1,8 +1,8 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import dynamic from 'next/dynamic'
+import nextDynamic from 'next/dynamic'
 
-const ReconMapView = dynamic(() => import('./ReconMapView'), { ssr: false })
+const ReconMapView = nextDynamic(() => import('./ReconMapView'), { ssr: false })
 
 const COMP_EMAILS = new Set([
   'vibesoftwaresolutions@gmail.com',
@@ -36,7 +36,7 @@ async function fetchRecon() {
   }))
 }
 
-export const dynamic_ = 'force-dynamic'
+export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Hyve Spy — Admin Recon' }
 
 export default async function AdminReconPage() {
