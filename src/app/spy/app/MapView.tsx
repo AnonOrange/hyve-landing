@@ -560,27 +560,55 @@ export default function MapView() {
         <CameraOverlay cam={selectedCam} onClose={() => setSelectedCam(null)} />
       )}
 
-      {/* Sex offender info modal */}
-      {selectedOffender && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/80 p-4 backdrop-blur" onClick={() => setSelectedOffender(null)}>
-          <div className="w-full max-w-md rounded-lg border border-[#A855F7] bg-[#020D14] p-5" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-2 flex items-center justify-between">
-              <div className="text-[10px] font-black tracking-[0.4em] text-[#A855F7]">REGISTERED OFFENDER</div>
-              <button onClick={() => setSelectedOffender(null)} className="rounded border border-[#0D2235] px-2 py-0.5 text-xs text-[#64748B] hover:text-[#E2E8F0]">✕</button>
+      {/* Sex offender info card — full registry details */}
+      {selectedOffender && (() => {
+        const o = selectedOffender as any;
+        const d = (o.details || {}) as Record<string, string | undefined>;
+        const row = (label: string, value?: string | null) =>
+          value ? <div key={label} className="flex justify-between gap-3 border-b border-[#0D2235]/50 py-1.5"><span className="font-mono text-[10px] uppercase tracking-widest text-[#64748B]">{label}</span><span className="text-right text-xs text-white">{value}</span></div> : null;
+        return (
+          <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/80 p-4 backdrop-blur" onClick={() => setSelectedOffender(null)}>
+            <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg border border-[#A855F7] bg-[#020D14] p-5" onClick={(e) => e.stopPropagation()}>
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-[10px] font-black tracking-[0.4em] text-[#A855F7]">REGISTERED OFFENDER</div>
+                <button onClick={() => setSelectedOffender(null)} className="rounded border border-[#0D2235] px-2 py-0.5 text-xs text-[#64748B] hover:text-[#E2E8F0]">✕</button>
+              </div>
+
+              {d.photo_url && (
+                <img src={d.photo_url} alt={o.label} className="mb-3 h-48 w-full rounded border border-[#0D2235] object-cover" onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')} />
+              )}
+
+              <div className="mb-3 text-lg font-bold text-white">{o.label || 'Registered offender'}</div>
+
+              <div className="space-y-0">
+                {row('DOB', d.dob)}
+                {row('Sex', d.sex)}
+                {row('Race', d.race)}
+                {row('Height', d.height ? `${d.height}${/^\d+$/.test(d.height) ? '"' : ''}` : null)}
+                {row('Weight', d.weight ? `${d.weight}${/^\d+$/.test(d.weight) ? ' lb' : ''}` : null)}
+                {row('Eye color', d.eye)}
+                {row('Hair color', d.hair)}
+                {row('Aliases', d.aliases)}
+                {row('Markings', d.markings)}
+                {row('Classification', d.classification)}
+                {row('Charge', d.charge)}
+                {row('Address', d.address)}
+                {row('City', d.city || o.county)}
+                {row('State', d.state)}
+                {row('ZIP', d.zip)}
+                {row('Registered', d.registered)}
+                {row('Case #', d.case_number)}
+                {row('Source', o.agency)}
+                {row('Coords', `${o.lat?.toFixed(5)}, ${o.lng?.toFixed(5)}`)}
+              </div>
+
+              <p className="mt-4 text-[10px] text-[#475569]">
+                Data from public state/county/city registry feeds. Offender locations are public record under the federal Adam Walsh Act. Verify at the official source: <a href="https://www.nsopw.gov" target="_blank" rel="noreferrer" className="text-[#A855F7] hover:underline">nsopw.gov</a>
+              </p>
             </div>
-            <div className="mb-4 text-base font-bold text-white">{selectedOffender.label || 'Registered offender'}</div>
-            <div className="mb-4 space-y-1 font-mono text-xs text-[#94A3B8]">
-              <div>Lat/Lng: <span className="text-white">{selectedOffender.lat?.toFixed(5)}, {selectedOffender.lng?.toFixed(5)}</span></div>
-              {(selectedOffender as any).county && <div>City: <span className="text-white">{(selectedOffender as any).county}</span></div>}
-              <div>Source: <span className="text-white">{selectedOffender.agency || 'state registry'}</span></div>
-            </div>
-            <p className="mb-3 text-xs text-[#64748B]">
-              Data sourced from public state and county registries. Offender locations are public record under federal Adam Walsh Act.
-              Verify details at the official registry: <a href="https://www.nsopw.gov" target="_blank" rel="noreferrer" className="text-[#A855F7] hover:underline">nsopw.gov</a>
-            </p>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ALPR info modal — these aren't watchable cameras, just locations of surveillance infrastructure */}
       {selectedAlpr && (
