@@ -126,9 +126,16 @@ const FEATURES = [
   {
     title: 'Sentinel — one-shot camera exposure audit',
     body:
-      "Pay $9.99-$49.99 once, list the cameras / IPs / domains you own, sign the authorization agreement, and we deliver a plain-English report: which of your devices are exposed to the internet, what kind of exposure (Hikvision unauthenticated UI, Dahua default credentials, Foscam weak password, Axis open RTSP, etc.), and step-by-step instructions to fix each one. Same legal model as professional pen-testing. No recurring fee, no scanning third-party assets.",
+      "Pay $9.99-$49.99 once, list the cameras / IPs / domains you own, sign the authorization agreement, and we deliver a plain-English report: which of your devices are exposed to the internet, what kind of exposure (Hikvision unauthenticated UI, Dahua default credentials, Foscam weak password, Axis open RTSP, etc.), and step-by-step instructions to fix each one. Real probes — DNS, TLS, HTTP, vendor-specific camera detection, exposed-DB-port checks. Same legal model as professional pen-testing. Live now at /spy/app/sentinel.",
     accent: '#A855F7',
     tag: 'SENTINEL',
+  },
+  {
+    title: 'Scout — automated infrastructure pen test',
+    body:
+      "$49.99-$299.99, one-shot pen test for your own domains and IPs. Real probes: SPF/DMARC missing, TLS expired, weak ciphers, missing security headers, exposed admin panels, public database ports, dangling CNAMEs (subdomain takeover). Same chassis as Sentinel — sign authorization, register assets, get a severity-color-coded report with click-by-click remediation per finding. Live now at /spy/app/sentinel.",
+    accent: '#FF2D2D',
+    tag: 'SCOUT',
   },
   {
     title: 'Built across three runtimes for maximum uptime',
