@@ -52,13 +52,24 @@ const NAV = [
   },
   {
     href: '/spy/app/world',
-    label: 'World',
-    match: (p: string) => p.startsWith('/spy/app/world'),
+    label: 'Globe',
+    match: (p: string) => p === '/spy/app/world' || p.startsWith('/spy/app/world/'),
     icon: (active: boolean) => (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#22C55E' : '#64748B'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
         <line x1="2" y1="12" x2="22" y2="12" />
         <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+      </svg>
+    ),
+  },
+  {
+    href: '/spy/app/world-cams',
+    label: 'W-Cams',
+    match: (p: string) => p.startsWith('/spy/app/world-cams'),
+    icon: (active: boolean) => (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#22C55E' : '#64748B'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M9 8l6 4-6 4z" fill={active ? '#22C55E' : '#64748B'} />
       </svg>
     ),
   },
@@ -95,7 +106,7 @@ export default function SpyBottomNav() {
       className="fixed inset-x-0 bottom-0 z-[3000] border-t border-[#0D2235] bg-[#020D14]/95 backdrop-blur"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <ul className="mx-auto grid max-w-3xl grid-cols-7">
+      <ul className="mx-auto grid max-w-3xl grid-cols-8">
         {NAV.map((item) => {
           const active = item.match(pathname);
           return (
