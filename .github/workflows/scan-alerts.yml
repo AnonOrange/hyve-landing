@@ -1,0 +1,41 @@
+name: Scan alerts (every 5 min)
+
+# GitHub Actions runs the live-alert poller because Vercel Hobby tier limits
+# crons to daily frequency. This workflow hits our /cron/scan-alerts endpoint
+# every 5 minutes via HTTPS, authenticating with the CRON_SECRET stored as a
+# GitHub Actions secret. Ships the same alert-detection results either way —
+# spikes + bursts → existing alertSvc → web push fan-out.
+#
+# Why not Vercel Pro? Pro is $20/mo per member. GitHub Actions free tier gives
+# 2,000 min/month for public repos (unlimited for the org). Each tick is a
+# 2-second curl, so 5-min cadence = ~150 min/mo. Comfortably free.
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch: # allow manual trigger from the Actions tab for testing
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Hit /cron/scan-alerts
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET not set in repo Actions secrets"
+            exit 1
+          fi
+          response=$(curl -sS -w "\nHTTP_CODE:%{http_code}" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            --max-time 90 \
+            "https://hyve-api.vercel.app/cron/scan-alerts")
+          http_code=$(echo "$response" | tail -1 | sed 's/HTTP_CODE://')
+          body=$(echo "$response" | sed '$d')
+          echo "$body"
+          if [ "$http_code" != "200" ]; then
+            echo "::error::Endpoint returned $http_code"
+            exit 1
+          fi
