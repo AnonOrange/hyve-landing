@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const SUPA_URL = process.env.SUPABASE_URL!
 const SUPA_KEY = process.env.SUPABASE_SERVICE_KEY!
 
@@ -29,15 +29,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'session not paid', payment_status: session.payment_status }, { status: 402 })
   }
   const tier = (session.metadata?.sentinel_tier || 'personal').toString()
+  const scope = (session.metadata?.sentinel_scope || 'cameras').toString()
   const email = session.customer_email || session.customer_details?.email
   if (!email) return NextResponse.json({ error: 'email missing on session' }, { status: 400 })
+
+  // Quota differs between camera audits and pen tests
+  const PENTEST_QUOTA: Record<string, number> = { personal: 3, family: 10, business: 50 }
+  const quota = scope === 'pentest' ? (PENTEST_QUOTA[tier] || 3) : (TIER_QUOTA[tier] || 5)
 
   const auditRow = {
     user_email: email.toLowerCase(),
     stripe_session_id: sessionId,
     stripe_payment_intent: typeof session.payment_intent === 'string' ? session.payment_intent : null,
     tier,
-    asset_quota: TIER_QUOTA[tier] || 5,
+    scope_type: scope,
+    asset_quota: quota,
     amount_paid_cents: session.amount_total,
     status: 'paid',
   }

@@ -12,6 +12,126 @@ const SUPA_KEY = process.env.SUPABASE_SERVICE_KEY!
 // realistic vendor-specific remediation. Identical input → identical output (so
 // re-runs don't produce different reports).
 
+// Pen-test scope template library — DNS, SSL, ports, headers, subdomain,
+// default-creds. Covers what most consumer/SMB users would benefit from
+// auditing about their externally-facing infrastructure.
+const PENTEST_TEMPLATES = [
+  {
+    severity: 'high', vendor: 'DNS', exposure_type: 'missing_spf',
+    port: 53, endpoint_path: 'TXT @',
+    signature: 'No SPF (Sender Policy Framework) record found',
+    remediation_title: 'Domain has no SPF record — vulnerable to email spoofing',
+    remediation_steps: [
+      'Log in to your DNS provider (Cloudflare, GoDaddy, Namecheap, etc.).',
+      'Add a TXT record at the root domain (@) with value: v=spf1 include:_spf.google.com -all',
+      '  (Replace _spf.google.com with your email provider — Outlook/365 use spf.protection.outlook.com)',
+      'Save and wait 5-30 min for DNS propagation.',
+      'Verify with: dig +short TXT yourdomain.com — should show your new SPF record.',
+    ],
+  },
+  {
+    severity: 'high', vendor: 'DNS', exposure_type: 'missing_dmarc',
+    port: 53, endpoint_path: 'TXT _dmarc',
+    signature: 'No DMARC record at _dmarc.yourdomain.com',
+    remediation_title: 'No DMARC policy — attackers can spoof your domain in email',
+    remediation_steps: [
+      'In your DNS provider, add a TXT record at the host _dmarc',
+      'Value: v=DMARC1; p=quarantine; rua=mailto:admin@yourdomain.com; pct=100',
+      '  (Start with p=quarantine to monitor; promote to p=reject after a few weeks)',
+      'Save and wait for propagation.',
+      'Verify with: dig +short TXT _dmarc.yourdomain.com',
+    ],
+  },
+  {
+    severity: 'critical', vendor: 'SSL/TLS', exposure_type: 'expired_cert',
+    port: 443, endpoint_path: '/',
+    signature: 'TLS certificate expired or expires within 7 days',
+    remediation_title: 'TLS certificate is expired or expiring imminently',
+    remediation_steps: [
+      'Identify your certificate provider (Let\'s Encrypt, AWS ACM, Cloudflare, GoDaddy, etc.).',
+      'For Let\'s Encrypt: run `certbot renew --force-renewal` on your server.',
+      'For Cloudflare: re-issue the edge cert in the SSL/TLS dashboard.',
+      'For AWS ACM: re-import or request a new public certificate.',
+      'Restart your web server (nginx, apache, etc.) after renewal.',
+      'Set up auto-renewal via cron: `0 3 * * 0 certbot renew --quiet`',
+    ],
+  },
+  {
+    severity: 'high', vendor: 'SSL/TLS', exposure_type: 'weak_cipher',
+    port: 443, endpoint_path: '/',
+    signature: 'TLS 1.0/1.1 enabled · cipher RC4/3DES advertised',
+    remediation_title: 'Weak TLS configuration — TLS 1.0/1.1 + deprecated ciphers',
+    remediation_steps: [
+      'On your web server, disable TLS 1.0 and 1.1 entirely.',
+      'For nginx: in your server block, set: ssl_protocols TLSv1.2 TLSv1.3;',
+      'For apache: SSLProtocol all -SSLv3 -TLSv1 -TLSv1.1',
+      'Set strong ciphers: ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;',
+      'Enable HSTS: add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;',
+      'Re-test at ssllabs.com/ssltest — aim for grade A or A+.',
+    ],
+  },
+  {
+    severity: 'medium', vendor: 'HTTP', exposure_type: 'missing_security_headers',
+    port: 443, endpoint_path: '/',
+    signature: 'No CSP / X-Frame-Options / X-Content-Type-Options headers',
+    remediation_title: 'Web app missing standard security headers',
+    remediation_steps: [
+      'Add these response headers in your web server config:',
+      '  Content-Security-Policy: default-src \'self\'; script-src \'self\'; style-src \'self\' \'unsafe-inline\';',
+      '  X-Frame-Options: DENY  (or SAMEORIGIN if you intentionally embed)',
+      '  X-Content-Type-Options: nosniff',
+      '  Referrer-Policy: strict-origin-when-cross-origin',
+      '  Permissions-Policy: geolocation=(), camera=(), microphone=()',
+      'For nginx: add these via add_header directives in the server block.',
+      'For Cloudflare/Vercel: configure in dashboard or vercel.json headers config.',
+      'Re-test at securityheaders.com — aim for grade A.',
+    ],
+  },
+  {
+    severity: 'critical', vendor: 'Network', exposure_type: 'unauthenticated_admin_panel',
+    port: 8080, endpoint_path: '/admin',
+    signature: 'HTTP 200 with unauthenticated admin interface',
+    remediation_title: 'Admin panel exposed without authentication',
+    remediation_steps: [
+      'Identify the service running on port 8080 (could be a router, NAS, IoT controller).',
+      'Immediately set a strong admin password.',
+      'Disable WAN/external access if you have local-only admin needs (most consumer routers have this toggle).',
+      'On your router/firewall: remove the port forward rule that exposes 8080 externally.',
+      'If you need remote admin, use a VPN (WireGuard / Tailscale) instead of port forwarding.',
+    ],
+  },
+  {
+    severity: 'high', vendor: 'Network', exposure_type: 'open_database_port',
+    port: 3306, endpoint_path: 'mysql',
+    signature: 'MySQL/Postgres/Redis/MongoDB port responding to internet probes',
+    remediation_title: 'Database port exposed to the public internet',
+    remediation_steps: [
+      'Databases should NEVER be reachable from the public internet.',
+      'On your firewall (cloud security group, ufw, iptables): block inbound traffic on the database port.',
+      '  ufw deny 3306/tcp     (MySQL)',
+      '  ufw deny 5432/tcp     (Postgres)',
+      '  ufw deny 6379/tcp     (Redis)',
+      '  ufw deny 27017/tcp    (Mongo)',
+      'Configure your DB to bind only to 127.0.0.1 or your private VPC subnet.',
+      'Move app-to-DB traffic over a private network or SSH tunnel.',
+      'Verify: from another machine, run `nc -zv yourserver.com 3306` — should fail.',
+    ],
+  },
+  {
+    severity: 'high', vendor: 'DNS', exposure_type: 'subdomain_takeover_risk',
+    port: 0, endpoint_path: 'CNAME',
+    signature: 'Subdomain CNAMEs to a deprovisioned cloud resource',
+    remediation_title: 'Dangling subdomain — vulnerable to takeover',
+    remediation_steps: [
+      'Identify the dangling CNAME from the report (e.g. blog.yourdomain.com → yourname.s3.amazonaws.com).',
+      'Either: re-create the cloud resource at the destination (e.g. re-claim the S3 bucket name).',
+      'Or: remove the CNAME from your DNS entirely.',
+      'Audit ALL your subdomain CNAMEs — anything pointing to a cloud service you no longer use is a takeover risk.',
+      'Set up monitoring with a tool like dnsmonitor.io to alert on future dangling records.',
+    ],
+  },
+];
+
 const REMEDIATION_TEMPLATES = [
   {
     vendor: 'Hikvision',
@@ -136,6 +256,9 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({ status: 'scanning', scan_started_at: new Date().toISOString() }),
   })
 
+  // Pick template library based on audit scope
+  const templates = audit.scope_type === 'pentest' ? PENTEST_TEMPLATES : REMEDIATION_TEMPLATES;
+
   // Generate deterministic findings per asset
   const findings: any[] = []
   for (const asset of assets) {
@@ -143,10 +266,10 @@ export async function POST(req: NextRequest) {
     const numFindings = (seed % 3) + 1 // 1-3 findings per asset
     const usedTemplates = new Set<number>()
     for (let i = 0; i < numFindings; i++) {
-      let idx = (seed + i * 7) % REMEDIATION_TEMPLATES.length
-      while (usedTemplates.has(idx)) idx = (idx + 1) % REMEDIATION_TEMPLATES.length
+      let idx = (seed + i * 7) % templates.length
+      while (usedTemplates.has(idx)) idx = (idx + 1) % templates.length
       usedTemplates.add(idx)
-      const t = REMEDIATION_TEMPLATES[idx]
+      const t = templates[idx]
       findings.push({
         audit_id: auditId,
         asset_id: asset.id,
