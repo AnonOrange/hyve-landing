@@ -1,0 +1,72 @@
+name: Hyve Spy autonomous agents
+
+# Drives the discovery / validation / classification / prune loops that keep
+# the cameras + feeds registry alive. Each job hits a hyve-api endpoint
+# protected by HYVE_API_AGENT_SECRET (set as a repo secret).
+
+on:
+  schedule:
+    # Validate is the most frequent — surfaces dead URLs fast.
+    - cron: '*/30 * * * *'   # every 30 min: validate
+    - cron: '17 */2 * * *'   # every 2 hours: classify pending discovery candidates
+    - cron: '23 */6 * * *'   # every 6 hours: discover new candidates
+    - cron: '7 3 * * *'      # daily at 03:07 UTC: prune dead cameras
+  workflow_dispatch:
+    inputs:
+      agent:
+        description: Which agent to trigger
+        required: true
+        type: choice
+        options: [validate, classify, discover, prune]
+
+env:
+  API: https://hyve-api.vercel.app
+
+jobs:
+  validate:
+    if: github.event.schedule == '*/30 * * * *' || github.event.inputs.agent == 'validate'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: validate batch
+        run: |
+          set -e
+          curl -fsS -X POST -H "X-Agent-Secret: ${{ secrets.HYVE_API_AGENT_SECRET }}" \
+            "$API/agents/validate?batch=80" | tee /tmp/out.json
+          jq -e '.ok == true' /tmp/out.json
+
+  classify:
+    if: github.event.schedule == '17 */2 * * *' || github.event.inputs.agent == 'classify'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: classify pending
+        run: |
+          set -e
+          curl -fsS -X POST -H "X-Agent-Secret: ${{ secrets.HYVE_API_AGENT_SECRET }}" \
+            "$API/agents/classify?batch=20" | tee /tmp/out.json
+          jq -e '.ok == true' /tmp/out.json
+
+  discover:
+    if: github.event.schedule == '23 */6 * * *' || github.event.inputs.agent == 'discover'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: discover new candidates
+        run: |
+          set -e
+          curl -fsS -X POST -H "X-Agent-Secret: ${{ secrets.HYVE_API_AGENT_SECRET }}" \
+            "$API/agents/discover?source=all" | tee /tmp/out.json
+          jq -e '.ok == true' /tmp/out.json
+
+  prune:
+    if: github.event.schedule == '7 3 * * *' || github.event.inputs.agent == 'prune'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: prune dead
+        run: |
+          set -e
+          curl -fsS -X POST -H "X-Agent-Secret: ${{ secrets.HYVE_API_AGENT_SECRET }}" \
+            "$API/agents/prune" | tee /tmp/out.json
+          jq -e '.ok == true' /tmp/out.json
