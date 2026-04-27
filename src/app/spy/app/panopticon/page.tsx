@@ -28,7 +28,9 @@ import dynamic from 'next/dynamic'
 
 const PanopMap = dynamic(() => import('./PanopMap'), { ssr: false })
 
-const API = 'https://hyve-api.vercel.app'
+// Panopticon now hits /api/realtime/surveillance with bbox filter, so the
+// previous "download 67MB then filter client-side" pattern is gone.
+const API = '/api/realtime'
 
 // How far around the user we keep markers in memory + render to Leaflet.
 // 25mi covers the user's whole metro area while keeping marker count
@@ -166,10 +168,13 @@ export default function PanopticonPage() {
     if (!userLocation) return
     setLoading(true)
     const [uLat, uLng] = userLocation
-    fetch(`${API}/cameras/surveillance`)
+    // Server-side bbox prefilter via the new realtime endpoint — only
+    // pulls markers within LOCAL_RADIUS_MI of the user. This makes the
+    // page load near-instant on mobile.
+    fetch(`${API}/surveillance?lat=${uLat}&lng=${uLng}&radius_mi=25&limit=10000`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((raw: any) => {
-        const arr: any[] = Array.isArray(raw) ? raw : raw?.cameras || raw?.markers || raw?.data || []
+        const arr: any[] = raw?.cameras || []
         const localOnly: Surveillance[] = []
         // Streaming filter — never builds the full 164k array in JS heap.
         // Important on memory-constrained Android WebViews.

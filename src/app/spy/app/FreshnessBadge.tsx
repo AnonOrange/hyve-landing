@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from 'react';
 
-const API_BASE = 'https://hyve-api.vercel.app';
+// Edge-cached passthrough at /api/realtime/freshness.
 
 function timeAgo(iso: string): string {
   const t = new Date(iso).getTime();
@@ -23,7 +23,7 @@ export default function FreshnessBadge({ accent = '#22C55E' }: { accent?: string
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`${API_BASE}/cron/cameras-freshness`)
+    fetch(`/api/realtime/freshness`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((j) => { if (!cancelled) setLast(j?.lastRefresh || null); })
       .catch(() => {});

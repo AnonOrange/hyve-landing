@@ -8,7 +8,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { CameraOverlay, camName, camUrl, youtubeId, type Camera } from '../CameraOverlay'
 import FreshnessBadge from '../FreshnessBadge'
 
-const API_BASE = 'https://hyve-api.vercel.app'
+// Now hits the Supabase-backed cache via /api/realtime/world-cams.
+// Was: 10MB direct download from /cameras/world. Now: ~50-200KB.
 const PAGE_SIZE = 60
 
 const TYPES = ['all', 'ptz', 'cruise-cam', 'snapshot', 'youtube', 'hls', 'webview'] as const
@@ -26,7 +27,7 @@ export default function WorldCamerasPage() {
 
   useEffect(() => {
     let cancelled = false
-    fetch(`${API_BASE}/cameras/world`, { cache: 'no-store' })
+    fetch(`/api/realtime/world-cams?limit=5000`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((j) => {
         if (cancelled) return

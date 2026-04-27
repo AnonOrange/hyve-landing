@@ -16,7 +16,8 @@ import { Marker, Popup } from 'react-leaflet';
 import MapHeader from '../MapHeader';
 import MapLoadingOverlay from '../MapLoadingOverlay';
 
-const API_BASE = 'https://hyve-api.vercel.app';
+// Now hits /api/realtime/crime + /api/realtime/crime/[id]/nearby-feeds
+// (Supabase-cached, geo-filtered). Was 2.4MB direct download per page load.
 
 type CrimeIncident = {
   id: string;
@@ -120,7 +121,7 @@ export default function CrimeMapView() {
   const fetchScannerLookup = (incidentId: string) => {
     if (scannerLookups[incidentId]) return; // already fetched
     setScannerLookups((s) => ({ ...s, [incidentId]: { feeds: [], archiveAvailable: false, loading: true } }));
-    fetch(`${API_BASE}/crime/incidents/${encodeURIComponent(incidentId)}/nearby-feeds`)
+    fetch(`/api/realtime/crime/${encodeURIComponent(incidentId)}/nearby-feeds`)
       .then((r) => r.json())
       .then((j) => {
         setScannerLookups((s) => ({
@@ -139,12 +140,13 @@ export default function CrimeMapView() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`${API_BASE}/crime/incidents?limit=10000`)
+    fetch(`/api/realtime/crime?limit=10000&since_hours=720`, { cache: 'no-store' })
       .then((r) => r.json())
-      .then((arr: CrimeIncident[]) => {
+      .then((j) => {
         if (cancelled) return;
+        const arr: CrimeIncident[] = j.incidents ?? [];
         setIncidents(
-          (Array.isArray(arr) ? arr : []).filter(
+          arr.filter(
             (p) => Number.isFinite(p?.lat) && Number.isFinite(p?.lng),
           ),
         );

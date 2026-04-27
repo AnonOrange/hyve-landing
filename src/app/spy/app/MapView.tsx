@@ -12,7 +12,8 @@ import { CameraOverlay, type Camera } from './CameraOverlay';
 import MapHeader from './MapHeader';
 import MapLoadingOverlay from './MapLoadingOverlay';
 
-const API_BASE = 'https://hyve-api.vercel.app';
+// Operations map — pulls from /api/realtime/{feeds,cameras}.
+// Pre-migration: 18MB+ cameras + 600KB feeds direct download. Now ~50KB total.
 
 const FEED_COLORS: Record<string, string> = {
   police: '#00D4FF',
@@ -91,8 +92,8 @@ export default function MapView() {
     (async () => {
       try {
         const [fRes, cRes] = await Promise.all([
-          fetch(`${API_BASE}/feeds/trending?limit=2000`),
-          fetch(`${API_BASE}/cameras/nearby?lat=39.8&lng=-98.5&radius=5000`),
+          fetch(`/api/realtime/feeds?limit=2000`, { cache: 'no-store' }),
+          fetch(`/api/realtime/cameras?limit=2000`, { cache: 'no-store' }),
         ]);
         const fJson = await fRes.json();
         const cJson = await cRes.json();
@@ -140,7 +141,7 @@ export default function MapView() {
       setFlyTo([lat, lng]);
       // load nearby cameras
       try {
-        const cRes = await fetch(`${API_BASE}/cameras/nearby?lat=${lat}&lng=${lng}&radius=100`);
+        const cRes = await fetch(`/api/realtime/cameras?lat=${lat}&lng=${lng}&radius_mi=100&limit=500`, { cache: 'no-store' });
         const cj = await cRes.json();
         const arr: Camera[] = Array.isArray(cj) ? cj : (cj?.cameras ?? cj?.data ?? []);
         if (arr.length) {
@@ -187,7 +188,7 @@ export default function MapView() {
         const { latitude, longitude } = pos.coords;
         setFlyTo([latitude, longitude]);
         try {
-          const res = await fetch(`${API_BASE}/cameras/nearby?lat=${latitude}&lng=${longitude}&radius=200`);
+          const res = await fetch(`/api/realtime/cameras?lat=${latitude}&lng=${longitude}&radius_mi=200&limit=500`, { cache: 'no-store' });
           const j = await res.json();
           const arr: Camera[] = Array.isArray(j) ? j : (j?.cameras ?? j?.data ?? []);
           if (arr.length > 0) {

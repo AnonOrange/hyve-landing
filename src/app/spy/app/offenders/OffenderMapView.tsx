@@ -11,7 +11,9 @@ import MarkerClusterGroup from 'react-leaflet-cluster';
 import MapHeader from '../MapHeader';
 import MapLoadingOverlay from '../MapLoadingOverlay';
 
-const API_BASE = 'https://hyve-api.vercel.app';
+// Pulls from /api/realtime/offenders (Supabase-backed, geo-filtered).
+// Was: 55MB direct download from /cameras/offenders. Now: ~50-200KB
+// when location is known, ~5MB max for full nationwide load.
 
 type Offender = {
   id?: string;
@@ -54,11 +56,12 @@ export default function OffenderMapView() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`${API_BASE}/cameras/offenders`)
+    fetch(`/api/realtime/offenders?limit=5000`, { cache: 'no-store' })
       .then((r) => r.json())
-      .then((arr: Offender[]) => {
+      .then((j) => {
         if (cancelled) return;
-        setOffenders((Array.isArray(arr) ? arr : []).filter((o) => o.lat != null && o.lng != null));
+        const arr: Offender[] = j.offenders ?? [];
+        setOffenders(arr.filter((o) => o.lat != null && o.lng != null));
       })
       .catch(() => {})
       .finally(() => !cancelled && setLoading(false));

@@ -15,7 +15,8 @@ import MarkerClusterGroup from 'react-leaflet-cluster';
 import MapHeader from '../MapHeader';
 import MapLoadingOverlay from '../MapLoadingOverlay';
 
-const API_BASE = 'https://hyve-api.vercel.app';
+// Pulls from /api/realtime/surveillance (Supabase-backed, geo-filtered).
+// Was: 67MB direct download from /cameras/surveillance.
 
 type SurvCam = {
   id?: string;
@@ -74,11 +75,12 @@ export default function SurveillanceMapView() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`${API_BASE}/cameras/surveillance`)
+    fetch(`/api/realtime/surveillance?limit=10000`, { cache: 'no-store' })
       .then((r) => r.json())
-      .then((arr: SurvCam[]) => {
+      .then((j) => {
         if (cancelled) return;
-        setData((Array.isArray(arr) ? arr : []).filter((c) => c.lat != null && c.lng != null));
+        const arr: SurvCam[] = j.cameras ?? [];
+        setData(arr.filter((c) => c.lat != null && c.lng != null));
       })
       .catch(() => {})
       .finally(() => !cancelled && setLoading(false));

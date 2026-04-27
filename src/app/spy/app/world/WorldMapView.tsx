@@ -16,7 +16,7 @@ import { CameraOverlay, type Camera } from '../CameraOverlay'
 import MapHeader from '../MapHeader'
 import MapLoadingOverlay from '../MapLoadingOverlay'
 
-const API_BASE = 'https://hyve-api.vercel.app'
+// Now hits /api/realtime/world-cams (Supabase-cached). Was 10MB direct download.
 
 function lat(o: any) { return o?.lat ?? o?.latitude }
 function lng(o: any) { return o?.lng ?? o?.longitude }
@@ -37,11 +37,12 @@ export default function WorldMapView() {
 
   useEffect(() => {
     let cancelled = false
-    fetch(`${API_BASE}/cameras/world`)
+    fetch(`/api/realtime/world-cams?limit=5000`, { cache: 'no-store' })
       .then((r) => r.json())
-      .then((arr: Camera[]) => {
+      .then((j) => {
         if (cancelled) return
-        const valid = (Array.isArray(arr) ? arr : []).filter((c) => lat(c) != null && lng(c) != null)
+        const arr: Camera[] = j.cameras ?? []
+        const valid = arr.filter((c) => lat(c) != null && lng(c) != null)
         setCameras(valid)
       })
       .catch(() => {})

@@ -25,7 +25,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BROADCASTS } from '@/lib/liveBroadcasts'
 
-const API = 'https://hyve-api.vercel.app'
+// Roulette pulls from the realtime cache.
+const API = '/api/realtime'
 
 type Destination = {
   id: string
@@ -73,11 +74,11 @@ export default function RoulettePage() {
   // the dice on it — we set it asynchronously after destinations are ready.
   useEffect(() => {
     Promise.all([
-      fetch(`${API}/feeds/trending?limit=2000`).then((r) => r.json()).catch(() => []),
-      fetch(`${API}/cameras/world`).then((r) => r.json()).catch(() => []),
+      fetch(`${API}/feeds?limit=2000`, { cache: 'no-store' }).then((r) => r.json()).catch(() => ({ feeds: [] })),
+      fetch(`${API}/world-cams?limit=2000`, { cache: 'no-store' }).then((r) => r.json()).catch(() => ({ cameras: [] })),
     ]).then(([fRaw, camRaw]) => {
-      const fs: any[] = Array.isArray(fRaw) ? fRaw : fRaw?.feeds || []
-      const cams: any[] = Array.isArray(camRaw) ? camRaw : camRaw?.cameras || camRaw?.data || []
+      const fs: any[] = fRaw?.feeds || []
+      const cams: any[] = camRaw?.cameras || []
 
       const map = new Map<string, Feed>()
       const dests: Destination[] = []
@@ -156,10 +157,10 @@ export default function RoulettePage() {
     })
 
     // Background: fetch crime separately so the heavy payload doesn't block.
-    fetch(`${API}/crime/incidents?limit=10000`)
+    fetch(`${API}/crime?limit=10000&since_hours=720`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((cRaw) => {
-        const cs: any[] = Array.isArray(cRaw) ? cRaw : cRaw?.incidents || []
+        const cs: any[] = cRaw?.incidents || []
         setAllCrime(
           cs
             .map((c) => ({
@@ -213,10 +214,10 @@ export default function RoulettePage() {
     setSpinning(false)
 
     // Surrounding context fetch — cameras within 25mi
-    const camRes = await fetch(`${API}/cameras/nearby?lat=${chosen.lat}&lng=${chosen.lng}&radius=25`).catch(() => null)
+    const camRes = await fetch(`${API}/cameras?lat=${chosen.lat}&lng=${chosen.lng}&radius_mi=25&limit=20`, { cache: 'no-store' }).catch(() => null)
     if (camRes?.ok) {
       const camRaw: any = await camRes.json()
-      const arr: any[] = Array.isArray(camRaw) ? camRaw : camRaw?.cameras || []
+      const arr: any[] = camRaw?.cameras || []
       setCams(arr.slice(0, 4))
     }
     setCrime(

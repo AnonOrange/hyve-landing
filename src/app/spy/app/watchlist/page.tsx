@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-const API_BASE = 'https://hyve-api.vercel.app';
+// Watchlist looks up its saved feed IDs against /api/realtime/feeds.
 const STORAGE_KEY = 'hyve_spy_watchlist';
 
 const FEED_COLORS: Record<string, string> = {
@@ -62,9 +62,9 @@ export default function WatchlistPage() {
     let cancelled = false;
     (async () => {
       try {
-        const r = await fetch(`${API_BASE}/feeds/trending?limit=5000`);
+        const r = await fetch(`/api/realtime/feeds?limit=5000`, { cache: 'no-store' });
         const j = await r.json();
-        const arr: Feed[] = Array.isArray(j) ? j : (j?.feeds ?? j?.data ?? []);
+        const arr: Feed[] = j.feeds ?? [];
         const set = new Set(ids);
         if (!cancelled) setFeeds(arr.filter((f) => set.has(f.id)));
       } catch (e) {

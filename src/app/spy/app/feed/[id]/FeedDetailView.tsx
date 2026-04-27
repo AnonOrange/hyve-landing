@@ -5,7 +5,11 @@ import { useParams, useRouter } from 'next/navigation';
 import { CameraOverlay, CameraThumb, type Camera as SharedCamera } from '../../CameraOverlay';
 import ChatPanel from './ChatPanel';
 
-const API_BASE = 'https://hyve-api.vercel.app';
+// FeedDetailView routes through /api/realtime/* — Supabase-backed cache for
+// list endpoints + edge-cached passthroughs for dynamic single-feed data.
+// foia.pdf still goes direct since it's a binary download.
+const API_BASE = '/api/realtime';
+const HYVE_API_DIRECT = 'https://hyve-api.vercel.app';
 
 type Feed = {
   id: string;
@@ -240,8 +244,8 @@ export default function FeedDetailView() {
     (async () => {
       try {
         const [fRes, nRes] = await Promise.all([
-          fetch(`${API_BASE}/feeds/${feedId}`),
-          fetch(`${API_BASE}/feeds/${feedId}/now-playing`),
+          fetch(`${API_BASE}/feed/${feedId}`),
+          fetch(`${API_BASE}/feed/${feedId}/now-playing`),
         ]);
         const fJson = await fRes.json().catch(() => null);
         const nJson = await nRes.json().catch(() => null);
@@ -263,9 +267,9 @@ export default function FeedDetailView() {
     if (lat == null || lng == null) return;
     (async () => {
       try {
-        const res = await fetch(`${API_BASE}/cameras/nearby?lat=${lat}&lng=${lng}&radius=50`);
+        const res = await fetch(`${API_BASE}/cameras?lat=${lat}&lng=${lng}&radius_mi=50&limit=20`);
         const j = await res.json();
-        const arr: Camera[] = Array.isArray(j) ? j : (j?.cameras ?? j?.data ?? []);
+        const arr: Camera[] = j?.cameras ?? [];
         setCameras(arr.slice(0, 12));
       } catch (e) {
         console.warn('camera fetch failed', e);
@@ -282,7 +286,7 @@ export default function FeedDetailView() {
     let cancelled = false;
     (async () => {
       try {
-        const url = `${API_BASE}/news/related?lat=${lat}&lng=${lng}${keyword ? `&keyword=${encodeURIComponent(keyword)}` : ''}`;
+        const url = `${API_BASE}/news?lat=${lat}&lng=${lng}${keyword ? `&keyword=${encodeURIComponent(keyword)}` : ''}`;
         const res = await fetch(url);
         if (!res.ok) return;
         const j = await res.json();
@@ -434,7 +438,8 @@ export default function FeedDetailView() {
       talkgroupName: tg,
       description: desc,
     });
-    return `${API_BASE}/feeds/${feedId}/foia.pdf?${params.toString()}`;
+    // foia.pdf goes direct to upstream — it's a binary file, no point caching.
+    return `${HYVE_API_DIRECT}/feeds/${feedId}/foia.pdf?${params.toString()}`;
   }, [feed, currentCall, feedId]);
 
   return (
