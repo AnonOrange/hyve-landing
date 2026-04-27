@@ -1,0 +1,48 @@
+# GitHub Actions workflow that auto-deploys to Vercel on push to main.
+#
+# This is a backup mechanism for when the Vercel GitHub App integration
+# gets disconnected (which happened ~2026-04-27 — the GitHub webhook
+# disappeared and pushes stopped triggering deploys until we re-added
+# this workflow).
+#
+# Required GitHub secrets:
+#   VERCEL_TOKEN     — Personal access token from https://vercel.com/account/tokens
+#   VERCEL_ORG_ID    — team_bvTdrX8wRW4fxOVHaM24fcpM (anonorange's projects)
+#   VERCEL_PROJECT_ID — prj_xPw28vVU5UKrAyhxyGdWIeMBDo4W (hyve-landing)
+#
+# To set them up once:
+#   gh secret set VERCEL_TOKEN     --body "<your token>"
+#   gh secret set VERCEL_ORG_ID    --body "team_bvTdrX8wRW4fxOVHaM24fcpM"
+#   gh secret set VERCEL_PROJECT_ID --body "prj_xPw28vVU5UKrAyhxyGdWIeMBDo4W"
+#
+# Or via the GitHub UI: Repo → Settings → Secrets and variables → Actions
+
+name: Vercel Production Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
