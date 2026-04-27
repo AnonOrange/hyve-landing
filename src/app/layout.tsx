@@ -2,6 +2,12 @@ import type { Metadata } from 'next'
 import './globals.css'
 import LanguagePicker from '@/components/LanguagePicker'
 
+// AdSense site-verification script. Must be present in the <head> of every
+// page on the domain for Google to verify ownership and serve ads.
+// Loading conditionally on NEXT_PUBLIC_ADSENSE_CLIENT — script is omitted
+// entirely if the env var isn't set (e.g. local dev without ad config).
+const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT || ''
+
 // Inline first-party tracker — ~1 KB, no external dependencies.
 // Ordered product detection: sentinel MUST precede /spy or it collapses.
 const TRACKER_JS = `(function(){
@@ -60,6 +66,22 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="scroll-smooth">
+      <head>
+        {/*
+          AdSense verification script — required in <head> on every page so
+          Google's crawler can verify domain ownership during site review.
+          We use the exact snippet from the AdSense console (async + crossOrigin)
+          so the verification check matches byte-for-byte.
+        */}
+        {ADSENSE_CLIENT && (
+          // eslint-disable-next-line @next/next/no-sync-scripts
+          <script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
+            crossOrigin="anonymous"
+          />
+        )}
+      </head>
       <body className="min-h-screen bg-black text-white antialiased">
         <script dangerouslySetInnerHTML={{ __html: TRACKER_JS }} />
         {children}

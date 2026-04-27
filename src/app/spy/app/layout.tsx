@@ -33,30 +33,15 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
-const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT || ''
-
 export default function SpyAppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[#08070a] text-[#ede8d8]">
       {/* PWA + iOS standalone hints (some are duplicated by Next metadata for safety) */}
       <link rel="manifest" href="/spy/app/manifest.json" />
       <link rel="apple-touch-icon" href="/spy-logo/hyve-spy-logo.png" />
-      {/*
-        AdSense script — loads once globally on /spy/app/* when the operator
-        has configured NEXT_PUBLIC_ADSENSE_CLIENT. Loading it for everyone
-        (not just free users) is correct: <AdSlot /> components decide
-        per-render whether to push an ad, and not loading the script at all
-        means free users would see empty <ins> tags. Crossorigin=anonymous
-        avoids credential leaks since AdSense responses don't need cookies.
-      */}
-      {ADSENSE_CLIENT && (
-        // eslint-disable-next-line @next/next/no-sync-scripts
-        <script
-          async
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
-          crossOrigin="anonymous"
-        />
-      )}
+      {/* AdSense script is now loaded globally from src/app/layout.tsx so it
+          appears in <head> on every page (required for site verification),
+          including / and /messenger which AdSense's crawler hits first. */}
       {children}
       {/*
         Free-tier banner ad — fixed above the bottom nav. AdSlot renders
