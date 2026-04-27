@@ -36,6 +36,7 @@ type Props = {
 
 export default function AdSlot({ slot, format = 'auto', className = '', hideLabel = false }: Props) {
   const [tier, setTier] = useState<string | null>(null)
+  const [filled, setFilled] = useState<'pending' | 'filled' | 'empty'>('pending')
   const insRef = useRef<HTMLModElement | null>(null)
   const pushedRef = useRef(false)
 
@@ -44,11 +45,11 @@ export default function AdSlot({ slot, format = 'auto', className = '', hideLabe
     setTier(m?.[1] || null)
   }, [])
 
-  // Push the ad to AdSense's queue once per mount, only when:
-  // - Free tier confirmed via cookie
-  // - Publisher ID configured
-  // - Slot ID configured (per-prop or default env)
-  // - We haven't already pushed this instance (prevents double-render warnings)
+  // Push the ad to AdSense's queue once per mount + watch for the result.
+  // AdSense annotates the <ins> element with data-ad-status="filled"|"unfilled"
+  // once it decides whether to serve. Pre-approval (or no-fill) yields
+  // "unfilled" or never sets the attribute at all — both should result in
+  // the wrapper hiding so users don't see an empty Sponsored box.
   useEffect(() => {
     const slotId = slot || ADSENSE_SLOT_DEFAULT
     if (tier !== 'free' || !ADSENSE_CLIENT || !slotId || pushedRef.current) return
@@ -59,19 +60,47 @@ export default function AdSlot({ slot, format = 'auto', className = '', hideLabe
       ;(window.adsbygoogle = window.adsbygoogle || []).push({})
       pushedRef.current = true
     } catch {
-      // AdSense throws if it can't render (ad-blocker, no fill, etc.).
-      // Silently — caller never needs to handle this.
+      setFilled('empty')
+      return
+    }
+
+    // Watch the ins element for fill/unfilled signal. Two paths:
+    //  1. data-ad-status attribute changes → MutationObserver picks it up
+    //  2. timeout elapses without a fill → we assume empty and hide
+    const ins = insRef.current
+    if (!ins) return
+
+    const observer = new MutationObserver(() => {
+      const status = ins.getAttribute('data-ad-status')
+      if (status === 'unfilled') setFilled('empty')
+      else if (status === 'filled') setFilled('filled')
+    })
+    observer.observe(ins, { attributes: true, attributeFilter: ['data-ad-status'] })
+
+    // Pre-approval / blocked / no-fill backstop — if AdSense never sets
+    // the attribute (most common before site approval), assume empty after
+    // 4s. Avoids leaving a blank "Sponsored" box forever.
+    const timeout = setTimeout(() => {
+      if (!ins.getAttribute('data-ad-status')) setFilled('empty')
+    }, 4000)
+
+    return () => {
+      observer.disconnect()
+      clearTimeout(timeout)
     }
   }, [tier, slot])
 
-  // Render nothing for paying users or when AdSense isn't configured.
+  // Three render gates — if any fails, render nothing.
   if (tier !== 'free') return null
   const slotId = slot || ADSENSE_SLOT_DEFAULT
   if (!ADSENSE_CLIENT || !slotId) return null
+  // If AdSense told us it can't serve (no approval, no fill, ad blocker),
+  // hide the entire wrapper — no empty Sponsored chrome.
+  if (filled === 'empty') return null
 
   return (
     <div className={`my-3 w-full ${className}`}>
-      {!hideLabel && (
+      {!hideLabel && filled === 'filled' && (
         <div className="mb-1 text-center font-mono text-[9px] uppercase tracking-[0.3em] text-[#475569]">
           Sponsored
         </div>
@@ -79,7 +108,7 @@ export default function AdSlot({ slot, format = 'auto', className = '', hideLabe
       <ins
         ref={insRef}
         className="adsbygoogle"
-        style={{ display: 'block', minHeight: 90 }}
+        style={{ display: 'block', minHeight: filled === 'filled' ? 90 : 0 }}
         data-ad-client={ADSENSE_CLIENT}
         data-ad-slot={slotId}
         data-ad-format={format}
