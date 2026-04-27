@@ -30,7 +30,7 @@ All data flows through Supabase (already in the stack, used for Sentinel + spy a
 
 ### Success criteria
 
-- Open `/admin` after sign-in: full at-a-glance dashboard renders in <100ms (reading from Supabase snapshot rows, not external APIs)
+- Open `/admin` after sign-in: full at-a-glance dashboard renders in <200ms (reading from Supabase snapshot rows, not external APIs). Budget assumes Vercel→Supabase round-trip ≤80ms and a small number of parallel reads (≤8). Pin Supabase project region to the same region as the dominant Vercel deployment region (currently `iad1`/US East — verify against the Supabase project's region in dashboard) to keep this realistic.
 - Stripe purchase across any product appears in "Recent purchases" within ~2 seconds of payment (via webhook → Supabase row)
 - Owner can invite a new admin: enter email + role → recipient receives Resend email → recipient sets password + PIN → invited admin can sign in within minutes
 - Owner cannot accidentally lock themselves out (revoke / role-change refuses if it would leave zero owners)
@@ -140,7 +140,7 @@ All data flows through Supabase (already in the stack, used for Sentinel + spy a
 | Tracker | Custom first-party → Supabase | User picked A in Q4 — privacy-first; per-product attribution unlocked |
 | Cron | Vercel Cron, every 5 min | Standard pattern; CRON_SECRET fail-closed (the bug we already shipped a fix for) |
 | Real-time path | Stripe webhook → Supabase row | Purchases visible in ~2s |
-| Stripe webhook scope | NEW unified webhook for Messenger + Spy + Spy Pro; Sentinel webhook unchanged | Don't touch what's working; isolated blast radius if a secret leaks |
+| Stripe webhook scope | NEW unified webhook for Messenger + Spy + Spy Pro using `STRIPE_UMBRELLA_WEBHOOK_SECRET`; Sentinel webhook unchanged | Don't touch what's working; isolated blast radius if a secret leaks. **Note:** existing Sentinel webhook code at `src/app/api/spy/sentinel/webhook/route.ts` falls back to `STRIPE_WEBHOOK_SECRET` if `STRIPE_SENTINEL_WEBHOOK_SECRET` is unset — Phase 1 must remove that fallback to avoid the umbrella secret being mis-applied to Sentinel events. |
 | Existing `/spy/admin` | KEEP — deep-link from umbrella Overview | Plan 1's recon/queue UI works; not in this spec's scope |
 | Forgot password | Yes — `admin_password_resets` table | User explicitly asked for it |
 
@@ -203,6 +203,8 @@ CREATE TABLE admin_audit_log (
 CREATE INDEX admin_audit_log_ts ON admin_audit_log(ts DESC);
 ```
 
+**Note: `admin_audit_log.ip` field.** Stores the requester IP for sign-in / failed-login forensics. Country code derived from `x-vercel-ip-country` is **not** stored here — it would compound visitor profiling and isn't needed for forensics. The audit log is admin-action provenance only.
+
 ### Flows
 
 #### Sign-in (any admin)
@@ -210,10 +212,10 @@ CREATE INDEX admin_audit_log_ts ON admin_audit_log(ts DESC);
 `POST /api/admin/login` body: `{ email, password, pin }`
 1. Resolve client IP (`x-forwarded-for`, fall back to `'unknown'`)
 2. If `login_fail:<ip>` ≥ 5 → `429 Too Many Requests` with `Retry-After: 900`
-3. Look up `admins` row by email where `active = true`. If not found → record failure + `401 Invalid credentials` (generic, never leak which field was wrong)
-4. `Promise.all([bcrypt.compare(password, row.password_hash), bcrypt.compare(pin, row.pin_hash)])` — always run both, even on email mismatch (constant-ish timing)
-5. On success: clear `login_fail:<ip>`, generate 32-byte hex session ID via `crypto.getRandomValues` (Web Crypto, runs on Edge), `kv.set(session:<id>, { admin_id, email, role, ip, createdAt, lastActiveAt }, { ex: 86400 })`, set `__Host-admin_session` cookie (HttpOnly, Secure, SameSite=Strict, Path=/), `UPDATE admins SET last_login_at = now()`, write audit log
-6. Return `{ ok: true }`
+3. Look up `admins` row by email where `active = true`. If found, use `row.password_hash` + `row.pin_hash`. **If not found, use a sentinel hash** (a bcrypt hash of a random string generated at module load and held in memory) so steps 4-5 still execute the same bcrypt work. This makes the timing of "no such email" and "wrong password" indistinguishable.
+4. `Promise.all([bcrypt.compare(password, hash_to_compare_pwd), bcrypt.compare(pin, hash_to_compare_pin)])` — always runs both bcrypt comparisons regardless of whether the row was found
+5. If row not found OR either bcrypt returned false → record failure (`login_fail:<ip>` INCR with 15m TTL), audit log `{action:'login_fail'}`, return `401 { error: 'Invalid credentials' }` (generic message; never leak which field/branch failed)
+6. On success: clear `login_fail:<ip>`, generate 32-byte hex session ID via `crypto.getRandomValues` (Web Crypto, runs on Edge), `kv.set(session:<id>, { admin_id, email, role, ip, createdAt, lastActiveAt }, { ex: 86400 })`, set `__Host-admin_session` cookie (HttpOnly, Secure, SameSite=Strict, Path=/), `UPDATE admins SET last_login_at = now()`, audit log `{action:'sign_in'}`, return `{ ok: true }`
 
 #### Logout
 
@@ -224,7 +226,8 @@ CREATE INDEX admin_audit_log_ts ON admin_audit_log(ts DESC);
 `POST /api/admin/forgot-password` body: `{ email }`
 1. Rate-limit per IP via `forgot_pw_rate:<ip>` counter (max 3 / 15 min)
 2. **Always return `200 { ok: true }` regardless of whether email matches** — generic message: *"If that email is on the admin allowlist, a reset link is on its way."* Don't leak the admin allowlist.
-3. If email matches an active admin: insert `admin_password_resets` row (token, 1h expiry), Resend email with link `https://www.hyveapp.co/admin/reset-password?token=<token>`, write audit log
+3. **Defer the email-send work**: regardless of whether the email matches, `await` only the rate-limit check before responding. The actual lookup + (conditional) Supabase INSERT + Resend mail happens in a fire-and-forget `Promise.resolve().then(...)` so response time is constant whether the email matches or not. (Vercel functions complete the deferred work before invocation timeout; for very large send queues use a queue, but Resend's send is sub-second.)
+4. (Inside the deferred task) If email matches an active admin: insert `admin_password_resets` row (token, 1h expiry), Resend email with link `https://www.hyveapp.co/admin/reset-password?token=<token>`, write audit log `{action:'reset_requested', target_email}`
 
 `GET /admin/reset-password?token=…` → form to set new password + new PIN
 `POST /api/admin/reset-password` body: `{ token, password, pin }`
@@ -296,10 +299,13 @@ After first sign-in, the seed owner uses `/admin/users` to invite anyone else.
 |---|---|
 | `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` | Already set (Sentinel uses them) |
 | `RESEND_API_KEY` | Already set |
+| `CRON_SECRET` | Already set as part of the security fix shipped earlier |
 | `ADMIN_SEED_EMAIL` | Email for the auto-seeded first owner |
 | `ADMIN_SEED_PASSWORD_HASH` | bcrypt of seed owner's password |
 | `ADMIN_SEED_PIN_HASH` | bcrypt of seed owner's 6-digit PIN |
 | `ADMIN_SESSION_SECRET` | 32-byte random hex (optional cookie-integrity HMAC) |
+| `STRIPE_UMBRELLA_WEBHOOK_SECRET` | NEW — signing secret for the Messenger/Spy/Spy Pro webhook. Distinct from `STRIPE_SENTINEL_WEBHOOK_SECRET` so secrets don't cross product boundaries. |
+| `KV_REST_API_URL`, `KV_REST_API_TOKEN`, `KV_REST_API_READ_ONLY_TOKEN` | Vercel KV connection — auto-set when KV is provisioned. **Vercel KV is NOT currently in use** despite the architecture diagram saying "already in stack" — Phase 1 must provision a KV store first. |
 
 ---
 
@@ -367,7 +373,9 @@ CREATE TABLE failed_payments (
 session:<64-hex>            JSON { admin_id, email, role, ip, createdAt, lastActiveAt }   TTL 24h sliding
 login_fail:<ip>             integer counter                                                TTL 15m
 forgot_pw_rate:<ip>         integer counter (max 3 / 15m)                                  TTL 15m
-scan_lock                   '1' while a manual snapshot scan runs                          TTL 30s
+scan_lock                   '1' while a manual snapshot scan runs (acquired via               TTL 30s
+                            kv.set(..., { nx: true, ex: 30 }) — atomic SETNX so concurrent
+                            scan-now requests don't both think they got the lock)
 ```
 
 ### `vid_hash` privacy guarantee
@@ -396,7 +404,12 @@ This is strictly stronger than the HyperLogLog approach used in the prior spec �
 **Client-side** (1 KB inline embedded by `app/layout.tsx`):
 - Skips `/admin*` paths entirely
 - `localStorage['hv_vid']` = random UUID (one-shot per browser)
-- Auto-detects `product` from `location.pathname` (`/messenger*` → messenger, `/spy/app/sentinel*` → sentinel, `/spy*` → spy, `/` → home)
+- Auto-detects `product` from `location.pathname` using **ordered prefix matching** — rules evaluated top-down, more-specific first. Reordering breaks Sentinel attribution (it would collapse into `spy`):
+  1. `path === '/'` or `startsWith('/home')` → `'home'`
+  2. `startsWith('/spy/app/sentinel')` → `'sentinel'`  ← MUST come before the next rule
+  3. `startsWith('/messenger') || startsWith('/download') || startsWith('/whitepaper')` → `'messenger'`
+  4. `startsWith('/spy')` → `'spy'`
+  5. otherwise → `null`
 - POSTs `{ vid, path, product, referrer, utm, ts }` via `navigator.sendBeacon('/api/track', ...)`
 - Exposes `window.hyveTrack(eventName)` for funnel events
 
@@ -419,18 +432,22 @@ This is strictly stronger than the HyperLogLog approach used in the prior spec �
 
 ### Cron jobs
 
-`vercel.json`:
+`vercel.json` — **MERGE with the existing cron entries, do not overwrite.** The current `vercel.json` already declares the Sentinel data-purge cron (`/api/spy/sentinel/purge` daily at 4am, gated by the `CRON_SECRET` we shipped a fail-closed fix for earlier today). Replacing the file wholesale would silently kill the purge job. The final file should contain ALL cron entries:
+
 ```jsonc
 {
   "crons": [
-    { "path": "/api/cron/snapshot", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/cleanup",  "schedule": "0 * * * *" }
+    { "path": "/api/spy/sentinel/purge", "schedule": "0 4 * * *" },   // EXISTING — preserve
+    { "path": "/api/cron/snapshot",      "schedule": "*/5 * * * *" }, // NEW
+    { "path": "/api/cron/cleanup",       "schedule": "0 * * * *" }    // NEW
   ]
 }
 ```
 
+Implementation step in Plan A: read the current `vercel.json`, add the two new entries to its `crons` array, do not delete or modify any existing entry.
+
 `/api/cron/snapshot` (every 5 min):
-- Auth: **fail-closed** check `if (!CRON_SECRET || got !== CRON_SECRET) return 401` (the bug we already fixed in `/api/spy/sentinel/purge` — applies here too)
+- Auth: Vercel cron sends `Authorization: Bearer ${CRON_SECRET}` on every scheduled request. Handler reads the header, strips the `Bearer ` prefix, and **fail-closed** checks `if (!CRON_SECRET || got !== CRON_SECRET) return 401` (matching the pattern shipped in the `/api/spy/sentinel/purge` security fix). Use the `Authorization` header only — no `x-cron-secret` fallback, to avoid the multi-source confusion that crept into the purge route.
 - All snapshots run in `Promise.allSettled` so one failure doesn't poison the rest
 - Each subtask has 10s timeout
 - For each Stripe price ID env var, sum charges in last 24h / 7d / 30d, count active subs by price_id → produces `snap.byProduct.{messenger,spy,spy_pro,sentinel}` and `snap.total`
@@ -442,7 +459,7 @@ Subtasks:
 3. Active subs count per product
 4. HYVE user count from `hyve-id /v1/stats`
 5. Sentinel audit count from Supabase
-6. Spy account count from `hyve-api` (pending: confirm endpoint)
+6. ~~Spy account count from `hyve-api`~~ — **deferred to v2.** The `hyve-api.vercel.app/admin/dashboard` endpoint exists (used by `/spy/admin`) but does not currently expose a count primitive that fits the snapshot shape. v1 admin uses Sentinel audit count + HYVE-id user count as the user-side numbers; spy account total surfaces via the deep-link to `/spy/admin`. Listed in "Open questions / future work."
 7. All-services health pings (relay / hyve-id / hyve-api / Supabase / Stripe) — each `{up, latencyMs}`
 8. TLS expiry on `hyveapp.co` (`node:tls`)
 9. DoH lookup for A / CNAME / MX / DNSSEC (Cloudflare 1.1.1.1)
@@ -457,6 +474,11 @@ DELETE FROM admin_invites        WHERE expires_at < now() - interval '30 days';
 DELETE FROM admin_password_resets WHERE expires_at < now() - interval '30 days';
 -- recent_purchases / failed_payments retained forever (business records)
 ```
+
+**Tradeoff: 180-day audit log retention.** This is enough for normal operational review (quarterly) but means an abuse incident discovered after 6 months has no in-DB evidence. Acceptable for v1 because:
+- Stripe events have their own forever-retention with full audit trail
+- Login failures correlate with `login_fail:<ip>` KV TTL bursts (15 min) — too short for forensics anyway
+- If forensic retention is needed later, replace `DELETE` with an archive-then-prune pattern (export to S3/Supabase Storage, then prune)
 
 ### Threat-level computation
 
@@ -477,7 +499,8 @@ Total → `low` (0) | `guarded` (1-9) | `elevated` (10-19) | `high` (20-29) | `c
 ### Stripe webhooks
 
 **NEW** `/api/stripe/webhook` (Messenger + Spy + Spy Pro):
-- Auth: `stripe.webhooks.constructEvent(rawBody, sig, STRIPE_WEBHOOK_SECRET)` — fail-closed, throws on signature mismatch
+- Auth: `stripe.webhooks.constructEvent(rawBody, sig, STRIPE_UMBRELLA_WEBHOOK_SECRET)` — fail-closed, throws on signature mismatch
+- **Phase 1 prerequisite:** delete the `|| process.env.STRIPE_WEBHOOK_SECRET` fallback in `src/app/api/spy/sentinel/webhook/route.ts:7` so the Sentinel webhook can never accidentally consume an umbrella-signed event (or vice versa)
 - `checkout.session.completed`: read `line_items[].price.id`, map to `product` enum (Messenger / Spy / Spy Pro), INSERT into `recent_purchases` with `ON CONFLICT (stripe_session) DO NOTHING`
 - `invoice.payment_failed`: INSERT into `failed_payments`
 - `customer.subscription.deleted`: trigger immediate `snapshots:subs` recompute (don't wait for cron)
@@ -560,6 +583,17 @@ The new piece (multi-admin management). Owner-only mutations.
 ### Existing `/spy/admin` disposition
 
 **Deep-linked from Overview**, contents unchanged. The Spy section card on Overview has a "→ Spy operational admin" link to the existing page. No migration in v1.
+
+**The hardcoded email allowlist in `src/app/spy/admin/page.tsx` (`vibesoftwaresolutions@gmail.com`, `luckybstudios@gmail.com`) is NOT auto-migrated** to the new `admins` table. Operators who want access to BOTH the new umbrella admin AND the existing `/spy/admin` must:
+1. The seed owner signs in via the new `/admin/login` (using `ADMIN_SEED_*` env vars)
+2. They invite themselves via the new flow (typing the same email they're hardcoded in `/spy/admin` for) and accept
+3. They now have access via both surfaces
+
+Two reasons not to auto-migrate:
+- The new system has a richer schema (password+PIN+role+audit) that the hardcoded set can't satisfy without a fake password
+- Surfacing the difference forces the operator to consciously decide which surface they're authenticating to, reducing accidental drift between the two sources of truth
+
+A future plan can migrate `/spy/admin` to read from the new `admins` table, eliminating the hardcoded set entirely. Out of scope for v1.
 
 ---
 
