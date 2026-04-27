@@ -471,7 +471,35 @@ export default function SpyPage() {
         <div className="mb-12 text-center">
           <div className="font-mono text-xs uppercase tracking-[0.4em] text-[#00D4FF]">// pricing</div>
           <h2 className="mt-4 text-4xl font-black md:text-5xl">Pick your tier. Cancel anytime.</h2>
-          <p className="mt-3 text-[#64748B]">72-hour free trial on every plan.</p>
+          <p className="mt-3 text-[#64748B]">72-hour free trial on every paid plan. Or start free with ads.</p>
+        </div>
+
+        {/*
+          FREE TIER — ad-supported, web-only. Same feature surface as Basic
+          but with display ads on most screens. Drives top-of-funnel volume
+          + creates an upgrade path to ad-free Basic.
+        */}
+        <div className="mb-6 rounded-2xl border-2 border-[#22C55E]/40 bg-gradient-to-br from-[#22C55E]/8 to-transparent p-6">
+          <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+            <div>
+              <div className="mb-1 font-mono text-[10px] tracking-[0.4em] text-[#22C55E]">
+                NEW · FREE WITH ADS
+              </div>
+              <h3 className="text-xl font-black text-[#E2E8F0]">$0/mo — same data, ad-supported</h3>
+              <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-[#94A3B8]">
+                All scanner audio, cameras, crime, TV, radio, pulse, and ticker — same as Basic, with
+                display ads on most screens. Pro features (Sleuth, Residential, Intel hub, Globe)
+                stay paid. Web only — sign up in seconds, no credit card.
+              </p>
+            </div>
+            <a
+              href="/spy/sign-up-free"
+              className="shrink-0 rounded px-6 py-3 text-sm font-black tracking-widest text-[#020D14] transition hover:scale-[1.02]"
+              style={{ background: '#22C55E', boxShadow: '0 0 60px -10px rgba(34,197,94,0.5)' }}
+            >
+              START FREE →
+            </a>
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">

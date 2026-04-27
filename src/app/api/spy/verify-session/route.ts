@@ -21,7 +21,7 @@ const PRO_PRICE_IDS = new Set(
 // it via document.cookie to decide what UI to render. The actual access
 // enforcement is on the server side: this cookie is just a UI hint that
 // matches the server's truth, refreshed on every verify-session call.
-function setTierCookie(res: NextResponse, tier: 'pro' | 'basic' | null) {
+function setTierCookie(res: NextResponse, tier: 'pro' | 'basic' | 'free' | null) {
   if (tier === null) {
     // Clear when there's no active sub.
     res.cookies.set('hyve_spy_tier', '', { path: '/', maxAge: 0, sameSite: 'lax', secure: true })
@@ -67,6 +67,21 @@ export async function GET(req: NextRequest) {
       { status: 200, headers: { 'Cache-Control': 'no-store' } },
     )
     setTierCookie(r, 'pro')
+    return r
+  }
+
+  // Free-tier bypass: /api/spy/sign-up-free sets `free:<userId>` for ad-
+  // supported users. They get the same Basic feature access (scanner audio,
+  // cameras, crime, TV, radio, pulse, ticker, etc.) but the app renders
+  // AdSlot components throughout because hyve_spy_tier === 'free'.
+  // Pro features (Sleuth, Residential, Intel hub, Globe) still gate-check
+  // against tier === 'pro' so they're hidden for free users.
+  if (sessionId.startsWith('free:')) {
+    const r = NextResponse.json(
+      { active: true, status: 'free', tier: 'free', currentPeriodEnd: null, cancelAtPeriodEnd: false },
+      { status: 200, headers: { 'Cache-Control': 'no-store' } },
+    )
+    setTierCookie(r, 'free')
     return r
   }
 
