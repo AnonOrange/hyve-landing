@@ -4,7 +4,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { CameraOverlay, camName, camUrl, youtubeId, type Camera } from '../CameraOverlay'
 import FreshnessBadge from '../FreshnessBadge'
 
-const API_BASE = 'https://hyve-api.vercel.app'
+// Cameras now load from our Supabase-backed cache via /api/realtime/cameras.
+// The cache is refreshed every 60s by the Railway worker that pings
+// /api/cron/realtime-sync. Geo-filtering on the server means the response
+// is ~50-200KB instead of the 18MB full-CONUS blob.
 const PAGE_SIZE = 60
 
 const TYPES = ['all', 'ptz', 'snapshot', 'youtube', 'hls', 'webview'] as const
@@ -18,22 +21,60 @@ export default function CamerasPage() {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
   const [selected, setSelected] = useState<Camera | null>(null)
+  const [userPos, setUserPos] = useState<[number, number] | null>(null)
+  const [radius, setRadius] = useState<number>(100)
   const sentinelRef = useRef<HTMLDivElement | null>(null)
 
-  // Load all cameras (CONUS-wide via huge radius — backend caps at the region anyway)
+  // Geolocate the user (best-effort — fall back to nationwide if denied)
+  useEffect(() => {
+    if (!navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(
+      (p) => setUserPos([p.coords.latitude, p.coords.longitude]),
+      () => setUserPos(null),
+      { enableHighAccuracy: false, maximumAge: 5 * 60_000, timeout: 5_000 },
+    )
+  }, [])
+
+  // Load cameras from the realtime cache.
+  // - With user location: fetch only within `radius` miles → tiny payload
+  // - Without: fetch top 1000 nationwide
+  // Refreshes every 60s to pick up cache updates.
   useEffect(() => {
     let cancelled = false
-    fetch(`${API_BASE}/cameras/nearby?lat=39.8&lng=-98.5&radius=5000`, { cache: 'no-store' })
-      .then((r) => r.json())
-      .then((j) => {
+    let intervalId: ReturnType<typeof setInterval> | null = null
+
+    async function load() {
+      try {
+        const params = new URLSearchParams()
+        if (userPos) {
+          params.set('lat', String(userPos[0]))
+          params.set('lng', String(userPos[1]))
+          params.set('radius_mi', String(radius))
+          params.set('limit', '1000')
+        } else {
+          params.set('limit', '1000')
+        }
+        const r = await fetch(`/api/realtime/cameras?${params}`, { cache: 'no-store' })
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        const j = await r.json()
         if (cancelled) return
-        const arr: Camera[] = Array.isArray(j) ? j : (j?.cameras ?? j?.data ?? [])
+        const arr: Camera[] = j.cameras ?? []
         setAll(arr.filter((c) => camUrl(c)))
-      })
-      .catch((e) => !cancelled && setErr(e.message || 'Load failed'))
-      .finally(() => !cancelled && setLoading(false))
-    return () => { cancelled = true }
-  }, [])
+        setErr(null)
+      } catch (e) {
+        if (!cancelled) setErr(e instanceof Error ? e.message : 'Load failed')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    load()
+    intervalId = setInterval(load, 60_000)
+    return () => {
+      cancelled = true
+      if (intervalId) clearInterval(intervalId)
+    }
+  }, [userPos, radius])
 
   // Filter + search
   const filtered = useMemo(() => {
