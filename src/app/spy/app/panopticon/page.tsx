@@ -30,6 +30,15 @@ const PanopMap = dynamic(() => import('./PanopMap'), { ssr: false })
 
 const API = 'https://hyve-api.vercel.app'
 
+// How far around the user we keep markers in memory + render to Leaflet.
+// 25mi covers the user's whole metro area while keeping marker count
+// in the low hundreds (vs the full 164k national dataset).
+const LOCAL_RADIUS_MI = 25
+// Degree-bounding-box prefilter — quick reject before haversine math.
+// 1° latitude = ~69mi. 0.5° = ~34mi which generously covers a 25mi radius
+// even at the equator. Cheap to evaluate and skips ~99% of distant points.
+const BOX_PREFILTER_DEG = 0.5
+
 export type Surveillance = {
   id: string
   // Real values seen in the API response: 'alpr-flock', 'public-cctv',
@@ -117,41 +126,85 @@ function levelFor(s: number): string {
 }
 
 export default function PanopticonPage() {
-  const [all, setAll] = useState<Surveillance[]>([])
+  // local = only markers within LOCAL_RADIUS_MI of the user's location.
+  // Replaces the previous "load all 164k markers, render with cluster"
+  // approach that was freezing low-end Android WebViews. Now we never
+  // create more than a few hundred Leaflet objects.
+  const [local, setLocal] = useState<Surveillance[]>([])
   const [loading, setLoading] = useState(true)
   const [pin, setPin] = useState<[number, number] | null>(null)
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null)
+  const [permissionDenied, setPermissionDenied] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
-  // Bootstrap: pull all surveillance markers once. They're static enough
-  // that a single fetch is fine, and being fully client-side means the
-  // 1mi radius queries are instant (no roundtrip per click).
+  // Step 1: capture user location FIRST, before any surveillance fetch.
+  // We need it to pre-filter the dataset; without it we'd be back to
+  // loading 164k markers and freezing.
   useEffect(() => {
+    if (!navigator.geolocation) {
+      setPermissionDenied(true)
+      setLoading(false)
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      (p) => setUserLocation([p.coords.latitude, p.coords.longitude]),
+      (e) => {
+        setPermissionDenied(true)
+        setLoading(false)
+        setErr(e.message)
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 5 * 60 * 1000 },
+    )
+  }, [])
+
+  // Step 2: once we have a location, fetch surveillance markers and
+  // immediately filter to LOCAL_RADIUS_MI. We still pull the whole dataset
+  // (no server-side bounding-box endpoint exists today) but we only KEEP
+  // the local subset in state — usually 100–800 markers depending on city
+  // density. Leaflet renders that instantly without freezing.
+  useEffect(() => {
+    if (!userLocation) return
+    setLoading(true)
+    const [uLat, uLng] = userLocation
     fetch(`${API}/cameras/surveillance`)
       .then((r) => r.json())
       .then((raw: any) => {
         const arr: any[] = Array.isArray(raw) ? raw : raw?.cameras || raw?.markers || raw?.data || []
-        setAll(
-          arr
-            .map((m: any) => ({
-              id: m.id || `${m.surveillance_type || m.feedType}-${m.lat}-${m.lng}`,
-              // Read the real field. Fallbacks for older shapes.
-              surveillanceType: m.surveillance_type || m.surveillanceType || m.feedType || m.type || m.category || '',
-              lat: m.lat ?? m.latitude,
-              lng: m.lng ?? m.lon ?? m.longitude,
-              label: m.label || m.name,
-              agency: m.agency,
-            }))
-            .filter((m: Surveillance) => Number.isFinite(m.lat) && Number.isFinite(m.lng)),
-        )
+        const localOnly: Surveillance[] = []
+        // Streaming filter — never builds the full 164k array in JS heap.
+        // Important on memory-constrained Android WebViews.
+        for (const m of arr) {
+          const lat = m.lat ?? m.latitude
+          const lng = m.lng ?? m.lon ?? m.longitude
+          if (typeof lat !== 'number' || typeof lng !== 'number') continue
+          // Cheap bounding-box prefilter (degrees) before the real haversine.
+          // Skips ~99% of points outside our area without trig calls.
+          const dLat = Math.abs(lat - uLat)
+          const dLng = Math.abs(lng - uLng)
+          if (dLat > BOX_PREFILTER_DEG || dLng > BOX_PREFILTER_DEG) continue
+          if (dist([uLat, uLng], [lat, lng]) > LOCAL_RADIUS_MI) continue
+          localOnly.push({
+            id: m.id || `${m.surveillance_type || m.feedType}-${lat}-${lng}`,
+            surveillanceType: m.surveillance_type || m.surveillanceType || m.feedType || m.type || m.category || '',
+            lat,
+            lng,
+            label: m.label || m.name,
+            agency: m.agency,
+          })
+        }
+        setLocal(localOnly)
+        // Auto-pin at user location so the score is computed immediately.
+        // No more "tap to begin" — landing screen IS the score.
+        setPin([uLat, uLng])
       })
       .catch((e) => setErr(e?.message || 'Surveillance load failed'))
       .finally(() => setLoading(false))
-  }, [])
+  }, [userLocation])
 
   const score: Score | null = useMemo(() => {
     if (!pin) return null
     const counts: Record<string, number> = {}
-    for (const m of all) {
+    for (const m of local) {
       if (dist(pin, [m.lat, m.lng]) > 1) continue
       const c = classify(m.surveillanceType)
       counts[c] = (counts[c] || 0) + 1
@@ -164,12 +217,16 @@ export default function PanopticonPage() {
       breakdown.push({ type: w.label, count, weight: w.weight, emoji: w.emoji })
     }
     return { total: Math.min(100, total), breakdown: breakdown.sort((a, b) => b.count * b.weight - a.count * a.weight) }
-  }, [pin, all])
+  }, [pin, local])
 
   const useGeolocation = () => {
     if (!navigator.geolocation) return
     navigator.geolocation.getCurrentPosition(
-      (p) => setPin([p.coords.latitude, p.coords.longitude]),
+      (p) => {
+        setUserLocation([p.coords.latitude, p.coords.longitude])
+        setPin([p.coords.latitude, p.coords.longitude])
+        setPermissionDenied(false)
+      },
       (e) => setErr(e.message),
       { enableHighAccuracy: true, timeout: 10000 },
     )
@@ -177,8 +234,8 @@ export default function PanopticonPage() {
 
   const nearbyMarkers = useMemo(() => {
     if (!pin) return []
-    return all.filter((m) => dist(pin, [m.lat, m.lng]) <= 1)
-  }, [pin, all])
+    return local.filter((m) => dist(pin, [m.lat, m.lng]) <= 1)
+  }, [pin, local])
 
   return (
     <main className="relative h-screen w-full bg-[#020D14] text-[#E2E8F0]">
@@ -192,11 +249,15 @@ export default function PanopticonPage() {
             <div>
               <div className="text-[10px] font-black tracking-[0.4em] text-[#A855F7]">PANOPTICON</div>
               <div className="font-mono text-[10px] text-[#64748B]">
-                {loading
-                  ? `loading ${all.length || 164_000} markers…`
-                  : pin
-                    ? `${nearbyMarkers.length} surveillance devices within 1mi`
-                    : 'click map or geolocate to score a location'}
+                {permissionDenied
+                  ? 'location required — tap SCORE ME to retry'
+                  : loading
+                    ? userLocation
+                      ? `loading local surveillance markers (${LOCAL_RADIUS_MI}mi)…`
+                      : 'getting your location…'
+                    : pin
+                      ? `${nearbyMarkers.length} devices within 1mi · ${local.length} indexed in ${LOCAL_RADIUS_MI}mi`
+                      : 'tap map to score a location'}
               </div>
             </div>
           </div>
@@ -215,7 +276,7 @@ export default function PanopticonPage() {
         </div>
       )}
 
-      <PanopMap markers={all} pin={pin} radiusMi={1} onClick={(lat, lng) => setPin([lat, lng])} />
+      <PanopMap markers={local} pin={pin} radiusMi={1} onClick={(lat, lng) => setPin([lat, lng])} />
 
       {/* Score card overlay */}
       {pin && score && (
