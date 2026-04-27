@@ -1,21 +1,21 @@
 // src/lib/admin/session.ts
 //
-// Opaque 64-char hex session IDs stored in Vercel KV with 24h sliding TTL.
-// Sessions are revocable instantly; a secondary set per email lets us kill all
-// sessions for a given admin on revoke or password reset.
-//
-// ⚠️ Imported by middleware.ts (Edge runtime). Must use Web Crypto only —
-// do NOT import node:crypto here.
+// Session storage via Supabase — no external KV dependency.
+// Sessions expire at a fixed TTL; middleware checks expires_at column.
+// Uses fetch-based supaGet/supaPost/supaPatch/supaDelete so it runs on
+// both Node and Edge runtimes (middleware).
 
-import { kv } from '@/lib/kv'
+import { supaGet, supaPost, supaPatch, supaDelete } from '@/lib/supabase'
 
 export interface AdminSession {
+  id: string
   admin_id: string
   email: string
   role: 'owner' | 'admin'
   ip: string
-  createdAt: number      // unix ms
-  lastActiveAt: number   // unix ms
+  created_at: string
+  last_active_at: string
+  expires_at: string
 }
 
 export const SESSION_TTL_SEC = 24 * 60 * 60
@@ -26,40 +26,48 @@ function generateId(): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
 }
 
-export async function createSession(params: Omit<AdminSession, 'createdAt' | 'lastActiveAt'>): Promise<string> {
+function expiresAt(): string {
+  return new Date(Date.now() + SESSION_TTL_SEC * 1000).toISOString()
+}
+
+export async function createSession(params: {
+  admin_id: string
+  email: string
+  role: 'owner' | 'admin'
+  ip: string
+}): Promise<string> {
   const id = generateId()
-  const now = Date.now()
-  const session: AdminSession = { ...params, createdAt: now, lastActiveAt: now }
-  await Promise.all([
-    kv.set(`session:${id}`, session, { ex: SESSION_TTL_SEC }),
-    kv.sadd(`admin_sessions:${params.email}`, id),
-    kv.expire(`admin_sessions:${params.email}`, SESSION_TTL_SEC * 7),  // index TTL = 7d max
-  ])
+  await supaPost('admin_sessions', {
+    id,
+    ...params,
+    expires_at: expiresAt(),
+  }, 'return=minimal')
   return id
 }
 
 export async function lookupSession(id: string): Promise<AdminSession | null> {
   if (!/^[0-9a-f]{64}$/.test(id)) return null
-  return kv.get<AdminSession>(`session:${id}`)
+  const now = new Date().toISOString()
+  const res = await supaGet(
+    'admin_sessions',
+    `id=eq.${encodeURIComponent(id)}&expires_at=gt.${encodeURIComponent(now)}&limit=1`,
+  )
+  if (!res.ok) return null
+  const rows = await res.json() as AdminSession[]
+  return rows[0] ?? null
 }
 
-export async function refreshSession(id: string, session: AdminSession): Promise<void> {
-  session.lastActiveAt = Date.now()
-  await kv.set(`session:${id}`, session, { ex: SESSION_TTL_SEC })
+export async function refreshSession(id: string): Promise<void> {
+  await supaPatch('admin_sessions', `id=eq.${encodeURIComponent(id)}`, {
+    last_active_at: new Date().toISOString(),
+    expires_at: expiresAt(),
+  })
 }
 
 export async function deleteSession(id: string): Promise<void> {
-  const session = await lookupSession(id)
-  const delOps: Promise<unknown>[] = [kv.del(`session:${id}`)]
-  if (session) delOps.push(kv.srem(`admin_sessions:${session.email}`, id))
-  await Promise.all(delOps)
+  await supaDelete('admin_sessions', `id=eq.${encodeURIComponent(id)}`)
 }
 
 export async function deleteAllSessionsForEmail(email: string): Promise<void> {
-  const ids = (await kv.smembers(`admin_sessions:${email}`)) as string[]
-  if (!ids.length) return
-  await Promise.all([
-    ...ids.map((id) => kv.del(`session:${id}`)),
-    kv.del(`admin_sessions:${email}`),
-  ])
+  await supaDelete('admin_sessions', `email=eq.${encodeURIComponent(email)}`)
 }

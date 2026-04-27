@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supaGet } from '@/lib/supabase'
 import { createReset, sendResetEmail } from '@/lib/admin/reset'
 import { writeAuditLog } from '@/lib/admin/audit'
-import { kv } from '@/lib/kv'
+import { incrementRateCount } from '@/lib/admin/ratelimit'
 import type { AdminRow } from '@/lib/admin/credentials'
 
 const RATE_LIMIT = 3
@@ -26,9 +26,8 @@ export async function POST(req: NextRequest) {
 
   // Rate-limit by IP before doing any real work
   const rateKey = `forgot_pw_rate:${ip}`
-  const count = (await kv.get<number>(rateKey)) ?? 0
-  if (count >= RATE_LIMIT) return GENERIC_OK
-  await kv.set(rateKey, count + 1, { ex: RATE_TTL })
+  const count = await incrementRateCount(rateKey, RATE_TTL)
+  if (count > RATE_LIMIT) return GENERIC_OK
 
   // Always respond immediately — real work fires deferred so timing is constant
   const email = body.email?.toLowerCase()

@@ -6,7 +6,6 @@ import { snapshotApkDownloads } from '@/lib/snapshots/github'
 import { snapshotStripeRevenue } from '@/lib/snapshots/stripe-revenue'
 import { computeThreatLevel, SEVERITY, type ThreatSignal } from '@/lib/snapshots/threat-level'
 import { supaPost, supaPatch, supaGet } from '@/lib/supabase'
-import { kv } from '@/lib/kv'
 
 // Cron runs on Node runtime (needs node:tls for TLS check)
 export const runtime = 'nodejs'
@@ -159,20 +158,17 @@ function buildThreatSignals(results: {
 }
 
 async function checkBruteForce(): Promise<void> {
-  // If any login_fail:* keys exist in KV, brute_force signal should be raised.
-  // We can't enumerate KV keys, so instead we write the threat level with
-  // a brute_force signal only when the cron detects lockout events in audit log.
+  // Check audit log for recent login failures; if found, surface as a snapshot
+  // so future threat-level consumers can include brute_force as a signal.
   try {
     const since = new Date(Date.now() - 15 * 60 * 1000).toISOString()
     const res = await supaGet(
       'admin_audit_log',
-      `action=eq.login_fail&ts=gte.${encodeURIComponent(since)}&select=id&limit=1`,
+      `action=eq.login_fail&ts=gte.${encodeURIComponent(since)}&select=id&limit=10`,
     )
     if (res.ok) {
       const rows = await res.json() as unknown[]
-      if (rows.length > 0) {
-        await kv.set('brute_force_active', '1', { ex: 15 * 60 })
-      }
+      await upsertSnapshot('brute_force', { active: rows.length > 0, count: rows.length, ts: Date.now() })
     }
   } catch {
     // Non-critical

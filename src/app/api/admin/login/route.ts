@@ -4,7 +4,7 @@ import { supaGet, supaPost, supaPatch } from '@/lib/supabase'
 import { verifyAdminCredentials, type AdminRow } from '@/lib/admin/credentials'
 import { createSession } from '@/lib/admin/session'
 import { writeAuditLog } from '@/lib/admin/audit'
-import { kv } from '@/lib/kv'
+import { getRateCount, incrementRateCount, clearRateCount } from '@/lib/admin/ratelimit'
 
 const LOCKOUT_LIMIT = 5
 const LOCKOUT_TTL = 15 * 60  // 15 minutes in seconds
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
 
   // Brute-force lockout check
   const lockKey = `login_fail:${ip}`
-  const failures = (await kv.get<number>(lockKey)) ?? 0
+  const failures = await getRateCount(lockKey)
   if (failures >= LOCKOUT_LIMIT) {
     return new NextResponse(JSON.stringify({ error: 'Too many attempts' }), {
       status: 429,
@@ -72,15 +72,14 @@ export async function POST(req: NextRequest) {
   const ok = await verifyAdminCredentials({ email, password, pin }, row)
 
   if (!ok) {
-    const newCount = failures + 1
-    await kv.set(lockKey, newCount, { ex: LOCKOUT_TTL })
+    await incrementRateCount(lockKey, LOCKOUT_TTL)
     await writeAuditLog({ actor_email: email.toLowerCase(), action: 'login_fail', ip })
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
   }
 
   // Success — clear lockout, create session
   await Promise.all([
-    kv.del(lockKey),
+    clearRateCount(lockKey),
     supaPatch('admins', `id=eq.${row!.id}`, { last_login_at: new Date().toISOString() }, 'return=minimal'),
   ])
 

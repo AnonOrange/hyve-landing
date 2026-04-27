@@ -22,11 +22,15 @@ export async function GET(req: NextRequest) {
     admin_password_resets:  daysAgo(now, 30),   // by expires_at
   }
 
+  const nowIso = now.toISOString()
+
   const results = await Promise.allSettled([
     supaDelete('traffic_events', `ts=lt.${cutoffs.traffic_events}`),
     supaDelete('admin_audit_log', `ts=lt.${cutoffs.admin_audit_log}`),
     supaDelete('admin_invites', `expires_at=lt.${cutoffs.admin_invites}`),
     supaDelete('admin_password_resets', `expires_at=lt.${cutoffs.admin_password_resets}`),
+    supaDelete('admin_sessions', `expires_at=lt.${nowIso}`),
+    supaDelete('admin_rate_limits', `expires_at=lt.${nowIso}`),
   ])
 
   const errors = results
