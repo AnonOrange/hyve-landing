@@ -65,7 +65,9 @@ export default function SpyLoginPage() {
         </form>
 
         <p className="mt-6 text-[11px] text-[#475569]">
-          No account? <a href="/spy#pricing" className="text-[#00D4FF] hover:text-white">Start the 72-hour free trial →</a>
+          No account? <a href="/spy/sign-up-free" className="text-[#00D4FF] hover:text-white">Start free with ads →</a>
+          {' or '}
+          <a href="/spy#pricing" className="text-[#E8C456] hover:text-white">subscribe →</a>
         </p>
       </div>
     </main>

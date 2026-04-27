@@ -48,12 +48,13 @@ export default function SpyPricing() {
             ── Pricing
           </span>
           <h2 className="text-4xl md:text-5xl font-black mt-3 mb-4">
-            Try free for 72 hours.
+            Use it free with ads.
             <br />
-            <span className="text-white/50">Then $5.99/month.</span>
+            <span className="text-white/50">Or pay $5.99/month — no ads.</span>
           </h2>
           <p className="text-white/50 text-base max-w-xl mx-auto">
-            Everything unlocked during trial. Cancel any time before the trial ends and you won&apos;t be charged a cent.
+            All scanner audio + cameras + crime + TV + radio — same data, ad-supported. Subscribe
+            anytime to remove ads and unlock Pro features.
           </p>
         </div>
 
@@ -67,7 +68,7 @@ export default function SpyPricing() {
           <div className="relative">
             <div className="flex items-center gap-3 mb-2">
               <span className="px-2 py-1 bg-[#00D4FF] text-black text-[9px] font-black tracking-widest uppercase rounded">
-                72-hr free trial
+                ad-free
               </span>
               <span className="px-2 py-1 border border-white/10 text-white/40 text-[9px] font-bold tracking-widest uppercase rounded">
                 cancel anytime
@@ -107,11 +108,11 @@ export default function SpyPricing() {
               disabled={loading || !stripeEnabled}
               className="w-full px-6 py-4 rounded-lg bg-[#00D4FF] text-black font-bold uppercase tracking-wider text-sm hover:bg-white transition-colors disabled:opacity-50"
             >
-              {loading ? 'Redirecting to Checkout…' : 'Start 72-Hour Free Trial'}
+              {loading ? 'Redirecting to Checkout…' : 'Subscribe — Remove Ads'}
             </button>
 
             <p className="text-center text-[11px] text-white/30 mt-4">
-              No charge today. We collect payment so you stay on after the trial. Cancel any time, no questions asked.
+              Or <a href="/spy/sign-up-free" className="text-[#00D4FF] hover:text-white">use the free tier with ads</a> — no payment required.
               <br />
               Secure payment via Stripe · Android 8.0+ · iOS coming soon
             </p>

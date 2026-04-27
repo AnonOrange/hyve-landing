@@ -255,14 +255,14 @@ export default function SpyPage() {
             SIGN IN
           </a>
           <a
-            href="#pricing"
+            href="/spy/sign-up-free"
             className="rounded px-4 py-2 text-xs font-black tracking-widest text-[#1a1200] transition hover:opacity-90"
             style={{
               background: 'linear-gradient(135deg, #C8A227, #E8C456)',
               boxShadow: '0 0 30px -10px rgba(200,162,39,0.5)',
             }}
           >
-            START FREE TRIAL
+            START FREE
           </a>
         </div>
       </header>
@@ -301,7 +301,7 @@ export default function SpyPage() {
                   boxShadow: '0 0 60px -10px rgba(200,162,39,0.5), 0 0 140px -40px rgba(232,196,86,0.6)',
                 }}
               >
-                START 72-HOUR FREE TRIAL
+                START FREE — NO PAYMENT
               </a>
               <a
                 href="/spy/login"
@@ -471,7 +471,7 @@ export default function SpyPage() {
         <div className="mb-12 text-center">
           <div className="font-mono text-xs uppercase tracking-[0.4em] text-[#00D4FF]">// pricing</div>
           <h2 className="mt-4 text-4xl font-black md:text-5xl">Pick your tier. Cancel anytime.</h2>
-          <p className="mt-3 text-[#64748B]">72-hour free trial on every paid plan. Or start free with ads.</p>
+          <p className="mt-3 text-[#64748B]">Start free with ads. Upgrade anytime to remove ads + unlock Pro features.</p>
         </div>
 
         {/*
@@ -514,7 +514,7 @@ export default function SpyPage() {
               <p className="text-xs text-[#64748B]">$71.88 / year if billed monthly</p>
             </div>
             <a href="/api/spy/checkout?plan=monthly&tier=basic" className="mt-8 block rounded border border-[#00D4FF] bg-[#00D4FF]/10 py-4 text-center text-sm font-black tracking-widest text-[#00D4FF] transition hover:bg-[#00D4FF]/20">
-              START FREE TRIAL
+              SUBSCRIBE — REMOVE ADS
             </a>
           </div>
 
@@ -532,7 +532,7 @@ export default function SpyPage() {
               <p className="text-xs text-[#22C55E]">≈ $5.00/mo · saves $11.89 vs monthly</p>
             </div>
             <a href="/api/spy/checkout?plan=annual&tier=basic" className="mt-8 block rounded bg-[#00D4FF] py-4 text-center text-sm font-black tracking-widest text-[#020D14] transition hover:bg-white">
-              START FREE TRIAL
+              SUBSCRIBE ANNUAL — SAVE $11.89
             </a>
           </div>
 
@@ -566,7 +566,7 @@ export default function SpyPage() {
               ))}
             </ul>
             <a href="/api/spy/checkout?plan=annual&tier=pro" className="mt-8 block rounded bg-[#F59E0B] py-4 text-center text-sm font-black tracking-widest text-[#020D14] transition hover:bg-[#FBBF24]">
-              GO PRO · FREE TRIAL
+              GO PRO ANNUAL
             </a>
           </div>
         </div>
@@ -617,7 +617,8 @@ export default function SpyPage() {
         </div>
 
         <p className="mt-6 text-center text-xs text-[#334155]">
-          $0 today. Trial ends in 72 hours, then your selected plan begins. Cancel anytime in one tap.
+          Subscribe to remove ads + unlock Pro features. Cancel anytime in one tap. Or use the free
+          tier — no payment required, ads only.
         </p>
       </section>
 

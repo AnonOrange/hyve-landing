@@ -80,13 +80,12 @@ function makeActivationCode(subscriptionId: string, email: string): string {
   return code.match(/.{4}/g)!.join('-')   // SPY-XXXX-XXXX-XXXX-XXXX style → 4×4
 }
 
-function welcomeEmailHtml(code: string, trialEndMs: number | null): string {
-  const trialEndStr = trialEndMs ? new Date(trialEndMs).toUTCString() : 'in 72 hours'
+function welcomeEmailHtml(code: string, _trialEndMs: number | null): string {
   return `<!doctype html>
 <html><body style="font-family:-apple-system,system-ui,sans-serif;background:#020D14;color:#E2E8F0;padding:40px 24px;">
 <div style="max-width:560px;margin:auto;">
 <h1 style="color:#00D4FF;font-size:28px;margin:0 0 8px;">Welcome to Hyve Spy</h1>
-<p style="color:#94A3B8;font-size:14px;margin:0 0 32px;">Your 72-hour free trial is active. Cancel any time before it ends and you won't be charged.</p>
+<p style="color:#94A3B8;font-size:14px;margin:0 0 32px;">Your subscription is active — ad-free access to every feature.</p>
 <div style="background:rgba(0,212,255,0.06);border:1px solid #00D4FF;border-radius:8px;padding:24px;margin-bottom:24px;">
   <p style="color:#00D4FF;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px;">Your Activation Code</p>
   <p style="font-family:monospace;font-size:24px;color:white;margin:0;letter-spacing:2px;">${code}</p>
@@ -94,12 +93,11 @@ function welcomeEmailHtml(code: string, trialEndMs: number | null): string {
 <p style="color:#94A3B8;font-size:14px;line-height:1.6;">
   1. Download Hyve Spy from <a href="https://hyveapp.co/spy#download" style="color:#00D4FF;">hyveapp.co/spy</a> (APK or Play Store)<br>
   2. Open the app → Settings → Activate<br>
-  3. Paste the code above. Everything unlocks for your trial.
+  3. Paste the code above. Everything unlocks immediately.
 </p>
 <p style="color:#64748B;font-size:12px;margin-top:32px;">
-  Trial ends: ${trialEndStr}<br>
-  After trial: $5.99/month, billed monthly. Cancel any time in your account.<br>
-  Manage your subscription: <a href="https://hyveapp.co/spy/account" style="color:#00D4FF;">hyveapp.co/spy/account</a>
+  Cancel any time in your account.<br>
+  Manage your subscription: <a href="https://hyveapp.co/spy/app/account" style="color:#00D4FF;">hyveapp.co/spy/app/account</a>
 </p>
 <p style="color:#475569;font-size:11px;margin-top:32px;border-top:1px solid #0D2235;padding-top:16px;">
   HYVE SPY · Real-Time Public Safety Intelligence<br>

@@ -32,10 +32,10 @@ export default function SpyHero() {
 
         <div className="flex flex-wrap items-center gap-3 mb-12">
           <a
-            href="#pricing"
+            href="/spy/sign-up-free"
             className="px-7 py-3.5 rounded-lg bg-[#00D4FF] text-black font-bold uppercase tracking-wider text-sm hover:bg-[#00D4FF]/90 transition-colors"
           >
-            Start 72-Hour Free Trial
+            Start Free with Ads
           </a>
           <a
             href="#features"

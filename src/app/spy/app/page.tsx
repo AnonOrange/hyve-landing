@@ -57,17 +57,25 @@ export default function SpyAppPage() {
           <div className="mb-3 font-mono text-[10px] font-bold tracking-[0.4em] text-[#FF2D2D]">
             ◆ ACCESS LOCKED
           </div>
-          <h1 className="mb-3 text-2xl font-black">Subscription required</h1>
+          <h1 className="mb-3 text-2xl font-black">Account required</h1>
           <p className="mb-6 text-sm text-[#64748B]">
-            Hyve Spy needs an active subscription to stream live scanner audio and cameras.
+            Hyve Spy needs an account to stream live scanner audio and cameras.
             {gate.status ? ` (status: ${gate.status})` : ''}
           </p>
-          <a
-            href="/spy#pricing"
-            className="inline-block rounded bg-[#00D4FF] px-6 py-3 text-sm font-black uppercase tracking-widest text-[#020D14] transition hover:bg-white"
-          >
-            Start 72-hour free trial
-          </a>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <a
+              href="/spy/sign-up-free"
+              className="inline-block rounded bg-[#22C55E] px-6 py-3 text-sm font-black uppercase tracking-widest text-[#020D14] transition hover:bg-[#16A34A]"
+            >
+              Start Free with Ads
+            </a>
+            <a
+              href="/spy#pricing"
+              className="inline-block rounded border border-[#00D4FF] bg-[#00D4FF]/10 px-6 py-3 text-sm font-black uppercase tracking-widest text-[#00D4FF] transition hover:bg-[#00D4FF]/20"
+            >
+              Subscribe — Remove Ads
+            </a>
+          </div>
           <p className="mt-4 text-[11px] text-[#334155]">
             Already paid on another device? Re-open your Stripe receipt link to re-bind this
             browser.

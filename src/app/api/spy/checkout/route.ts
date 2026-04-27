@@ -36,7 +36,9 @@ async function createSession(req: NextRequest, plan: string | null, tier: string
     allow_promotion_codes: true,
     billing_address_collection: 'auto',
     subscription_data: {
-      trial_period_days: 3,
+      // Removed the 3-day free trial — users wanting a no-cost option now
+      // sign up via /spy/sign-up-free for the ad-supported tier instead.
+      // Trial-via-Stripe was confusing alongside a real free tier.
       metadata: { product: 'hyve_spy', plan: resolvedPlan, tier: resolvedTier, ...(email ? { email } : {}) },
     },
     payment_method_collection: 'always',
