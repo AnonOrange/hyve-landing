@@ -254,9 +254,10 @@ export default function HomePage() {
       <section id="apps" className="relative z-10 mx-auto max-w-7xl px-6 pb-16 pt-12">
         <div className="mb-10 text-center">
           <div className="font-mono text-[10px] tracking-[0.4em] text-[#C8A227]">LIVE NOW · HYVEAPP.CO</div>
-          <h2 className="mt-2 text-3xl font-black md:text-4xl">Pick an app. They all share one identity.</h2>
+          <h2 className="mt-2 text-3xl font-black md:text-4xl">Pick an app. Built on the same trust layer.</h2>
           <p className="mt-3 text-sm text-[#9e8a55]">
-            Sign in once on any Hyve product — your account works across all of them.
+            Each app stands on its own and signs in independently. They share the same engineering
+            standard, design language, and privacy ethos — unified accounts are on the roadmap.
           </p>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
