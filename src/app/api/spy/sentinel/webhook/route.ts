@@ -4,7 +4,7 @@ import Stripe from 'stripe'
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const SUPA_URL = process.env.SUPABASE_URL!
 const SUPA_KEY = process.env.SUPABASE_SERVICE_KEY!
-const WEBHOOK_SECRET = process.env.STRIPE_SENTINEL_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET
+const WEBHOOK_SECRET = process.env.STRIPE_SENTINEL_WEBHOOK_SECRET
 
 const TIER_QUOTA: Record<string, number> = { personal: 5, family: 20, business: 100 }
 const PENTEST_QUOTA: Record<string, number> = { personal: 3, family: 10, business: 50 }
