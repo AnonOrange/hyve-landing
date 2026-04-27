@@ -177,6 +177,7 @@ export const ALL_SOURCES = [
   'NSOPW',          // National Sex Offender Public Website — name+state lookup
   'COURTLISTENER',  // CourtListener — name → federal court records (PACER index)
   'WAYBACK',        // Wayback Machine — username → archived snapshots of profiles
+  'REDDIT',         // Reddit — username → public profile + karma + join date
 ] as const
 export type SourceCode = typeof ALL_SOURCES[number] | string
 
@@ -191,6 +192,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   NSOPW: 'Sex Offender Registry',
   COURTLISTENER: 'CourtListener (Fed Courts)',
   WAYBACK: 'Wayback Machine',
+  REDDIT: 'Reddit',
 }
 
 // Each adapter declares which query types it can answer. Used by the UI
@@ -206,6 +208,7 @@ export const SOURCE_QUERY_TYPES: Record<string, ScanQueryType[]> = {
   NSOPW: ['name'],
   COURTLISTENER: ['name'],
   WAYBACK: ['username'],
+  REDDIT: ['username'],
 }
 
 // ─── Heuristic match scorer ──────────────────────────────────────────────

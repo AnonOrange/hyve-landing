@@ -137,6 +137,21 @@ export default function ResidentialPage() {
         </div>
       </div>
 
+      {/* Phase 1 status banner — federal REO sources are SPA-rendered with
+          anti-bot WAFs; we ship the framework + 8 adapter scaffolds and
+          iterate on each adapter's URL discovery as live testing surfaces
+          the working endpoints. */}
+      <div className="mx-auto max-w-6xl px-4 pt-3">
+        <div className="rounded border border-[#F59E0B]/30 bg-[#F59E0B]/5 px-3 py-2 text-[11px] text-[#F59E0B]/90">
+          <strong>Phase 1 (federal sources):</strong> the 8 adapters are
+          live but several federal sites use anti-bot WAFs that block
+          our scraper at L7. We&apos;re iterating on each adapter&apos;s
+          endpoint discovery; many scans will return 0 hits until a
+          source-specific fix lands. <strong>ATTOM/PropertyRadar</strong>
+          integration unlocks reliable nationwide coverage when ready.
+        </div>
+      </div>
+
       <div className="mx-auto grid max-w-6xl gap-4 px-4 pt-4 lg:grid-cols-[260px,1fr]">
         {/* Sidebar: scan history */}
         <aside className="lg:sticky lg:top-[88px] lg:self-start">
