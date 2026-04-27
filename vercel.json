@@ -1,8 +1,7 @@
 {
   "crons": [
-    {
-      "path": "/api/spy/sentinel/purge",
-      "schedule": "0 4 * * *"
-    }
+    { "path": "/api/spy/sentinel/purge", "schedule": "0 4 * * *" },
+    { "path": "/api/cron/snapshot",      "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/cleanup",       "schedule": "0 * * * *" }
   ]
 }
