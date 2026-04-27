@@ -60,10 +60,15 @@ export default function SignUpFreePage() {
           <div className="mb-1 text-center font-mono text-[10px] tracking-[0.4em] text-[#22C55E]">
             FREE WITH ADS
           </div>
-          <h1 className="text-center text-2xl font-black">Get the basics free</h1>
+          <h1 className="text-center text-2xl font-black">Scanner + Cameras, free</h1>
           <p className="mt-2 text-center text-[12px] leading-relaxed text-[#9e8a55]">
-            Live scanner audio · 73K cameras · 39K TV channels · 54K radio stations · live crime ·
-            push alerts. Same data the paid tiers get, with display ads on most screens.
+            Live public-safety scanner audio (6,500+ feeds) and 73,000+ live cameras
+            (US DOT, traffic, weather, NPS, EarthCam, Windy worldwide).
+            Display ads on most screens.
+          </p>
+          <p className="mt-3 text-center text-[11px] text-[#6b5e3a]">
+            TV, Radio, Crime, Pulse, Roulette, Ticker, Panopticon, Watchlist, Sleuth,
+            Residential, Intel — all require an upgrade to Basic ($5.99/mo) or Pro ($9.99/mo).
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 grid gap-3">
@@ -95,8 +100,8 @@ export default function SignUpFreePage() {
                 className="mt-1 accent-[#22C55E]"
               />
               <span>
-                I understand the free tier shows display ads on most screens, and Pro features
-                (Sleuth, Residential, Intel hub, Globe) require an upgrade. I accept the{' '}
+                I understand the free tier is limited to <strong>Scanner + Cameras only</strong>
+                (with display ads). Other features require a Basic or Pro subscription. I accept the{' '}
                 <Link href="/privacy" className="text-[#E8C456] underline-offset-4 hover:underline">privacy policy</Link>.
               </span>
             </label>

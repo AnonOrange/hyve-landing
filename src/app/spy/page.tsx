@@ -475,9 +475,9 @@ export default function SpyPage() {
         </div>
 
         {/*
-          FREE TIER — ad-supported, web-only. Same feature surface as Basic
-          but with display ads on most screens. Drives top-of-funnel volume
-          + creates an upgrade path to ad-free Basic.
+          FREE TIER — ad-supported, scanner + cameras only. Limited scope
+          drives upgrade pressure: try the core experience free, see ads, see
+          which other features exist (TV/Radio/Crime/etc), upgrade to unlock.
         */}
         <div className="mb-6 rounded-2xl border-2 border-[#22C55E]/40 bg-gradient-to-br from-[#22C55E]/8 to-transparent p-6">
           <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
@@ -485,11 +485,12 @@ export default function SpyPage() {
               <div className="mb-1 font-mono text-[10px] tracking-[0.4em] text-[#22C55E]">
                 NEW · FREE WITH ADS
               </div>
-              <h3 className="text-xl font-black text-[#E2E8F0]">$0/mo — same data, ad-supported</h3>
+              <h3 className="text-xl font-black text-[#E2E8F0]">$0/mo — Scanner + Cameras only</h3>
               <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-[#94A3B8]">
-                All scanner audio, cameras, crime, TV, radio, pulse, and ticker — same as Basic, with
-                display ads on most screens. Pro features (Sleuth, Residential, Intel hub, Globe)
-                stay paid. Web only — sign up in seconds, no credit card.
+                Live public-safety scanner audio (6,500+ feeds) and 73,000+ live cameras
+                (DOT, traffic, weather, NPS, EarthCam, Windy worldwide). Display ads on most screens.
+                <span className="text-[#6b5e3a]"> TV, Radio, Crime, Pulse, Roulette, Ticker, Panopticon — all require Basic ($5.99/mo).
+                Sleuth, Residential, Intel — Pro ($9.99/mo).</span>
               </p>
             </div>
             <a

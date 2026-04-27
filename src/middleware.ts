@@ -9,6 +9,64 @@ const ADMIN_PUBLIC = new Set([
   '/admin/accept-invite',
 ])
 
+// ── Per-tier route allowlists for /spy/app/* ────────────────────────────────
+// FREE tier: scanner + cameras only — same scope as the AdSense-supported
+// signup. Other features show an upgrade gate at /spy/app/upgrade.
+const FREE_ALLOWED_PREFIXES = [
+  '/spy/app/cameras',     // US camera grid
+  '/spy/app/world-cams',  // worldwide cameras
+  '/spy/app/feeds',       // scanner feed list
+  '/spy/app/feed/',       // /feed/[id] detail
+  '/spy/app/account',     // account/settings (so they can manage)
+  '/spy/app/sentinel',    // one-shot audits — paid separately
+  '/spy/app/upgrade',     // the upgrade screen itself
+]
+const FREE_ALLOWED_EXACT = new Set([
+  '/spy/app',             // map landing
+  '/spy/app/',
+  '/spy/app/manifest.json',
+  '/spy/app/sw.js',
+  '/spy/app/settings',    // settings webview
+])
+
+// PRO-ONLY routes: even basic users hit the upgrade gate here.
+const PRO_ONLY_PREFIXES = [
+  '/spy/app/sleuth',
+  '/spy/app/residential',
+  '/spy/app/intel',
+  '/spy/app/surveillance',
+  '/spy/app/offenders',
+  '/spy/app/world',       // Pro-only worldwide map (NOT world-cams which is open)
+]
+
+function readTier(req: NextRequest): 'pro' | 'basic' | 'free' | null {
+  const t = req.cookies.get('hyve_spy_tier')?.value
+  if (t === 'pro' || t === 'basic' || t === 'free') return t
+  return null
+}
+
+function isAllowedForFree(pathname: string): boolean {
+  if (FREE_ALLOWED_EXACT.has(pathname)) return true
+  for (const prefix of FREE_ALLOWED_PREFIXES) {
+    if (pathname.startsWith(prefix)) return true
+  }
+  return false
+}
+
+function isProOnly(pathname: string): boolean {
+  for (const prefix of PRO_ONLY_PREFIXES) {
+    if (pathname.startsWith(prefix)) return true
+  }
+  return false
+}
+
+function redirectToUpgrade(req: NextRequest, requiredTier: 'basic' | 'pro'): NextResponse {
+  const url = req.nextUrl.clone()
+  url.pathname = '/spy/app/upgrade'
+  url.search = `?tier=${requiredTier}&from=${encodeURIComponent(req.nextUrl.pathname)}`
+  return NextResponse.redirect(url, 302)
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl
 
@@ -17,15 +75,34 @@ export async function middleware(req: NextRequest) {
     if (pathname === '/spy/app/manifest.json') return NextResponse.next()
     if (pathname === '/spy/app/sw.js') return NextResponse.next()
 
+    // Step 1: must have a session at all
     const hasSession = req.cookies.has('hyve_spy_session')
-    if (hasSession) return NextResponse.next()
+    if (!hasSession) {
+      const next = encodeURIComponent(pathname + (search || ''))
+      const url = req.nextUrl.clone()
+      url.pathname = '/spy'
+      url.search = `?next=${next}`
+      url.hash = 'pricing'
+      return NextResponse.redirect(url, 302)
+    }
 
-    const next = encodeURIComponent(pathname + (search || ''))
-    const url = req.nextUrl.clone()
-    url.pathname = '/spy'
-    url.search = `?next=${next}`
-    url.hash = 'pricing'
-    return NextResponse.redirect(url, 302)
+    // Step 2: tier-based feature gate. Reads hyve_spy_tier cookie set by
+    // /api/spy/verify-session. The upgrade page itself is always reachable
+    // (it's in FREE_ALLOWED_PREFIXES).
+    const tier = readTier(req)
+
+    // Pro-only routes — basic + free both blocked, only pro/comp pass.
+    if (isProOnly(pathname) && tier !== 'pro') {
+      return redirectToUpgrade(req, 'pro')
+    }
+
+    // Free tier is restricted to scanner + cameras + account + sentinel.
+    // Everything else requires basic or higher.
+    if (tier === 'free' && !isAllowedForFree(pathname)) {
+      return redirectToUpgrade(req, 'basic')
+    }
+
+    return NextResponse.next()
   }
 
   // ── Admin dashboard gate (/admin/*) ───────────────────────────────────────
