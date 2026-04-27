@@ -1,4 +1,4 @@
-const apkUrl = process.env.NEXT_PUBLIC_APK_URL || '#'
+const apkUrl = process.env.NEXT_PUBLIC_APK_URL || 'https://github.com/AnonOrange/hyve-landing/releases/download/v1.2.0/HYVE-v1.2.0.apk'
 const iosUrl = process.env.NEXT_PUBLIC_IOS_URL || 'mailto:vibesoftwaresolutions@gmail.com?subject=HYVE%20iOS%20Early%20Access'
 
 export default function DownloadSection() {

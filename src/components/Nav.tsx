@@ -11,7 +11,7 @@ export default function Nav() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const apkUrl = process.env.NEXT_PUBLIC_APK_URL || '#download'
+  const apkUrl = process.env.NEXT_PUBLIC_APK_URL || 'https://github.com/AnonOrange/hyve-landing/releases/download/v1.2.0/HYVE-v1.2.0.apk'
 
   return (
     <nav

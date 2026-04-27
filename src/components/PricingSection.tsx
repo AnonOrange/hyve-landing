@@ -89,7 +89,7 @@ export default function PricingSection() {
               {loading === 'monthly' ? 'Redirecting…' : 'Subscribe Monthly'}
             </button>
             <a
-              href={process.env.NEXT_PUBLIC_APK_URL || '#download'}
+              href={process.env.NEXT_PUBLIC_APK_URL || 'https://github.com/AnonOrange/hyve-landing/releases/download/v1.2.0/HYVE-v1.2.0.apk'}
               download
               className="block text-center text-xs text-white/30 hover:text-white/60 mt-3 transition-colors"
             >
@@ -145,7 +145,7 @@ export default function PricingSection() {
               {loading === 'annual' ? 'Redirecting…' : 'Claim Lifetime Access'}
             </button>
             <a
-              href={process.env.NEXT_PUBLIC_APK_URL || '#download'}
+              href={process.env.NEXT_PUBLIC_APK_URL || 'https://github.com/AnonOrange/hyve-landing/releases/download/v1.2.0/HYVE-v1.2.0.apk'}
               download
               className="block text-center text-xs text-white/30 hover:text-white/60 mt-3 transition-colors"
             >
