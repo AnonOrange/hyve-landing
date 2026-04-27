@@ -1,9 +1,11 @@
 'use client';
 
+// Feeds list — pulls from the Supabase-backed /api/realtime/feeds cache.
+// Refreshes every 60s. The cache itself is refilled every 60s by the
+// Railway worker that pings /api/cron/realtime-sync.
+
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-
-const API_BASE = 'https://hyve-api.vercel.app';
 
 const FEED_COLORS: Record<string, string> = {
   police: '#00D4FF',
@@ -39,20 +41,27 @@ export default function FeedsListPage() {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
+    async function load() {
       try {
-        const r = await fetch(`${API_BASE}/feeds/trending?limit=2000`);
+        const r = await fetch('/api/realtime/feeds?limit=2000', { cache: 'no-store' });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const j = await r.json();
-        const arr: Feed[] = Array.isArray(j) ? j : (j?.feeds ?? j?.data ?? []);
-        if (!cancelled) setFeeds(arr);
+        if (cancelled) return;
+        setFeeds(j.feeds ?? []);
       } catch (e) {
         console.error('feeds load failed', e);
       } finally {
         if (!cancelled) setLoading(false);
       }
-    })();
+    }
+
+    load();
+    intervalId = setInterval(load, 60_000);
     return () => {
       cancelled = true;
+      if (intervalId) clearInterval(intervalId);
     };
   }, []);
 

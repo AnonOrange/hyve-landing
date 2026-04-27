@@ -38,7 +38,9 @@ export type PulsePoint = {
   detail: string
 }
 
-const API = 'https://hyve-api.vercel.app'
+// Pulse pulls from the Supabase-backed realtime cache via /api/realtime/*.
+// Cache is refreshed every 60s by the Railway worker.
+const API = '/api/realtime'
 
 export default function PulsePage() {
   const [points, setPoints] = useState<PulsePoint[]>([])
@@ -52,13 +54,13 @@ export default function PulsePage() {
     let cancelled = false
     setLoading(true)
     Promise.all([
-      fetch(`${API}/feeds/trending?limit=2000`).then((r) => r.json()).catch(() => []),
-      fetch(`${API}/crime/incidents?limit=10000`).then((r) => r.json()).catch(() => []),
+      fetch(`${API}/feeds?limit=2000`, { cache: 'no-store' }).then((r) => r.json()).catch(() => ({ feeds: [] })),
+      fetch(`${API}/crime?limit=10000&since_hours=24`, { cache: 'no-store' }).then((r) => r.json()).catch(() => ({ incidents: [] })),
     ])
       .then(([feedsRaw, crimeRaw]) => {
         if (cancelled) return
-        const feeds: any[] = Array.isArray(feedsRaw) ? feedsRaw : feedsRaw?.feeds || feedsRaw?.data || []
-        const crimes: any[] = Array.isArray(crimeRaw) ? crimeRaw : crimeRaw?.incidents || crimeRaw?.data || []
+        const feeds: any[] = feedsRaw?.feeds || []
+        const crimes: any[] = crimeRaw?.incidents || []
 
         // Normalize listener-spike intensity by dataset max so the heat ramp
         // doesn't get crushed by one outlier scanner. Below threshold = quiet.

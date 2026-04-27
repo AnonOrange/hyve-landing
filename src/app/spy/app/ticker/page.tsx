@@ -178,7 +178,20 @@ export default function TickerPage() {
       if (!cancelled) setItems(merged)
     }
 
-    fetch(`${API}/feeds/trending?limit=200`)
+    // Use the Supabase-backed realtime cache via /api/realtime/*. Geo-filter
+    // server-side when we have user location → tiny payload, fast load.
+    const feedsParams = new URLSearchParams({ limit: '500' })
+    const crimeParams = new URLSearchParams({ limit: '1000', since_hours: '24' })
+    if (userPos) {
+      feedsParams.set('lat', String(userPos[0]))
+      feedsParams.set('lng', String(userPos[1]))
+      feedsParams.set('radius_mi', String(radius))
+      crimeParams.set('lat', String(userPos[0]))
+      crimeParams.set('lng', String(userPos[1]))
+      crimeParams.set('radius_mi', String(radius))
+    }
+
+    fetch(`/api/realtime/feeds?${feedsParams}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((raw) => {
         feedItems = buildFeedItems(raw)
@@ -190,7 +203,7 @@ export default function TickerPage() {
         if (pending === 0 && !cancelled) setLoading(false)
       })
 
-    fetch(`${API}/crime/incidents?limit=500`)
+    fetch(`/api/realtime/crime?${crimeParams}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((raw) => {
         crimeItems = buildCrimeItems(raw)
