@@ -170,11 +170,13 @@ export const ALL_SOURCES = [
   'HIBP',           // Have I Been Pwned — email → breaches
   'GITHUB',         // GitHub — username → public profile + repos
   'GRAVATAR',       // Gravatar — email → profile
-  'SHERLOCK',       // Sherlock-style enumeration across 300+ social platforms
+  'SHERLOCK',       // Sherlock-style enumeration across 50+ social platforms
   'OPENCORPORATES', // OpenCorporates — name → business filings
   'USPTO',          // USPTO — name → patents/trademarks
   'FAA',            // FAA — name → airman / pilot license
   'NSOPW',          // National Sex Offender Public Website — name+state lookup
+  'COURTLISTENER',  // CourtListener — name → federal court records (PACER index)
+  'WAYBACK',        // Wayback Machine — username → archived snapshots of profiles
 ] as const
 export type SourceCode = typeof ALL_SOURCES[number] | string
 
@@ -182,11 +184,13 @@ export const SOURCE_LABELS: Record<string, string> = {
   HIBP: 'Have I Been Pwned',
   GITHUB: 'GitHub',
   GRAVATAR: 'Gravatar',
-  SHERLOCK: 'Sherlock (300+ sites)',
+  SHERLOCK: 'Sherlock (50+ sites)',
   OPENCORPORATES: 'OpenCorporates',
   USPTO: 'USPTO Patents & TMs',
   FAA: 'FAA Airman Registry',
   NSOPW: 'Sex Offender Registry',
+  COURTLISTENER: 'CourtListener (Fed Courts)',
+  WAYBACK: 'Wayback Machine',
 }
 
 // Each adapter declares which query types it can answer. Used by the UI
@@ -200,6 +204,8 @@ export const SOURCE_QUERY_TYPES: Record<string, ScanQueryType[]> = {
   USPTO: ['name'],
   FAA: ['name'],
   NSOPW: ['name'],
+  COURTLISTENER: ['name'],
+  WAYBACK: ['username'],
 }
 
 // ─── Heuristic match scorer ──────────────────────────────────────────────

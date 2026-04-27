@@ -22,6 +22,7 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 
 export default function SleuthPage() {
   const [tier, setTier] = useState<'pro' | 'basic' | null>(null)
@@ -61,14 +62,23 @@ export default function SleuthPage() {
             <div className="font-mono text-[10px] tracking-[0.3em] text-[#9e8a55]">National OSINT smart launcher · Pro</div>
           </div>
         </div>
-        <a
-          href="/sleuth/HOW_TO_USE.html"
-          target="_blank"
-          rel="noopener"
-          className="rounded border border-[#2a2135] px-2.5 py-1 text-[10px] font-bold tracking-widest text-[#9e8a55] hover:border-[#C8A227] hover:text-[#C8A227]"
-        >
-          📖 HOW TO USE
-        </a>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/spy/app/sleuth/scan"
+            className="rounded px-2.5 py-1 text-[10px] font-black tracking-widest text-[#020D14]"
+            style={{ background: 'linear-gradient(135deg, #C8A227, #E8C456)' }}
+          >
+            ⚡ NEW: IN-APP SCANNER
+          </Link>
+          <a
+            href="/sleuth/HOW_TO_USE.html"
+            target="_blank"
+            rel="noopener"
+            className="rounded border border-[#2a2135] px-2.5 py-1 text-[10px] font-bold tracking-widest text-[#9e8a55] hover:border-[#C8A227] hover:text-[#C8A227]"
+          >
+            📖 HOW TO USE
+          </a>
+        </div>
       </div>
       <iframe
         // The static app lives at /sleuth/index.html (served from public/).
