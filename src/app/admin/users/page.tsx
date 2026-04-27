@@ -3,6 +3,7 @@ import { getAdminSession } from '@/lib/admin/get-session'
 import { supaGet } from '@/lib/supabase'
 import AdminShell from '../_shell'
 import UsersClient from './_client'
+import CompAccessClient from './_comp-access-client'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Users · HYVE Admin' }
@@ -39,6 +40,12 @@ export default async function UsersPage() {
         currentAdminId={session.admin_id}
         currentRole={session.role}
       />
+      {/*
+        Comp Access section — admin grants free lifetime Pro access by email.
+        Renders below the main admin user table so the existing layout stays
+        intact. Pulls its own data on mount via /api/admin/comp-access.
+      */}
+      <CompAccessClient />
     </AdminShell>
   )
 }

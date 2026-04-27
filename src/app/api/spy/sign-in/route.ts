@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-// Same allowlist as hyve-spy-accounts/src/lib/compAccess.ts. Update both when adding.
-const COMP_EMAILS = new Set([
-  'vibesoftwaresolutions@gmail.com',
-])
+import { isCompEmail } from '@/lib/admin/comp-access'
 
 const ONE_YEAR = 60 * 60 * 24 * 365
 
@@ -49,7 +45,11 @@ export async function POST(req: NextRequest) {
   const data = await r.json()
   const userEmail: string = data?.user?.email || email
 
-  const sessionValue = COMP_EMAILS.has(userEmail.toLowerCase())
+  // Comp-access lookup hits both the hardcoded owner allowlist + the
+  // admin-managed comp_access_emails Supabase table. Either match → grants
+  // free lifetime Pro access via the `comp:<email>` cookie prefix.
+  const isComp = await isCompEmail(userEmail)
+  const sessionValue = isComp
     ? `comp:${userEmail.toLowerCase()}`
     : `auth:${data?.user?.id || ''}` // non-comp authed users still need a Stripe session for paid access
 

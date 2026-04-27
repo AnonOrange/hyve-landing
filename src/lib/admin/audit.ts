@@ -17,6 +17,8 @@ export type AuditAction =
   | 'reset_requested'
   | 'password_reset'
   | 'scan'
+  | 'comp_grant'    // free lifetime Pro access granted to an email
+  | 'comp_revoke'   // free lifetime Pro access revoked
 
 export interface AuditEntry {
   actor_email: string
