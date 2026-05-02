@@ -21,11 +21,11 @@ const config = {
     return [
       {
         source: '/RealityShield',
-        destination: 'https://hyvetrus.vercel.app/',
+        destination: 'https://hyvetrus.vercel.app/RealityShield',
       },
       {
         source: '/RealityShield/:path*',
-        destination: 'https://hyvetrus.vercel.app/:path*',
+        destination: 'https://hyvetrus.vercel.app/RealityShield/:path*',
       },
     ]
   },
