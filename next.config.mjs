@@ -16,6 +16,19 @@ const config = {
       },
     ]
   },
+
+  async rewrites() {
+    return [
+      {
+        source: '/RealityShield',
+        destination: 'https://hyvetrus.vercel.app/',
+      },
+      {
+        source: '/RealityShield/:path*',
+        destination: 'https://hyvetrus.vercel.app/:path*',
+      },
+    ]
+  },
 }
 
 export default config
