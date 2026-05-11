@@ -19,6 +19,8 @@ export type AuditAction =
   | 'scan'
   | 'comp_grant'    // free lifetime Pro access granted to an email
   | 'comp_revoke'   // free lifetime Pro access revoked
+  | 'caseline_comp_key_issue'   // admin minted a complimentary CaseLine desktop key
+  | 'caseline_comp_key_revoke'  // admin revoked a complimentary CaseLine desktop key
 
 export interface AuditEntry {
   actor_email: string

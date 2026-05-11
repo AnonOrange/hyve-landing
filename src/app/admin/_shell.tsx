@@ -7,6 +7,7 @@ const TABS = [
   { label: 'FINANCIAL', href: '/admin/financial' },
   { label: 'TRAFFIC',   href: '/admin/traffic' },
   { label: 'USERS',     href: '/admin/users' },
+  { label: 'CASELINE',  href: '/admin/caseline-keys' },
   { label: 'REALTIME',  href: '/admin/realtime' },
   { label: 'SECURITY',  href: '/admin/security' },
 ]
