@@ -4,6 +4,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import FeatureGrid from './FeatureGrid'
 
 export const metadata = {
   title: 'Hyve CaseLine — Tactical workspace for law firms',
@@ -271,37 +272,10 @@ export default function CaseLinePage() {
             Every tool a defender needs, in one workspace.
           </h2>
         </div>
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map((f) => (
-            <div
-              key={f.title}
-              className="overflow-hidden rounded-xl border-2 transition hover:scale-[1.01]"
-              style={{ borderColor: `${ACCENT}33`, background: `${ACCENT}08` }}
-            >
-              <div
-                className="relative aspect-[16/10] w-full overflow-hidden border-b"
-                style={{ borderColor: `${ACCENT}22`, background: '#0b0a10' }}
-              >
-                <Image
-                  src={f.screenshot}
-                  alt={`${f.title} — real screenshot from the CaseLine desktop app`}
-                  width={1480}
-                  height={925}
-                  className="h-full w-full object-cover object-top transition-transform duration-500 hover:scale-105"
-                />
-                {/* Subtle cyan inner glow on hover */}
-                <div
-                  className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 hover:opacity-100"
-                  style={{ boxShadow: `inset 0 0 60px ${ACCENT}33` }}
-                />
-              </div>
-              <div className="p-5">
-                <h3 className="text-base font-black text-[#ede8d8]">{f.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-[#9e8a55]">{f.body}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        <FeatureGrid features={FEATURES} />
+        <p className="mt-6 text-center text-[11px] tracking-wider text-[#6b5e3a]">
+          Click any card to see the full-size screenshot
+        </p>
       </section>
 
       {/* DEPLOY */}
