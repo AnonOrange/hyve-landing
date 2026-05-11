@@ -67,8 +67,9 @@ export async function POST(req: NextRequest) {
       await handleCheckoutCompleted(stripe, event.data.object as Stripe.Checkout.Session)
     } else if (event.type === 'invoice.payment_failed') {
       await handlePaymentFailed(event.data.object as Stripe.Invoice)
+    } else if (event.type === 'customer.subscription.deleted' || event.type === 'customer.subscription.updated') {
+      await handleSubscriptionLifecycle(stripe, event.data.object as Stripe.Subscription)
     }
-    // customer.subscription.deleted: snapshot cron will pick up the change within 5 min
   } catch (err) {
     console.error('[umbrella webhook] Handler error:', (err as Error).message)
     // Don't surface errors to Stripe — log only
@@ -102,5 +103,35 @@ async function handlePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
     amount: invoice.amount_due ?? 0,
     reason: invoice.last_finalization_error?.message ?? 'payment_failed',
     stripe_event: invoice.id,
+  }, 'return=minimal')
+}
+
+// Subscription lifecycle changes — cancellation, downgrade, past-due, etc.
+// Reading from the subscription is enough; we don't need to mutate the
+// license metadata because /api/caseline/validate checks the *live* stripe
+// status, not a cached flag. We just record the change for the dashboard.
+async function handleSubscriptionLifecycle(stripe: Stripe, sub: Stripe.Subscription): Promise<void> {
+  // Only track CaseLine subscriptions here — Spy/Messenger have their own
+  // tracking via recent_purchases. Identify by metadata.product.
+  const product = sub.metadata?.product
+  if (product !== 'hyve_caseline') return
+
+  const licenseKey = sub.metadata?.license_key
+  if (!licenseKey) {
+    // No license key on the subscription — nothing to invalidate.
+    console.warn('[umbrella webhook] caseline subscription without license_key', sub.id)
+    return
+  }
+
+  // Record the status change for the admin dashboard. The validate endpoint
+  // reads stripe directly so it'll pick up cancellation immediately on the
+  // next poll; this is just an audit trail.
+  await supaPost('caseline_license_events', {
+    license_key: licenseKey,
+    subscription_id: sub.id,
+    status: sub.status, // active | past_due | canceled | unpaid | incomplete | ...
+    canceled_at: sub.canceled_at ? new Date(sub.canceled_at * 1000).toISOString() : null,
+    customer_id: typeof sub.customer === 'string' ? sub.customer : sub.customer.id,
+    tier: sub.metadata.tier === '10' ? '10' : '5',
   }, 'return=minimal')
 }
