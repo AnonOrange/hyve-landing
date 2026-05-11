@@ -13,56 +13,73 @@ export const metadata = {
 
 const ACCENT = '#00B4D8'
 
-type Feature = { title: string; body: string }
+type Feature = {
+  title: string
+  body: string
+  /** Real product screenshot. 1480x920 captured from a live build. */
+  screenshot: string
+}
 
 const FEATURES: Feature[] = [
   {
     title: 'CaSeY — local AI',
     body: 'Curated legal knowledge base across all major practice areas + optional in-browser LLM (Llama 3, Phi-3) or firm-server LLM via Ollama. Voice in, voice out. "Hey CaSeY" wake word. No queries to external AI, ever.',
+    screenshot: '/caseline-features/casey.png',
   },
   {
     title: 'LIVE TRIAL mode',
-    body: 'Continuous speech recognition with ~30 objection-trigger patterns. Pops the right objection name, rationale, authority, and verbatim prompt the moment your opponent says the trigger words.',
+    body: 'Continuous speech recognition with ~80 objection + motion trigger patterns. Pops the right objection name, rationale, authority, and verbatim prompt the moment your opponent says the trigger words.',
+    screenshot: '/caseline-features/live-trial.png',
   },
   {
     title: 'Federal sentencing math',
     body: 'USSG 2024 grid baked in. Offense level + criminal history → guideline range, zone, mandatory-minimum flags, ACCA + Career Offender effects. Real-time recalculation as you adjust inputs.',
+    screenshot: '/caseline-features/sentencing.png',
   },
   {
     title: 'Deadline calculator',
     body: 'Trigger events compute every downstream federal deadline automatically — Speedy Trial Act 70-day, AEDPA 1-year, FRAP 4(b) appeals, FRCrP discovery, notice deadlines. Pulsing topbar countdown.',
+    screenshot: '/caseline-features/deadlines.png',
   },
   {
     title: 'Trial Notebook',
     body: 'Witnesses (with examination outlines), exhibits (marked / admitted / excluded), motions in limine, voir dire, opening / closing. Mark live as the trial unfolds.',
+    screenshot: '/caseline-features/trial-notebook.png',
   },
   {
     title: 'OSINT — SKIPS',
     body: '110+ curated tools across People, Phone, Social, Court, Vehicle, Property, Dark Web, plus 15 documented field-investigation tactics. Search the whole catalog instantly.',
+    screenshot: '/caseline-features/skips.png',
   },
   {
     title: 'Drafting + PDF import',
     body: '27+ legal templates auto-filled from firm profile + active case. Print-to-PDF with proper Letter-size, double-spaced legal formatting. Fill any AcroForm PDF (motions to suppress, FOIA, etc.).',
+    screenshot: '/caseline-features/drafts.png',
   },
   {
     title: 'Multi-case + sharing',
-    body: 'Persistent named cases with linking, team members, export/import, and either Firebase cloud sync or an on-premises CaseLine Server hub.',
+    body: 'Persistent named cases with linking, team members, export/import, and either Firebase cloud sync or an on-premises CaseLine Server hub. Switch between every active matter with one click.',
+    screenshot: '/caseline-features/multi-case.png',
   },
   {
     title: 'Billable hours',
     body: 'Live timer per case, manual entries, hourly-rate × minutes math, billable/non-billable toggle, CSV export ready for QuickBooks/Clio.',
+    screenshot: '/caseline-features/billing.png',
   },
   {
     title: 'Face Search',
     body: '12 curated facial-recognition services with one-click launch. Image stays in your browser. Legal-use disclaimer baked in (BIPA / GDPR awareness).',
+    screenshot: '/caseline-features/face-search.png',
   },
   {
-    title: 'Audit log',
-    body: 'Every login, case read/write/delete, firm-profile change, file upload, and LLM query is logged with timestamp + user + target. Supports ABA Model Rule 1.6 documentation.',
+    title: 'License + audit log',
+    body: 'License + seat management plus an audit trail: every login, case read/write/delete, firm-profile change, file upload, and LLM query is logged with timestamp + user + target. Supports ABA Model Rule 1.6 documentation.',
+    screenshot: '/caseline-features/audit-log.png',
   },
   {
     title: 'Files & exhibits',
     body: 'Attach original PDFs, photos, audio, video to any case. Stored locally; synced to CaseLine Server or Firebase when configured. Open / download / delete from one panel.',
+    screenshot: '/caseline-features/files.png',
   },
 ]
 
@@ -254,15 +271,34 @@ export default function CaseLinePage() {
             Every tool a defender needs, in one workspace.
           </h2>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f) => (
             <div
               key={f.title}
-              className="rounded-xl border-2 p-5 transition hover:scale-[1.01]"
+              className="overflow-hidden rounded-xl border-2 transition hover:scale-[1.01]"
               style={{ borderColor: `${ACCENT}33`, background: `${ACCENT}08` }}
             >
-              <h3 className="text-base font-black text-[#ede8d8]">{f.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[#9e8a55]">{f.body}</p>
+              <div
+                className="relative aspect-[16/10] w-full overflow-hidden border-b"
+                style={{ borderColor: `${ACCENT}22`, background: '#0b0a10' }}
+              >
+                <Image
+                  src={f.screenshot}
+                  alt={`${f.title} — real screenshot from the CaseLine desktop app`}
+                  width={1480}
+                  height={925}
+                  className="h-full w-full object-cover object-top transition-transform duration-500 hover:scale-105"
+                />
+                {/* Subtle cyan inner glow on hover */}
+                <div
+                  className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 hover:opacity-100"
+                  style={{ boxShadow: `inset 0 0 60px ${ACCENT}33` }}
+                />
+              </div>
+              <div className="p-5">
+                <h3 className="text-base font-black text-[#ede8d8]">{f.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-[#9e8a55]">{f.body}</p>
+              </div>
             </div>
           ))}
         </div>
