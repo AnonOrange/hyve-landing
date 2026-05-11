@@ -1,0 +1,84 @@
+.casey { display: grid; gap: 14px; }
+.input {
+  display: flex; gap: 8px;
+}
+.input input {
+  flex: 1;
+  background: var(--co-panel);
+  border: 1px solid var(--co-border);
+  color: var(--co-text);
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+}
+.input input:focus { border-color: #00B4D8; }
+.input button {
+  background: #00B4D8; color: #000;
+  border: none; border-radius: 8px;
+  padding: 0 20px;
+  font-family: 'Courier New', monospace;
+  font-weight: 800; letter-spacing: 0.2em; font-size: 13px;
+  cursor: pointer;
+}
+
+.suggestTitle {
+  font-family: 'Courier New', monospace;
+  font-size: 10px; letter-spacing: 0.3em;
+  color: var(--co-muted);
+  margin: 4px 4px 8px;
+}
+.suggestGrid {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.chip {
+  background: rgba(0,180,216,0.08);
+  border: 1px solid rgba(0,180,216,0.3);
+  color: #00B4D8;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.card {
+  background: var(--co-panel);
+  border: 1px solid var(--co-border);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.cardCat {
+  font-family: 'Courier New', monospace;
+  font-size: 9px; letter-spacing: 0.3em;
+  color: #00B4D8;
+}
+.cardQ {
+  font-size: 15px; font-weight: 800;
+  margin: 6px 0 10px;
+  color: var(--co-text);
+}
+.cardA {
+  font-size: 13px; line-height: 1.55;
+  color: var(--co-text);
+}
+.cardA strong { color: #00B4D8; }
+.cardA em { color: #c8a227; font-style: italic; }
+.cardA ul, .cardA ol { padding-left: 18px; margin: 6px 0; }
+.cardCites {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--co-border);
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.cite {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  color: var(--co-muted);
+  background: rgba(255,255,255,0.04);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.empty { padding: 24px 8px; text-align: center; color: var(--co-muted); }
+.emptyTitle { font-size: 16px; font-weight: 900; color: var(--co-text); margin-bottom: 8px; }
+.emptyHelp { font-size: 13px; line-height: 1.5; }
