@@ -5,6 +5,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import ServerDownloadGate from './ServerDownloadGate'
 
 export const metadata = {
   title: 'Download Hyve CaseLine',
@@ -59,7 +60,6 @@ function getPlatforms(): Platform[] {
 
 export default function DownloadPage() {
   const platforms = getPlatforms()
-  const serverUrl = process.env.NEXT_PUBLIC_CASELINE_SERVER_URL || null
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#08070a] font-sans text-[#ede8d8]">
@@ -146,23 +146,7 @@ export default function DownloadPage() {
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              {serverUrl ? (
-                <a
-                  href={serverUrl}
-                  className="rounded px-6 py-3 text-center font-mono text-xs font-bold tracking-[0.3em] text-black transition hover:scale-[1.02]"
-                  style={{ background: ACCENT, boxShadow: `0 0 16px ${ACCENT}77` }}
-                >
-                  DOWNLOAD SERVER →
-                </a>
-              ) : (
-                <a
-                  href="mailto:majixx@vibesoftwaresolutions.com?subject=CaseLine%20Server%20-%20request%20build"
-                  className="rounded border-2 px-6 py-3 text-center font-mono text-xs font-bold tracking-[0.3em] transition hover:bg-white/5"
-                  style={{ borderColor: ACCENT, color: ACCENT }}
-                >
-                  REQUEST BUILD →
-                </a>
-              )}
+              <ServerDownloadGate />
               <Link
                 href="/caseline/server-docs"
                 className="rounded border px-6 py-3 text-center font-mono text-[10px] font-bold tracking-[0.3em] text-[#9e8a55] transition hover:text-[#ede8d8]"
