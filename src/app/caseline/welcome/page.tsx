@@ -99,7 +99,7 @@ export default async function WelcomePage({ searchParams }: PageProps) {
   const sub = session.subscription as Stripe.Subscription | null
   if (!sub) {
     // Shouldn't happen for subscription-mode sessions, but render a safe fallback.
-    return <FailedFallback reason="No subscription returned by Stripe. Check your email — sales@hyveapp.co will follow up." />
+    return <FailedFallback reason="No subscription returned by Stripe. Check your email — majixx@vibesoftwaresolutions.com will follow up." />
   }
 
   const tier = (sub.metadata.tier === '10' ? '10' : '5') as '5' | '10'

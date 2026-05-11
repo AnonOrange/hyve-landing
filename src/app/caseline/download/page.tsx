@@ -156,21 +156,20 @@ export default function DownloadPage() {
                 </a>
               ) : (
                 <a
-                  href="mailto:sales@hyveapp.co?subject=CaseLine%20Server%20-%20request%20build"
+                  href="mailto:majixx@vibesoftwaresolutions.com?subject=CaseLine%20Server%20-%20request%20build"
                   className="rounded border-2 px-6 py-3 text-center font-mono text-xs font-bold tracking-[0.3em] transition hover:bg-white/5"
                   style={{ borderColor: ACCENT, color: ACCENT }}
                 >
                   REQUEST BUILD →
                 </a>
               )}
-              <a
-                href="https://docs.hyveapp.co/caseline/server"
-                target="_blank" rel="noopener noreferrer"
+              <Link
+                href="/caseline/server-docs"
                 className="rounded border px-6 py-3 text-center font-mono text-[10px] font-bold tracking-[0.3em] text-[#9e8a55] transition hover:text-[#ede8d8]"
                 style={{ borderColor: '#2a2135' }}
               >
-                SETUP DOCS ↗
-              </a>
+                SETUP DOCS →
+              </Link>
             </div>
           </div>
         </div>

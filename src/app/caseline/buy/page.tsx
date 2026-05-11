@@ -94,7 +94,7 @@ export default function BuyPage({ searchParams }: { searchParams: { tier?: strin
             Custom seat counts, on-prem LLM deployment, SSO, dedicated implementation engineer, SLA-backed uptime.
           </p>
           <a
-            href="mailto:sales@hyveapp.co?subject=Enterprise%20CaseLine%20quote"
+            href="mailto:majixx@vibesoftwaresolutions.com?subject=Enterprise%20CaseLine%20quote"
             className="mt-5 inline-block rounded border-2 px-6 py-2 font-mono text-xs font-bold tracking-[0.3em] transition hover:bg-white/5"
             style={{ borderColor: ACCENT, color: ACCENT }}
           >

@@ -121,7 +121,7 @@ const TIERS: Tier[] = [
       'Single sign-on integration',
       'On-prem LLM deployment',
     ],
-    cta: { label: 'REQUEST QUOTE', href: 'mailto:sales@hyveapp.co?subject=Enterprise%20CaseLine%20quote' },
+    cta: { label: 'REQUEST QUOTE', href: 'mailto:majixx@vibesoftwaresolutions.com?subject=Enterprise%20CaseLine%20quote' },
   },
 ]
 
@@ -399,7 +399,7 @@ export default function CaseLinePage() {
               <Link href="/caseline/download" className="hover:text-[#00B4D8]">DOWNLOAD</Link>
               <Link href="/caseline/buy" className="hover:text-[#00B4D8]">BUY</Link>
               <Link href="/privacy" className="hover:text-[#E8C456]">PRIVACY</Link>
-              <a href="mailto:sales@hyveapp.co" className="hover:text-[#E8C456]">SALES</a>
+              <a href="mailto:majixx@vibesoftwaresolutions.com" className="hover:text-[#E8C456]">SALES</a>
               <a href="mailto:support@hyveapp.co" className="hover:text-[#E8C456]">SUPPORT</a>
             </div>
           </div>
