@@ -15,6 +15,24 @@ function pickPriceId(tier: string | null): string | null {
   return PRICE_5 || null
 }
 
+// Reject any HTML brackets or control characters before storing the firm
+// name in Stripe metadata. Downstream the value lands in the receipt-email
+// HTML template; an injection here would be a stored-XSS vector. We allow
+// normal Unicode (firm names with accents, etc.) but block the two
+// brackets and every char with code point < 0x20 or in the C1 range
+// (0x7f-0x9f). Implementation: code-point loop — no regex with literal
+// control bytes so the source file stays free of weird characters.
+function firmNameSafe(s: string): boolean {
+  if (s.length < 2 || s.length > 120) return false
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i)
+    if (c === 0x3c || c === 0x3e) return false      // < or >
+    if (c < 0x20) return false                       // ASCII control
+    if (c >= 0x7f && c <= 0x9f) return false         // DEL + C1 control
+  }
+  return true
+}
+
 async function createSession(req: NextRequest, tier: string | null, opts: { email?: string; firmName?: string } = {}) {
   if (!stripeKey) return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 })
   const priceId = pickPriceId(tier)
@@ -72,11 +90,11 @@ export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => ({}))) as { email?: string; firmName?: string; tier?: string }
   const email = body.email?.trim()
   const firmName = body.firmName?.trim()
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!email || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: 'Valid email required' }, { status: 400 })
   }
-  if (!firmName || firmName.length < 2) {
-    return NextResponse.json({ error: 'Firm name required' }, { status: 400 })
+  if (!firmName || !firmNameSafe(firmName)) {
+    return NextResponse.json({ error: 'Firm name must be 2-120 characters without HTML or control characters.' }, { status: 400 })
   }
   try {
     const session = await createSession(req, body.tier ?? null, { email, firmName })

@@ -63,7 +63,13 @@ export async function GET(req: NextRequest) {
 
 function makeActivationCode(subscriptionId: string, email: string): string {
   // Deterministic 16-char code: HMAC(SUB_SECRET, email|sub) → 8 bytes base32
-  const secret = process.env.SPY_ACTIVATION_SECRET || 'change-me-in-production'
+  // Fail closed: refuse to generate predictable codes from a placeholder
+  // secret. If the env var is missing the deployment is misconfigured;
+  // raise an error rather than silently using a publicly-known value.
+  const secret = process.env.SPY_ACTIVATION_SECRET
+  if (!secret || secret.length < 32) {
+    throw new Error('SPY_ACTIVATION_SECRET is not set or too short — refusing to generate weak activation codes')
+  }
   const h = crypto.createHmac('sha256', secret).update(`${email}|${subscriptionId}`).digest()
   // Crockford base32 of first 10 bytes -> 16 chars
   const alphabet = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'

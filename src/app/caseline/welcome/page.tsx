@@ -21,20 +21,38 @@ function genLicenseKey(): string {
   return `HYVE-${block()}-${block()}-${block()}`
 }
 
+// Defense in depth: even though the checkout API now validates firmName
+// to reject brackets and control chars, escape every interpolation here
+// too. One layer is never enough for HTML construction.
+function escHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 function licenseEmailHtml(key: string, tier: '5' | '10', firmName: string, expiresIso: string) {
   const tierLabel = tier === '5' ? 'STARTER (5 seats)' : 'FIRM (10 seats)'
+  const safeFirm = escHtml(firmName)
+  const safeExpires = escHtml(expiresIso)
+  // `key` is generated server-side from a fixed alphabet (HYVE-A-Z2-9 only)
+  // so it can't contain HTML. Escaped anyway in case the generator ever
+  // changes.
+  const safeKey = escHtml(key)
   return `
 <!doctype html>
 <html><body style="background:#08070a;color:#ede8d8;font-family:Helvetica,Arial,sans-serif;margin:0;padding:32px;">
   <div style="max-width:560px;margin:0 auto;background:rgba(0,0,0,0.7);border:1px solid #00b4d8;border-radius:8px;padding:30px;">
     <div style="font-family:Courier,monospace;color:#00b4d8;letter-spacing:4px;font-size:14px;margin-bottom:8px;">HYVE / CASELINE</div>
     <div style="font-size:22px;color:#fff;margin-bottom:18px;">Your license is ready.</div>
-    <p>Thanks, <strong>${firmName}</strong> — your <strong>${tierLabel}</strong> subscription is active.</p>
+    <p>Thanks, <strong>${safeFirm}</strong> — your <strong>${tierLabel}</strong> subscription is active.</p>
     <div style="margin:22px 0;padding:18px;background:rgba(0,0,0,0.5);border:1px dashed #00b4d8;border-radius:4px;text-align:center;">
       <div style="font-family:Courier,monospace;color:#00b4d8;letter-spacing:2px;font-size:11px;">LICENSE KEY</div>
-      <div style="font-family:Courier,monospace;font-size:22px;color:#fff;margin-top:6px;letter-spacing:3px;">${key}</div>
+      <div style="font-family:Courier,monospace;font-size:22px;color:#fff;margin-top:6px;letter-spacing:3px;">${safeKey}</div>
     </div>
-    <p>Active through <strong>${expiresIso}</strong>.</p>
+    <p>Active through <strong>${safeExpires}</strong>.</p>
     <h3 style="color:#00b4d8;font-size:14px;margin-top:24px;">Activate</h3>
     <ol>
       <li><a href="https://www.hyveapp.co/caseline/download" style="color:#00b4d8;">Download CaseLine</a> for your operating system.</li>
