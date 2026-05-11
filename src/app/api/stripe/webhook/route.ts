@@ -15,11 +15,15 @@ function priceIdToProduct(priceId: string): string {
     STRIPE_SPY_ANNUAL_PRICE_ID,
     STRIPE_SPY_PRO_PRICE_ID,
     STRIPE_SPY_PRO_ANNUAL_PRICE_ID,
+    STRIPE_CASELINE_5_PRICE_ID,
+    STRIPE_CASELINE_10_PRICE_ID,
   } = process.env
 
   if (priceId === STRIPE_MONTHLY_PRICE_ID || priceId === STRIPE_ANNUAL_PRICE_ID) return 'messenger'
   if (priceId === STRIPE_SPY_PRICE_ID || priceId === STRIPE_SPY_ANNUAL_PRICE_ID) return 'spy'
   if (priceId === STRIPE_SPY_PRO_PRICE_ID || priceId === STRIPE_SPY_PRO_ANNUAL_PRICE_ID) return 'spy_pro'
+  if (priceId === STRIPE_CASELINE_5_PRICE_ID)  return 'caseline_starter'
+  if (priceId === STRIPE_CASELINE_10_PRICE_ID) return 'caseline_firm'
   return 'unknown'
 }
 
@@ -28,10 +32,13 @@ function planLabel(priceId: string): string {
     STRIPE_MONTHLY_PRICE_ID, STRIPE_ANNUAL_PRICE_ID,
     STRIPE_SPY_PRICE_ID, STRIPE_SPY_ANNUAL_PRICE_ID,
     STRIPE_SPY_PRO_PRICE_ID, STRIPE_SPY_PRO_ANNUAL_PRICE_ID,
+    STRIPE_CASELINE_5_PRICE_ID, STRIPE_CASELINE_10_PRICE_ID,
   } = process.env
 
   if (priceId === STRIPE_ANNUAL_PRICE_ID || priceId === STRIPE_SPY_ANNUAL_PRICE_ID || priceId === STRIPE_SPY_PRO_ANNUAL_PRICE_ID) return 'annual'
   if (priceId === STRIPE_MONTHLY_PRICE_ID || priceId === STRIPE_SPY_PRICE_ID || priceId === STRIPE_SPY_PRO_PRICE_ID) return 'monthly'
+  // CaseLine tiers are sold as annual seat packs.
+  if (priceId === STRIPE_CASELINE_5_PRICE_ID || priceId === STRIPE_CASELINE_10_PRICE_ID) return 'annual'
   return 'unknown'
 }
 

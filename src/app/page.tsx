@@ -80,6 +80,25 @@ const APPS: App[] = [
     blurb:
       'Pay once — $9.99–$299.99. List your assets, sign authorization, get a real DNS/TLS/HTTP/port-probed report with severity-color-coded remediation steps. Same legal model as professional pen-testing.',
   },
+  {
+    name: 'Hyve MELVIS',
+    tagline: 'The All-Seeing Eye — RF + camera + drone fusion',
+    href: '/melvis/',
+    logo: '/melvis/assets/Open Neutral.PNG',
+    accent: '#D4A849',
+    blurb:
+      'Smart-home awareness that runs entirely on your computer. Turns the smart devices already on your WiFi into a unified RF + camera + drone awareness layer. Zero data collection. Coming soon — join the waitlist.',
+    badge: 'COMING SOON',
+  },
+  {
+    name: 'Hyve CaseLine',
+    tagline: 'Tactical case-analysis workspace for law firms',
+    href: '/caseline',
+    logo: '/hyve-logo/hyve-caseline-emblem.png',
+    accent: '#00B4D8',
+    blurb:
+      'Case management, OSINT (Skips), legal drafting, federal sentencing math, deadline calendars, trial notebook, and CaSeY — a local AI assistant that never phones home. Native desktop installer · optional on-prem CaseLine Server with local LLM. From $999/yr · 5 seats.',
+  },
 ]
 
 // The wider Hyve ecosystem hosted on Vibe Software Solutions
@@ -240,6 +259,8 @@ export default function HomePage() {
         <nav className="hidden gap-5 text-xs font-bold tracking-[0.2em] text-[#9e8a55] md:flex">
           <a href="#apps" className="transition hover:text-[#E8C456]">APPS</a>
           <a href="/spy" className="transition hover:text-[#E8C456]">SPY</a>
+          <a href="/caseline" className="transition hover:text-[#E8C456]" style={{ color: '#00B4D8' }}>CASELINE</a>
+          <a href="/melvis/" className="transition hover:text-[#E8C456]" style={{ color: '#D4A849' }}>MELVIS ◉</a>
           <a href="/messenger" className="transition hover:text-[#E8C456]">MESSENGER</a>
           <a href="https://www.hyvealpha.com" className="transition hover:text-[#E8C456]" target="_blank" rel="noopener">ALPHA ↗</a>
           <a href="https://www.hyvecares.org" className="transition hover:text-[#E8C456]" target="_blank" rel="noopener">CARES ↗</a>
@@ -326,6 +347,7 @@ export default function HomePage() {
             </div>
             <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-mono text-[10px] tracking-[0.2em] text-[#6b5e3a]">
               <a href="/spy" className="hover:text-[#E8C456]">SPY</a>
+              <a href="/caseline" className="hover:text-[#E8C456]">CASELINE</a>
               <a href="/messenger" className="hover:text-[#E8C456]">MESSENGER</a>
               <a href="/spy/app/sleuth" className="hover:text-[#E8C456]">SLEUTH</a>
               <a href="/spy/app/residential" className="hover:text-[#E8C456]">RESIDENTIAL</a>
@@ -340,8 +362,8 @@ export default function HomePage() {
 
           <p className="mx-auto mt-6 max-w-3xl text-center text-[10px] leading-relaxed text-[#475569]">
             © {new Date().getFullYear()} Anthony S. Owens / Vibe Software Solutions. All rights reserved.
-            HYVE™, Hyve Spy, Hyve Messenger, Hyve Sleuth, Hyve Residential, Hyve Sentinel, Hyve Alpha,
-            Hyve Cares, Hyve Tribe, Hyve Overlord, Hyve Raptor, Hyve Shield, Hyve OS, Hyve Scope,
+            HYVE™, Hyve Spy, Hyve Messenger, Hyve Sleuth, Hyve Residential, Hyve Sentinel, Hyve CaseLine,
+            Hyve Alpha, Hyve Cares, Hyve Tribe, Hyve Overlord, Hyve Raptor, Hyve Shield, Hyve OS, Hyve Scope,
             Hyve Social, Hyve VUE, and Hyve-CUI are trademarks of Vibe Software Solutions.
           </p>
         </div>
