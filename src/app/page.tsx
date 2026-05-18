@@ -99,6 +99,16 @@ const APPS: App[] = [
     blurb:
       'Case management, OSINT (Skips), legal drafting, federal sentencing math, deadline calendars, trial notebook, and CaSeY — a local AI assistant that never phones home. Native desktop installer · optional on-prem CaseLine Server with local LLM. From $999/yr · 5 seats.',
   },
+  {
+    name: 'HYVE Attend',
+    tagline: 'Live events — browser-first ticketing & broadcast',
+    href: '/attend',
+    icon: '🎟️',
+    accent: '#E8C456',
+    blurb:
+      'Discover live performances, buy and transfer tickets, and join the show from any browser. Low-fee ticketing, an interactive event room, automated refunds and payouts — for human live broadcasts today, AI performances next.',
+    badge: 'NEW',
+  },
 ]
 
 // The wider Hyve ecosystem hosted on Vibe Software Solutions
