@@ -48,7 +48,9 @@ export async function ensureProfile(user: AttendUser): Promise<string> {
       display_name: user.email.split('@')[0],
       role: 'USER',
     },
-    'return=minimal',
+    // ignore-duplicates makes this safe under a concurrent first-request
+    // race: a second insert for the same id is a no-op, not an error.
+    'return=minimal,resolution=ignore-duplicates',
   )
   return user.id
 }
