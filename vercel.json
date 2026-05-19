@@ -1,7 +1,10 @@
 {
   "crons": [
-    { "path": "/api/spy/sentinel/purge",  "schedule": "0 4 * * *" },
-    { "path": "/api/cron/snapshot",       "schedule": "0 6 * * *" },
-    { "path": "/api/cron/cleanup",        "schedule": "0 5 * * *" }
+    { "path": "/api/spy/sentinel/purge",          "schedule": "0 4 * * *" },
+    { "path": "/api/cron/cleanup",                "schedule": "0 5 * * *" },
+    { "path": "/api/cron/snapshot",               "schedule": "0 6 * * *" },
+    { "path": "/api/attend/jobs/cart-expiry",     "schedule": "0 7 * * *" },
+    { "path": "/api/attend/jobs/settlement",      "schedule": "0 8 * * *" },
+    { "path": "/api/attend/jobs/transfer-expiry", "schedule": "0 9 * * *" }
   ]
 }
