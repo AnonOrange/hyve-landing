@@ -8,6 +8,7 @@ import {
   markWebhookProcessed,
 } from '@/lib/attend/payments/payments-repository'
 import { fulfilRegistration } from '@/lib/attend/payments/registration-service'
+import { fulfilCheckout } from '@/lib/attend/payments/checkout-service'
 import { syncAccountStatus } from '@/lib/attend/payments/connect-service'
 
 export const runtime = 'nodejs'
@@ -57,6 +58,8 @@ export async function POST(req: NextRequest) {
       const session = event.data.object as Stripe.Checkout.Session
       if (session.metadata?.attend_kind === 'registration') {
         await fulfilRegistration(session)
+      } else if (session.metadata?.attend_kind === 'ticket_order') {
+        await fulfilCheckout(session)
       }
     } else if (event.type === 'account.updated') {
       await syncAccountStatus((event.data.object as Stripe.Account).id)
