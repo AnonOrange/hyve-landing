@@ -107,9 +107,8 @@ export async function updateEventDetails(
 
 /**
  * Move the event to a new status, enforcing the §6.9 transition topology.
- * NOTE: only topology is checked here. Guard *conditions* ($50 paid, stream
- * tested) and transition *authority* (admin-only approve/reject) land in
- * Phase 2b — until then this PATCH surface is creator-reachable.
+ * Internal / cancellation use only — the public PATCH route exposes just the
+ * guarded `advanceSetup` and a `cancel` action, not free-form transitions.
  */
 export async function changeEventStatus(
   id: string,
@@ -123,4 +122,33 @@ export async function changeEventStatus(
     throw new ValidationError((err as Error).message)
   }
   await updateEvent(id, { status: to, updated_by: creatorId })
+}
+
+/**
+ * Advance an event one guarded step along the setup chain:
+ *   PROMOTION_FEE_PAID    -> PAYOUT_SETUP_REQUIRED   (automatic)
+ *   PAYOUT_SETUP_REQUIRED -> STREAM_SETUP_REQUIRED   (requires Connect payouts)
+ * `payoutsAreEnabled` is supplied by the caller — the route composes events +
+ * payments, so this module stays free of payment-module imports.
+ */
+export async function advanceSetup(
+  id: string,
+  creatorId: string,
+  payoutsAreEnabled: boolean,
+): Promise<EventStatus> {
+  const event = await loadOwned(id, creatorId)
+  if (event.status === 'PROMOTION_FEE_PAID') {
+    assertTransition(event.status, 'PAYOUT_SETUP_REQUIRED')
+    await updateEvent(id, { status: 'PAYOUT_SETUP_REQUIRED', updated_by: creatorId })
+    return 'PAYOUT_SETUP_REQUIRED'
+  }
+  if (event.status === 'PAYOUT_SETUP_REQUIRED') {
+    if (!payoutsAreEnabled) {
+      throw new ValidationError('Complete Stripe Connect onboarding before continuing')
+    }
+    assertTransition(event.status, 'STREAM_SETUP_REQUIRED')
+    await updateEvent(id, { status: 'STREAM_SETUP_REQUIRED', updated_by: creatorId })
+    return 'STREAM_SETUP_REQUIRED'
+  }
+  throw new ValidationError('There is nothing to advance for this event')
 }
