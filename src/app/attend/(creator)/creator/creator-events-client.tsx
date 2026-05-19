@@ -6,19 +6,29 @@ import type { EventRow } from '@/lib/attend/events/repository'
 const inputClass =
   'rounded border border-[#2a2135] bg-[#111111] px-3 py-2 text-sm text-[#ede8d8] outline-none focus:border-[#E8C456]'
 
+const actionBtn =
+  'rounded bg-[#E8C456] px-3 py-1.5 text-xs font-bold text-black transition hover:brightness-110 disabled:opacity-50'
+
 const SHOW_TYPES = [
   { value: 'HUMAN_LIVE_BROADCAST', label: 'Human live broadcast' },
   { value: 'FREE_EVENT', label: 'Free event' },
   { value: 'PRIVATE_EVENT', label: 'Private event' },
 ]
 
-export default function CreatorEventsClient({ events }: { events: EventRow[] }) {
+export default function CreatorEventsClient({
+  events,
+  payoutsEnabled,
+}: {
+  events: EventRow[]
+  payoutsEnabled: boolean
+}) {
   const [title, setTitle] = useState('')
   const [showType, setShowType] = useState('HUMAN_LIVE_BROADCAST')
   const [startsAt, setStartsAt] = useState('')
   const [endsAt, setEndsAt] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [busyId, setBusyId] = useState<string | null>(null)
 
   async function createEvent(e: React.FormEvent) {
     e.preventDefault()
@@ -44,9 +54,69 @@ export default function CreatorEventsClient({ events }: { events: EventRow[] }) 
     }
   }
 
+  // Calls a POST endpoint that returns { url } and redirects the browser to it.
+  async function redirectVia(id: string, endpoint: string, failMsg: string) {
+    setBusyId(id)
+    setError(null)
+    try {
+      const res = await fetch(endpoint, { method: 'POST' })
+      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string }
+      if (data.url) {
+        window.location.href = data.url
+        return
+      }
+      setError(data.error ?? failMsg)
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  async function advanceSetup(eventId: string) {
+    setBusyId(eventId)
+    setError(null)
+    try {
+      const res = await fetch(`/api/attend/events/${eventId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'advance-setup' }),
+      })
+      if (res.ok) {
+        window.location.reload()
+        return
+      }
+      const data = (await res.json().catch(() => ({}))) as { error?: string }
+      setError(data.error ?? 'Failed to advance the event')
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
   return (
     <div className="py-10">
-      <h1 className="text-2xl font-black">Your events</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-black">Your events</h1>
+        {payoutsEnabled ? (
+          <span className="font-mono text-[11px] tracking-widest text-[#39FF14]">
+            PAYOUTS CONNECTED ✓
+          </span>
+        ) : (
+          <button
+            onClick={() =>
+              redirectVia('connect', '/api/attend/connect/onboard', 'Failed to start onboarding')
+            }
+            disabled={busyId === 'connect'}
+            className={actionBtn}
+          >
+            {busyId === 'connect' ? 'Opening…' : 'Connect payouts'}
+          </button>
+        )}
+      </div>
+
+      {error && <p className="mt-3 text-xs text-red-400">{error}</p>}
 
       <ul className="mt-6 flex flex-col gap-2">
         {events.length === 0 && (
@@ -55,10 +125,38 @@ export default function CreatorEventsClient({ events }: { events: EventRow[] }) 
         {events.map((ev) => (
           <li
             key={ev.id}
-            className="flex items-center justify-between rounded border border-[#2a2135] bg-[#111111] px-4 py-3"
+            className="flex items-center justify-between gap-3 rounded border border-[#2a2135] bg-[#111111] px-4 py-3"
           >
             <span className="text-sm font-bold">{ev.title}</span>
-            <span className="font-mono text-[10px] tracking-widest text-[#E8C456]">{ev.status}</span>
+            <div className="flex items-center gap-3">
+              {ev.status === 'REGISTRATION_PENDING' && (
+                <button
+                  onClick={() =>
+                    redirectVia(
+                      ev.id,
+                      `/api/attend/events/${ev.id}/pay-registration`,
+                      'Failed to start the registration checkout',
+                    )
+                  }
+                  disabled={busyId === ev.id}
+                  className={actionBtn}
+                >
+                  {busyId === ev.id ? 'Opening…' : 'Pay $50 registration'}
+                </button>
+              )}
+              {(ev.status === 'PROMOTION_FEE_PAID' || ev.status === 'PAYOUT_SETUP_REQUIRED') && (
+                <button
+                  onClick={() => advanceSetup(ev.id)}
+                  disabled={busyId === ev.id}
+                  className={actionBtn}
+                >
+                  {busyId === ev.id ? 'Working…' : 'Advance setup'}
+                </button>
+              )}
+              <span className="font-mono text-[10px] tracking-widest text-[#E8C456]">
+                {ev.status}
+              </span>
+            </div>
           </li>
         ))}
       </ul>
@@ -99,7 +197,6 @@ export default function CreatorEventsClient({ events }: { events: EventRow[] }) 
             className={`${inputClass} mt-1 w-full`}
           />
         </label>
-        {error && <p className="text-xs text-red-400">{error}</p>}
         <button
           type="submit"
           disabled={loading}
