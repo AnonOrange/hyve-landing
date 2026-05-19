@@ -76,6 +76,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       await changeEventStatus(params.id, profile.id, 'ENDED')
       return NextResponse.json({ ok: true, status: 'ENDED' })
     }
+    if (body.action === 'open-sales') {
+      await changeEventStatus(params.id, profile.id, 'ON_SALE')
+      return NextResponse.json({ ok: true, status: 'ON_SALE' })
+    }
     if (body.action === 'cancel') {
       await changeEventStatus(params.id, profile.id, 'CANCELLED')
       return NextResponse.json({ ok: true, status: 'CANCELLED' })
