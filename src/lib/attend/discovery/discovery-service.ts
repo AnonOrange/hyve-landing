@@ -7,6 +7,7 @@ import {
   getEventBySlug,
 } from '@/lib/attend/events/repository'
 import { eventTiming, isPubliclyViewable } from '@/lib/attend/events/lifecycle'
+import { getFeaturedEvents, type FeaturedEvent } from '@/lib/attend/promotion/promotion-service'
 import {
   type TicketTypeRow,
   listTicketTypesByEvent,
@@ -17,20 +18,21 @@ import {
 } from '@/lib/attend/identity/profile-repository'
 
 export interface DiscoveryFeed {
+  featured: FeaturedEvent[]
   live: EventRow[]
   upcoming: EventRow[]
 }
 
-/** The discovery page's two sections: events happening now and still upcoming. */
+/** The discovery page: a featured row, plus events happening now and upcoming. */
 export async function getDiscoveryFeed(): Promise<DiscoveryFeed> {
-  const events = await listDiscoverableEvents()
+  const [events, featured] = await Promise.all([listDiscoverableEvents(), getFeaturedEvents()])
   const live: EventRow[] = []
   const upcoming: EventRow[] = []
   for (const ev of events) {
     if (eventTiming(ev.status) === 'LIVE') live.push(ev)
     else upcoming.push(ev)
   }
-  return { live, upcoming }
+  return { featured, live, upcoming }
 }
 
 export interface EventPageArtist {
