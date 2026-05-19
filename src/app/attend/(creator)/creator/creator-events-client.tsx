@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import type { EventRow } from '@/lib/attend/events/repository'
 
 const inputClass =
@@ -42,7 +43,9 @@ export default function CreatorEventsClient({
         body: JSON.stringify({ title, showType, startsAt, endsAt, timezone }),
       })
       if (res.ok) {
-        window.location.reload()
+        // Drop the creator straight into the new event's dashboard.
+        const created = (await res.json()) as { id: string }
+        window.location.href = `/attend/creator/events/${created.id}`
         return
       }
       const data = (await res.json().catch(() => ({}))) as { error?: string }
@@ -66,28 +69,6 @@ export default function CreatorEventsClient({
         return
       }
       setError(data.error ?? failMsg)
-    } catch {
-      setError('Something went wrong. Please try again.')
-    } finally {
-      setBusyId(null)
-    }
-  }
-
-  async function advanceSetup(eventId: string) {
-    setBusyId(eventId)
-    setError(null)
-    try {
-      const res = await fetch(`/api/attend/events/${eventId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'advance-setup' }),
-      })
-      if (res.ok) {
-        window.location.reload()
-        return
-      }
-      const data = (await res.json().catch(() => ({}))) as { error?: string }
-      setError(data.error ?? 'Failed to advance the event')
     } catch {
       setError('Something went wrong. Please try again.')
     } finally {
@@ -123,40 +104,16 @@ export default function CreatorEventsClient({
           <li className="text-sm text-[#9e8a55]">No events yet — create your first show below.</li>
         )}
         {events.map((ev) => (
-          <li
-            key={ev.id}
-            className="flex items-center justify-between gap-3 rounded border border-[#2a2135] bg-[#111111] px-4 py-3"
-          >
-            <span className="text-sm font-bold">{ev.title}</span>
-            <div className="flex items-center gap-3">
-              {ev.status === 'REGISTRATION_PENDING' && (
-                <button
-                  onClick={() =>
-                    redirectVia(
-                      ev.id,
-                      `/api/attend/events/${ev.id}/pay-registration`,
-                      'Failed to start the registration checkout',
-                    )
-                  }
-                  disabled={busyId === ev.id}
-                  className={actionBtn}
-                >
-                  {busyId === ev.id ? 'Opening…' : 'Pay $50 registration'}
-                </button>
-              )}
-              {(ev.status === 'PROMOTION_FEE_PAID' || ev.status === 'PAYOUT_SETUP_REQUIRED') && (
-                <button
-                  onClick={() => advanceSetup(ev.id)}
-                  disabled={busyId === ev.id}
-                  className={actionBtn}
-                >
-                  {busyId === ev.id ? 'Working…' : 'Advance setup'}
-                </button>
-              )}
+          <li key={ev.id}>
+            <Link
+              href={`/attend/creator/events/${ev.id}`}
+              className="flex items-center justify-between gap-3 rounded border border-[#2a2135] bg-[#111111] px-4 py-3 transition hover:border-[#E8C456]"
+            >
+              <span className="text-sm font-bold">{ev.title}</span>
               <span className="font-mono text-[10px] tracking-widest text-[#E8C456]">
                 {ev.status}
               </span>
-            </div>
+            </Link>
           </li>
         ))}
       </ul>

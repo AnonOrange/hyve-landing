@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { percentOf, formatUsd, sumCents } from '@/lib/attend/money'
+import { percentOf, formatUsd, sumCents, dollarsToCents } from '@/lib/attend/money'
 
 describe('percentOf', () => {
   it('takes a basis-point percentage of an integer-cent amount', () => {
@@ -31,5 +31,21 @@ describe('formatUsd', () => {
     expect(formatUsd(2_500)).toBe('$25.00')
     expect(formatUsd(0)).toBe('$0.00')
     expect(formatUsd(99)).toBe('$0.99')
+  })
+})
+
+describe('dollarsToCents', () => {
+  it('parses dollar amounts to integer cents without float error', () => {
+    expect(dollarsToCents('25')).toBe(2500)
+    expect(dollarsToCents('25.5')).toBe(2550)
+    expect(dollarsToCents('19.99')).toBe(1999)
+    expect(dollarsToCents('0')).toBe(0)
+    expect(dollarsToCents('0.01')).toBe(1)
+    expect(dollarsToCents(' 10.00 ')).toBe(1000)
+  })
+  it('rejects malformed amounts', () => {
+    for (const bad of ['', 'abc', '-5', '1.234', '1.', '.5', '1,000']) {
+      expect(() => dollarsToCents(bad)).toThrow()
+    }
   })
 })

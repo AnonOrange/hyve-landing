@@ -35,3 +35,17 @@ export function formatUsd(cents: number): string {
   const abs = Math.abs(cents)
   return `${sign}$${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, '0')}`
 }
+
+/**
+ * Parse a human dollar amount ("25", "19.99") to integer cents. String-only
+ * arithmetic — no float math. Rejects anything that is not a non-negative
+ * amount with at most two decimal places.
+ */
+export function dollarsToCents(dollars: string): number {
+  const trimmed = dollars.trim()
+  if (!/^\d+(\.\d{1,2})?$/.test(trimmed)) {
+    throw new Error(`money: invalid dollar amount "${dollars}"`)
+  }
+  const [whole, frac = ''] = trimmed.split('.')
+  return Number(whole) * 100 + Number(frac.padEnd(2, '0'))
+}
