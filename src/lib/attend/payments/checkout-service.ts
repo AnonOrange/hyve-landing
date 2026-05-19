@@ -138,4 +138,13 @@ export async function fulfilCheckout(session: Stripe.Checkout.Session): Promise<
   if (!res.ok) {
     throw new Error(`attend_complete_checkout RPC failed: ${res.status} ${await res.text()}`)
   }
+  // The RPC no-ops (completed: false) if the order was cancelled before the
+  // payment landed — the buyer paid a cancelled order and is owed a refund.
+  const result = (await res.json().catch(() => ({}))) as { status?: string; completed?: boolean }
+  if (result.completed === false) {
+    console.error(
+      `[attend checkout] order ${orderId} was ${result.status} at payment — ` +
+        'buyer paid a non-pending order; a refund is owed',
+    )
+  }
 }
