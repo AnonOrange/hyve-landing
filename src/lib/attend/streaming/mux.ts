@@ -1,6 +1,7 @@
 // The real StreamProvider — Mux Live via the REST API. No SDK: a fetch call to
 // create a live stream, and crypto HMAC to verify webhook signatures.
 import { createHmac, timingSafeEqual } from 'crypto'
+import { SignJWT, importPKCS8 } from 'jose'
 import type { LiveStream, StreamProvider } from '@/lib/attend/streaming/provider'
 
 const MUX_API = 'https://api.mux.com/video/v1'
@@ -57,5 +58,23 @@ export class MuxStreamProvider implements StreamProvider {
     const a = Buffer.from(v1)
     const b = Buffer.from(expected)
     return a.length === b.length && timingSafeEqual(a, b)
+  }
+
+  // A Mux signed-playback JWT: RS256, kid = signing key id, sub = playback id,
+  // aud = 'v' (video). The signing key arrives base64-encoded PKCS8 PEM.
+  async signPlaybackToken(playbackId: string): Promise<string> {
+    const kid = process.env.MUX_SIGNING_KEY_ID
+    const keyB64 = process.env.MUX_SIGNING_KEY_PRIVATE
+    if (!kid || !keyB64) {
+      throw new Error('Mux signing key not configured (MUX_SIGNING_KEY_ID / MUX_SIGNING_KEY_PRIVATE)')
+    }
+    const pem = Buffer.from(keyB64, 'base64').toString('utf8')
+    const privateKey = await importPKCS8(pem, 'RS256')
+    return new SignJWT({})
+      .setProtectedHeader({ alg: 'RS256', kid })
+      .setSubject(playbackId)
+      .setAudience('v')
+      .setExpirationTime('2h')
+      .sign(privateKey)
   }
 }
