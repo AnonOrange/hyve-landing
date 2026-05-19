@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 import { attendStripe } from '@/lib/attend/payments/stripe'
 import {
-  recordWebhookEvent,
+  claimWebhookEvent,
   isWebhookProcessed,
+  releaseWebhookClaim,
   markWebhookProcessed,
 } from '@/lib/attend/payments/payments-repository'
 import { fulfilRegistration } from '@/lib/attend/payments/registration-service'
@@ -14,8 +15,9 @@ export const runtime = 'nodejs'
 const WEBHOOK_SECRET = process.env.STRIPE_ATTEND_WEBHOOK_SECRET
 
 // HYVE Attend's own Stripe webhook — separate from the shared /api/stripe/webhook.
-// Deduplicates on completion (not receipt), so a delivery whose handler fails
-// returns 500, Stripe retries, and the retry re-runs the (idempotent) handler.
+// Each event is claimed atomically (an INSERT against unique(provider_event_id));
+// a handler that fails releases the claim and returns 500, so Stripe's retry
+// re-runs the (idempotent) handler. Exactly-once in effect, retry-safe.
 export async function POST(req: NextRequest) {
   if (!WEBHOOK_SECRET) {
     console.error('[attend webhook] STRIPE_ATTEND_WEBHOOK_SECRET not set')
@@ -33,12 +35,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
+  // Atomically claim the event; a concurrent duplicate delivery loses the claim.
+  let claimed: boolean
   try {
+    claimed = await claimWebhookEvent('STRIPE', event.id, event.type, event.data.object)
+  } catch (err) {
+    console.error('[attend webhook] claim failed:', (err as Error).message)
+    return NextResponse.json({ error: 'Webhook store unavailable' }, { status: 500 })
+  }
+  if (!claimed) {
+    // Another delivery owns it: skip if already finished, else ask Stripe to
+    // retry (by then the owner has finished, or released the claim on failure).
     if (await isWebhookProcessed(event.id)) {
       return NextResponse.json({ received: true, duplicate: true })
     }
-    await recordWebhookEvent('STRIPE', event.id, event.type, event.data.object)
+    return NextResponse.json({ error: 'Event already in progress' }, { status: 500 })
+  }
 
+  try {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session
       if (session.metadata?.attend_kind === 'registration') {
@@ -47,12 +61,11 @@ export async function POST(req: NextRequest) {
     } else if (event.type === 'account.updated') {
       await syncAccountStatus((event.data.object as Stripe.Account).id)
     }
-
     await markWebhookProcessed(event.id)
     return NextResponse.json({ received: true })
   } catch (err) {
-    // 500 → Stripe retries. The event was not marked processed, so the retry
-    // re-runs the handler; fulfilRegistration and the RPC are both idempotent.
+    // Release the claim so Stripe's retry re-runs the (idempotent) handler.
+    await releaseWebhookClaim(event.id)
     console.error(`[attend webhook] handler error for ${event.type}:`, (err as Error).message)
     return NextResponse.json({ error: 'Handler failed' }, { status: 500 })
   }

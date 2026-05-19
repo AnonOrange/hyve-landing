@@ -2,7 +2,7 @@
 // session and fulfil it (record the payment, run the atomic RPC).
 import type Stripe from 'stripe'
 import { attendStripe, REGISTRATION_FEE_CENTS } from '@/lib/attend/payments/stripe'
-import { insertPayment, findPaymentByIntent } from '@/lib/attend/payments/payments-repository'
+import { insertPayment, findPaymentBySession } from '@/lib/attend/payments/payments-repository'
 import { getEventById } from '@/lib/attend/events/repository'
 import { ForbiddenError, NotFoundError, ValidationError } from '@/lib/attend/events/service'
 import { supaPost } from '@/lib/supabase'
@@ -59,8 +59,9 @@ export async function fulfilRegistration(session: Stripe.Checkout.Session): Prom
       ? session.payment_intent
       : (session.payment_intent?.id ?? null)
 
-  // Idempotent: reuse the payment if a prior webhook delivery already recorded it.
-  let payment = paymentIntentId ? await findPaymentByIntent(paymentIntentId) : null
+  // Idempotent: dedup on the Checkout session id (always present, unlike the
+  // payment intent), so a retried delivery reuses the recorded payment.
+  let payment = await findPaymentBySession(session.id)
   if (!payment) {
     payment = await insertPayment({
       kind: 'REGISTRATION_FEE',
@@ -73,6 +74,7 @@ export async function fulfilRegistration(session: Stripe.Checkout.Session): Prom
       stripe_payment_intent_id: paymentIntentId,
       stripe_charge_id: null,
       stripe_refund_id: null,
+      stripe_checkout_session_id: session.id,
     })
   }
 
