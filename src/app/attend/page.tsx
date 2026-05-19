@@ -5,6 +5,6 @@ import DiscoveryClient from './discovery-client'
 export const dynamic = 'force-dynamic'
 
 export default async function AttendHome() {
-  const { live, upcoming } = await getDiscoveryFeed()
-  return <DiscoveryClient live={live} upcoming={upcoming} />
+  const { featured, live, upcoming } = await getDiscoveryFeed()
+  return <DiscoveryClient featured={featured} live={live} upcoming={upcoming} />
 }

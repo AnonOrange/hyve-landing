@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import type { EventRow } from '@/lib/attend/events/repository'
+import type { FeaturedEvent } from '@/lib/attend/promotion/promotion-service'
 
 // Local UI label list — the codebase keeps these per-component (see
 // creator-events-client.tsx, ticket-types-panel.tsx) rather than shared.
@@ -22,13 +23,27 @@ const filterPill = (active: boolean) =>
     : 'border border-[#2a2135] text-[#9e8a55] hover:text-[#E8C456]')
 
 export default function DiscoveryClient({
+  featured,
   live,
   upcoming,
 }: {
+  featured: FeaturedEvent[]
   live: EventRow[]
   upcoming: EventRow[]
 }) {
   const [filter, setFilter] = useState('ALL')
+
+  // Fire one impression beacon per page view for the featured campaigns.
+  useEffect(() => {
+    if (featured.length === 0) return
+    const campaignIds = featured.map((f) => f.campaignId)
+    fetch('/api/attend/promotion/impressions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ campaignIds }),
+      keepalive: true,
+    }).catch(() => {})
+  }, [featured])
 
   const apply = (events: EventRow[]) =>
     filter === 'ALL' ? events : events.filter((e) => e.show_type === filter)
@@ -54,6 +69,31 @@ export default function DiscoveryClient({
           </button>
         ))}
       </div>
+
+      {featured.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-xs font-black tracking-[0.2em] text-[#E8C456]">FEATURED</h2>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {featured.map((f) => (
+              <Link
+                key={f.campaignId}
+                href={`/api/attend/promotion/${f.campaignId}/click?to=${f.event.slug}`}
+                className="flex flex-col gap-2 rounded border border-[#E8C456] bg-[#15120c] p-4 transition hover:brightness-110"
+              >
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#E8C456]">
+                  Featured · {showTypeLabel(f.event.show_type)}
+                </span>
+                <span className="text-base font-black">
+                  {f.headline ?? f.event.title}
+                </span>
+                <span className="font-mono text-[10px] tracking-widest text-[#9e8a55]">
+                  {fmtWhen(f.event.starts_at)}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <Section title="LIVE NOW" empty="No live events right now." events={apply(live)} live />
       <Section
