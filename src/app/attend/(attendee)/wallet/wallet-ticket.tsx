@@ -5,6 +5,9 @@ import type { OwnedTicket } from '@/lib/attend/ticketing/ticket-repository'
 
 const IDLE_STATES = ['ASSIGNED_TO_BUYER', 'TRANSFER_ACCEPTED']
 const PENDING_STATES = ['TRANSFER_PENDING_EMAIL', 'TRANSFER_PENDING_FRIEND_CODE']
+const REFUNDABLE_STATES = [
+  'ASSIGNED_TO_BUYER', 'TRANSFER_ACCEPTED', 'CHECKED_IN', 'IN_ROOM', 'USED', 'NO_SHOW',
+]
 
 const humanize = (s: string) =>
   s.charAt(0).toUpperCase() + s.slice(1).toLowerCase().replace(/_/g, ' ')
@@ -21,12 +24,19 @@ export default function WalletTicket({ ticket }: { ticket: OwnedTicket }) {
   const [open, setOpen] = useState(false)
   const [method, setMethod] = useState<'EMAIL' | 'FRIEND_CODE'>('EMAIL')
   const [email, setEmail] = useState('')
+  const [refundOpen, setRefundOpen] = useState(false)
+  const [refundReason, setRefundReason] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const idle = IDLE_STATES.includes(ticket.state)
   const pending = PENDING_STATES.includes(ticket.state)
+  const refundable = REFUNDABLE_STATES.includes(ticket.state)
+  const refundRequested = ticket.state === 'REFUND_REQUESTED'
   const pendingTransfer = ticket.attend_ticket_transfers.find((t) => t.status === 'PENDING')
+
+  const showTransferBtn = idle && !open
+  const showRefundBtn = refundable && !refundOpen
 
   async function startTransfer() {
     setBusy(true)
@@ -72,6 +82,29 @@ export default function WalletTicket({ ticket }: { ticket: OwnedTicket }) {
     }
   }
 
+  async function requestRefund() {
+    setBusy(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/attend/tickets/${ticket.id}/refund`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: refundReason }),
+      })
+      if (res.ok) {
+        // The reloaded wallet shows the "review in progress" notice.
+        window.location.reload()
+        return
+      }
+      const data = (await res.json().catch(() => ({}))) as { error?: string }
+      setError(data.error ?? 'Refund request could not be opened')
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <li className="rounded border border-[#2a2135] px-3 py-2">
       <div className="flex items-center justify-between gap-3">
@@ -83,51 +116,89 @@ export default function WalletTicket({ ticket }: { ticket: OwnedTicket }) {
 
       {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
 
-      {idle && (
-        <div className="mt-2">
-          {!open ? (
+      {refundRequested && (
+        <p className="mt-2 text-xs text-[#9e8a55]">
+          Refund requested — review in progress. HYVE is checking attendance,
+          ticket, event, and stream records. Review may take up to 30 days.
+        </p>
+      )}
+
+      {(showTransferBtn || showRefundBtn) && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {showTransferBtn && (
             <button onClick={() => setOpen(true)} className={ghostBtn}>
               Transfer ticket
             </button>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setMethod('EMAIL')}
-                  className={method === 'EMAIL' ? actionBtn : ghostBtn}
-                >
-                  By email
-                </button>
-                <button
-                  onClick={() => setMethod('FRIEND_CODE')}
-                  className={method === 'FRIEND_CODE' ? actionBtn : ghostBtn}
-                >
-                  By friend code
-                </button>
-              </div>
-              {method === 'EMAIL' && (
-                <input
-                  type="email"
-                  placeholder="recipient@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={inputClass}
-                />
-              )}
-              <div className="flex gap-2">
-                <button
-                  onClick={startTransfer}
-                  disabled={busy || (method === 'EMAIL' && email.trim().length === 0)}
-                  className={actionBtn}
-                >
-                  {busy ? 'Working…' : 'Send transfer'}
-                </button>
-                <button onClick={() => setOpen(false)} disabled={busy} className={ghostBtn}>
-                  Cancel
-                </button>
-              </div>
-            </div>
           )}
+          {showRefundBtn && (
+            <button onClick={() => setRefundOpen(true)} className={ghostBtn}>
+              Request a refund
+            </button>
+          )}
+        </div>
+      )}
+
+      {idle && open && (
+        <div className="mt-2 flex flex-col gap-2">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setMethod('EMAIL')}
+              className={method === 'EMAIL' ? actionBtn : ghostBtn}
+            >
+              By email
+            </button>
+            <button
+              onClick={() => setMethod('FRIEND_CODE')}
+              className={method === 'FRIEND_CODE' ? actionBtn : ghostBtn}
+            >
+              By friend code
+            </button>
+          </div>
+          {method === 'EMAIL' && (
+            <input
+              type="email"
+              placeholder="recipient@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={inputClass}
+            />
+          )}
+          <div className="flex gap-2">
+            <button
+              onClick={startTransfer}
+              disabled={busy || (method === 'EMAIL' && email.trim().length === 0)}
+              className={actionBtn}
+            >
+              {busy ? 'Working…' : 'Send transfer'}
+            </button>
+            <button onClick={() => setOpen(false)} disabled={busy} className={ghostBtn}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {refundable && refundOpen && (
+        <div className="mt-2 flex flex-col gap-2">
+          <textarea
+            placeholder="Tell us why you're requesting a refund (optional)"
+            value={refundReason}
+            onChange={(e) => setRefundReason(e.target.value)}
+            rows={3}
+            className={inputClass}
+          />
+          <p className="text-[11px] text-[#9e8a55]">
+            Submitting a request does not guarantee a refund. HYVE reviews each
+            request against attendance and event records.
+          </p>
+          <div className="flex gap-2">
+            <button onClick={requestRefund} disabled={busy} className={actionBtn}>
+              {busy ? 'Working…' : 'Submit request'}
+            </button>
+            <button onClick={() => setRefundOpen(false)} disabled={busy} className={ghostBtn}>
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 
