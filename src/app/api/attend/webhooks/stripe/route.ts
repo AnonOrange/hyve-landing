@@ -10,6 +10,7 @@ import {
 import { fulfilRegistration } from '@/lib/attend/payments/registration-service'
 import { fulfilCheckout } from '@/lib/attend/payments/checkout-service'
 import { syncAccountStatus } from '@/lib/attend/payments/connect-service'
+import { ingestDisputeCreated, ingestDisputeClosed } from '@/lib/attend/disputes/dispute-service'
 
 export const runtime = 'nodejs'
 
@@ -63,6 +64,10 @@ export async function POST(req: NextRequest) {
       }
     } else if (event.type === 'account.updated') {
       await syncAccountStatus((event.data.object as Stripe.Account).id)
+    } else if (event.type === 'charge.dispute.created') {
+      await ingestDisputeCreated(event.data.object as Stripe.Dispute)
+    } else if (event.type === 'charge.dispute.closed') {
+      await ingestDisputeClosed(event.data.object as Stripe.Dispute)
     }
     await markWebhookProcessed(event.id)
     return NextResponse.json({ received: true })
