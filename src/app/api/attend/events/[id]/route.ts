@@ -4,11 +4,12 @@ import {
   getCreatorEvent,
   updateEventDetails,
   changeEventStatus,
+  advanceSetup,
   ForbiddenError,
   NotFoundError,
   ValidationError,
 } from '@/lib/attend/events/service'
-import type { EventStatus } from '@/lib/attend/events/lifecycle'
+import { payoutsEnabled } from '@/lib/attend/payments/connect-service'
 
 export const runtime = 'nodejs'
 
@@ -45,11 +46,18 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   try {
-    if (typeof body.status === 'string') {
-      await changeEventStatus(params.id, profile.id, body.status as EventStatus)
-    } else {
-      await updateEventDetails(params.id, profile.id, body)
+    if (body.action === 'advance-setup') {
+      const status = await advanceSetup(params.id, profile.id, await payoutsEnabled(profile.id))
+      return NextResponse.json({ ok: true, status })
     }
+    if (body.action === 'cancel') {
+      await changeEventStatus(params.id, profile.id, 'CANCELLED')
+      return NextResponse.json({ ok: true, status: 'CANCELLED' })
+    }
+    if (body.action !== undefined) {
+      return NextResponse.json({ error: `Unknown action: ${String(body.action)}` }, { status: 400 })
+    }
+    await updateEventDetails(params.id, profile.id, body)
     return NextResponse.json({ ok: true })
   } catch (err) {
     return mapError(err, 'patch')
