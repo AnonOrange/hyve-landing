@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { requireCreator } from '@/lib/attend/identity/roles'
 import { listMyEvents } from '@/lib/attend/events/service'
@@ -14,5 +15,17 @@ export default async function CreatorPage() {
     listMyEvents(profile.id),
     payoutsEnabled(profile.id),
   ])
-  return <CreatorEventsClient events={events} payoutsEnabled={payouts} />
+  return (
+    <>
+      <div className="flex justify-end pt-6">
+        <Link
+          href="/attend/creator/payouts"
+          className="text-xs font-bold text-[#9e8a55] transition hover:text-[#E8C456]"
+        >
+          View payouts →
+        </Link>
+      </div>
+      <CreatorEventsClient events={events} payoutsEnabled={payouts} />
+    </>
+  )
 }
