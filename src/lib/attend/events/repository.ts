@@ -1,6 +1,6 @@
 // Raw-REST data access for attend_events. Query-only — no business logic.
 import { supaGet, supaPost, supaPatch } from '@/lib/supabase'
-import type { EventStatus } from '@/lib/attend/events/lifecycle'
+import { type EventStatus, DISCOVERABLE_STATUSES } from '@/lib/attend/events/lifecycle'
 
 export interface EventRow {
   id: string
@@ -56,6 +56,17 @@ export async function listEventsByCreator(creatorId: string): Promise<EventRow[]
     await supaGet(
       'attend_events',
       `creator_id=eq.${creatorId}&deleted_at=is.null&select=*&order=created_at.desc`,
+    ),
+  )
+}
+
+/** Events a buyer may browse: public, in a discoverable status, soonest first. */
+export async function listDiscoverableEvents(): Promise<EventRow[]> {
+  return rows(
+    await supaGet(
+      'attend_events',
+      `status=in.(${DISCOVERABLE_STATUSES.join(',')})&visibility=eq.PUBLIC` +
+        `&deleted_at=is.null&select=*&order=starts_at.asc`,
     ),
   )
 }

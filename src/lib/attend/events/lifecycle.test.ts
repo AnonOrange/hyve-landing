@@ -4,6 +4,9 @@ import {
   assertTransition,
   ALL_STATUSES,
   draftTargetStatus,
+  DISCOVERABLE_STATUSES,
+  isDiscoverable,
+  eventTiming,
 } from '@/lib/attend/events/lifecycle'
 
 describe('canTransition', () => {
@@ -85,6 +88,22 @@ describe('draftTargetStatus', () => {
   it('only ever returns a legal successor of DRAFT', () => {
     for (const showType of ['FREE_EVENT', 'HUMAN_LIVE_BROADCAST', 'PRIVATE_EVENT']) {
       expect(canTransition('DRAFT', draftTargetStatus(showType))).toBe(true)
+    }
+  })
+})
+
+describe('discoverability + timing', () => {
+  it('isDiscoverable matches the discoverable status set', () => {
+    for (const s of DISCOVERABLE_STATUSES) expect(isDiscoverable(s)).toBe(true)
+    expect(isDiscoverable('DRAFT')).toBe(false)
+    expect(isDiscoverable('ENDED')).toBe(false)
+  })
+  it('eventTiming buckets show-day statuses as LIVE, the rest as UPCOMING', () => {
+    for (const s of ['SOUNDCHECK', 'DOORS_OPEN', 'LIVE'] as const) {
+      expect(eventTiming(s)).toBe('LIVE')
+    }
+    for (const s of ['PUBLISHED', 'ON_SALE', 'SALES_PAUSED'] as const) {
+      expect(eventTiming(s)).toBe('UPCOMING')
     }
   })
 })

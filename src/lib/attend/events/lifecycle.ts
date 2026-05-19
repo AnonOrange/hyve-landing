@@ -63,3 +63,23 @@ export function assertTransition(from: EventStatus, to: EventStatus): void {
 export function draftTargetStatus(showType: string): EventStatus {
   return showType === 'FREE_EVENT' ? 'STREAM_SETUP_REQUIRED' : 'REGISTRATION_PENDING'
 }
+
+// Statuses at which a buyer may discover and view an event (spec §7). The
+// single source of truth for both the discovery query and the event-page gate.
+export const DISCOVERABLE_STATUSES: EventStatus[] = [
+  'PUBLISHED', 'ON_SALE', 'SALES_PAUSED', 'SOUNDCHECK', 'DOORS_OPEN', 'LIVE',
+]
+
+export function isDiscoverable(status: EventStatus): boolean {
+  return DISCOVERABLE_STATUSES.includes(status)
+}
+
+export type EventTiming = 'LIVE' | 'UPCOMING'
+
+// A discoverable event is either happening now or still upcoming — the two
+// sections the discovery page renders.
+const LIVE_STATUSES: EventStatus[] = ['SOUNDCHECK', 'DOORS_OPEN', 'LIVE']
+
+export function eventTiming(status: EventStatus): EventTiming {
+  return LIVE_STATUSES.includes(status) ? 'LIVE' : 'UPCOMING'
+}
