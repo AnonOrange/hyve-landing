@@ -401,8 +401,9 @@ No other change — the exactly-once claim, the release-on-failure, and `markWeb
 
 ## Notes & deferrals
 
-- **Cart expiry is Phase 3c** — until then an abandoned `PENDING` order keeps its inventory hold. Acceptable for a test-mode milestone; 3c adds the reclaiming job.
+- **Cart expiry is Phase 3c** — until then an abandoned `PENDING` order keeps its inventory hold. Acceptable for a test-mode milestone; 3c adds the reclaiming job. Note for 3c: `startCheckout` increments `quantity_sold` (inside the RPC) before the Stripe call and the session-id patch, so a failure in between leaves a `PENDING` order with a *null* `stripe_checkout_session_id` — the cart-expiry job must reclaim those by age, not only by Stripe-session lookup.
 - **Phase 3c must soften the `attend_complete_checkout` non-`PENDING` guard.** Once cart-expiry can set an order `CANCELLED`, a slow payment whose `checkout.session.completed` webhook lands *after* expiry would hit the `status <> 'PENDING'` → `raise` and wedge Stripe into ~3 days of 500 retries. When 3c builds cart-expiry it must change that branch to return a no-op signalling "paid-after-expiry, refund needed" rather than raising. In Phase 3b the branch is unreachable as a wedge — nothing cancels an order yet — so it ships as-is.
 - **Wallet is Phase 3c** — `success_url` returns to the event page with `?purchased=1`; the event page may show a brief "payment received" note. No wallet link until 3c.
 - **RPC integration tests** (spec §10) need test infrastructure that does not exist yet; deferred to the Phase 7 hardening pass. The RPC bodies rely on careful review here.
+- **Phase 7 hardening:** `attend_complete_checkout` should assert the recorded payment `amount_cents` equals the order `total_cents` and raise on divergence — currently Stripe's `amount_total` is recorded with a `0` fallback and not cross-checked against the order.
 - **Separate charges + transfers** (spec §7.4): this phase takes the buyer's payment to the platform; the artist `Transfer` is Phase 6 (payouts). `ARTIST_NET_PENDING` is posted now so the payout job can read it later.

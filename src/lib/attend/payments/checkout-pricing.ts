@@ -32,8 +32,10 @@ export function priceSelections(
   const items: PricedItem[] = []
   let subtotalCents = 0
   for (const sel of chosen) {
-    if (!Number.isInteger(sel.quantity) || sel.quantity < 1) {
-      throw new ValidationError('Ticket quantity must be a positive whole number')
+    // Positivity is already enforced by the `quantity > 0` filter above; this
+    // rejects fractional quantities from a crafted request.
+    if (!Number.isInteger(sel.quantity)) {
+      throw new ValidationError('Ticket quantity must be a whole number')
     }
     const tt = ticketTypes.find((t) => t.id === sel.ticketTypeId)
     if (!tt) throw new ValidationError('Unknown ticket type')
