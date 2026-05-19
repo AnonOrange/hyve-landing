@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getEventPage } from '@/lib/attend/discovery/discovery-service'
-import { formatUsd } from '@/lib/attend/money'
+import { getAttendUser } from '@/lib/attend/identity/auth'
+import CheckoutClient from './checkout-client'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,6 +31,7 @@ export default async function EventPage({ params }: { params: { slug: string } }
   const data = await getEventPage(params.slug)
   if (!data) notFound()
   const { event, ticketTypes, artist } = data
+  const user = await getAttendUser()
   const starts = fmtWhen(event.starts_at)
   const ends = fmtWhen(event.ends_at)
 
@@ -111,38 +113,11 @@ export default async function EventPage({ params }: { params: { slug: string } }
             )}
           </section>
 
-          <section className={card}>
-            <h2 className="text-xs font-black tracking-[0.2em] text-[#9e8a55]">TICKETS</h2>
-            {ticketTypes.length === 0 ? (
-              <p className="mt-3 text-sm text-[#9e8a55]">Tickets not yet listed.</p>
-            ) : (
-              <>
-                <ul className="mt-3 flex flex-col gap-2">
-                  {ticketTypes.map((tt) => (
-                    <li
-                      key={tt.id}
-                      className="flex items-center justify-between gap-3 rounded border border-[#2a2135] px-3 py-2"
-                    >
-                      <div>
-                        <span className="text-sm font-bold">{tt.name}</span>
-                        {tt.status === 'SOLD_OUT' && (
-                          <span className="ml-2 text-[10px] font-bold uppercase tracking-wider text-red-400">
-                            Sold out
-                          </span>
-                        )}
-                      </div>
-                      <span className="font-mono text-sm text-[#E8C456]">
-                        {formatUsd(tt.price_cents)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-3 text-[11px] text-[#9e8a55]">
-                  All prices are final — no fees are added at checkout.
-                </p>
-              </>
-            )}
-          </section>
+          <CheckoutClient
+            eventId={event.id}
+            ticketTypes={ticketTypes}
+            signedIn={!!user}
+          />
         </div>
       </div>
     </div>
