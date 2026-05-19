@@ -17,4 +17,8 @@ export class FakeStreamProvider implements StreamProvider {
   verifyWebhookSignature(): boolean {
     return true
   }
+
+  async signPlaybackToken(playbackId: string): Promise<string> {
+    return `fake-token-${playbackId}`
+  }
 }

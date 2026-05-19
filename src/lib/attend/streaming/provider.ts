@@ -15,6 +15,8 @@ export interface StreamProvider {
   createLiveStream(): Promise<LiveStream>
   // Verify a provider webhook's signature over the raw request body.
   verifyWebhookSignature(rawBody: string, signature: string | null): boolean
+  // Mint a short-lived signed token scoping HLS playback to a ticket-holder.
+  signPlaybackToken(playbackId: string): Promise<string>
 }
 
 /** The real Mux provider when credentials are configured, otherwise the fake. */
