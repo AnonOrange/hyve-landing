@@ -14,6 +14,15 @@ export interface OwnedTicket {
     status: string
   }
   attend_ticket_types: { name: string; kind: string }
+  // A ticket has at most one PENDING transfer; past REVOKED/EXPIRED/ACCEPTED
+  // rows may also appear — the wallet picks the PENDING one.
+  attend_ticket_transfers: {
+    id: string
+    method: string
+    friend_code: string | null
+    to_email: string | null
+    status: string
+  }[]
 }
 
 /**
@@ -27,7 +36,8 @@ export async function listOwnedTicketsWithContext(ownerId: string): Promise<Owne
     `owner_id=eq.${ownerId}` +
       `&select=id,state,access_token,created_at,` +
       `attend_events(id,title,slug,starts_at,status),` +
-      `attend_ticket_types(name,kind)` +
+      `attend_ticket_types(name,kind),` +
+      `attend_ticket_transfers(id,method,friend_code,to_email,status)` +
       `&order=created_at.desc`,
   )
   if (!res.ok) throw new Error(`attend_tickets query failed: ${res.status}`)
