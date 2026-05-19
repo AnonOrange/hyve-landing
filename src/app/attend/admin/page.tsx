@@ -1,0 +1,39 @@
+import { listEventsByStatus } from '@/lib/attend/events/repository'
+import ReviewClient from './review-client'
+
+export const metadata = { title: 'Attend admin' }
+export const dynamic = 'force-dynamic'
+
+const fmtWhen = (iso: string | null) => (iso ? iso.slice(0, 16).replace('T', ' ') : 'Date TBA')
+
+export default async function AdminPage() {
+  const events = await listEventsByStatus('SUBMITTED_FOR_REVIEW')
+
+  return (
+    <div>
+      <h2 className="text-xs font-black tracking-[0.2em] text-[#9e8a55]">
+        EVENTS AWAITING REVIEW
+      </h2>
+      {events.length === 0 ? (
+        <p className="mt-3 text-sm text-[#9e8a55]">No events awaiting review.</p>
+      ) : (
+        <ul className="mt-4 flex flex-col gap-3">
+          {events.map((ev) => (
+            <li
+              key={ev.id}
+              className="flex items-center justify-between gap-3 rounded border border-[#2a2135] bg-[#111111] px-4 py-3"
+            >
+              <div>
+                <span className="text-sm font-bold">{ev.title}</span>
+                <p className="text-xs text-[#9e8a55]">
+                  {ev.show_type} · starts {fmtWhen(ev.starts_at)}
+                </p>
+              </div>
+              <ReviewClient eventId={ev.id} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
