@@ -6,12 +6,14 @@ import {
   changeEventStatus,
   advanceSetup,
   submitDraft,
+  submitForReview,
   ForbiddenError,
   NotFoundError,
   ValidationError,
 } from '@/lib/attend/events/service'
 import { listEventTicketTypes } from '@/lib/attend/ticketing/ticket-type-service'
 import { payoutsEnabled } from '@/lib/attend/payments/connect-service'
+import { getEventStream } from '@/lib/attend/streaming/streaming-service'
 
 export const runtime = 'nodejs'
 
@@ -56,6 +58,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (body.action === 'advance-setup') {
       const status = await advanceSetup(params.id, profile.id, await payoutsEnabled(profile.id))
       return NextResponse.json({ ok: true, status })
+    }
+    if (body.action === 'submit-for-review') {
+      const stream = await getEventStream(params.id)
+      await submitForReview(params.id, profile.id, stream?.test_passed_at != null)
+      return NextResponse.json({ ok: true, status: 'SUBMITTED_FOR_REVIEW' })
     }
     if (body.action === 'cancel') {
       await changeEventStatus(params.id, profile.id, 'CANCELLED')

@@ -179,3 +179,24 @@ export async function submitDraft(
   await updateEvent(id, { status: target, updated_by: creatorId })
   return target
 }
+
+/**
+ * Submit a STREAM_SETUP_REQUIRED event for review. `streamTestPassed` is
+ * supplied by the route (attend_streams.test_passed_at is non-null) — the
+ * route composes events + streaming, keeping this module streaming-free.
+ */
+export async function submitForReview(
+  id: string,
+  creatorId: string,
+  streamTestPassed: boolean,
+): Promise<void> {
+  const event = await loadOwned(id, creatorId)
+  if (event.status !== 'STREAM_SETUP_REQUIRED') {
+    throw new ValidationError('This event is not ready to submit for review')
+  }
+  if (!streamTestPassed) {
+    throw new ValidationError('Run a successful stream test before submitting for review')
+  }
+  assertTransition(event.status, 'SUBMITTED_FOR_REVIEW')
+  await updateEvent(id, { status: 'SUBMITTED_FOR_REVIEW', updated_by: creatorId })
+}
