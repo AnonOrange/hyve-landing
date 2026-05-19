@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { expireStaleCarts } from '@/lib/attend/payments/cart-expiry-service'
 
@@ -6,6 +7,16 @@ export const dynamic = 'force-dynamic'
 
 const CRON_SECRET = process.env.ATTEND_CRON_SECRET
 
+// Constant-time bearer check — avoids leaking the secret via response timing.
+function authorized(header: string | null, secret: string): boolean {
+  const expected = `Bearer ${secret}`
+  const provided = header ?? ''
+  return (
+    provided.length === expected.length &&
+    timingSafeEqual(Buffer.from(provided), Buffer.from(expected))
+  )
+}
+
 // GET /api/attend/jobs/cart-expiry — invoked on a schedule (GitHub Actions).
 // Bearer-secret gated; idempotent (attend_expire_order no-ops a non-PENDING order).
 export async function GET(req: NextRequest) {
@@ -13,7 +24,7 @@ export async function GET(req: NextRequest) {
     console.error('[cart-expiry] ATTEND_CRON_SECRET not set')
     return NextResponse.json({ error: 'Cron not configured' }, { status: 500 })
   }
-  if (req.headers.get('authorization') !== `Bearer ${CRON_SECRET}`) {
+  if (!authorized(req.headers.get('authorization'), CRON_SECRET)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   try {
