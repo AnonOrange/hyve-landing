@@ -92,11 +92,10 @@ export async function revokeTransfer(transferId: string, actorId: string): Promi
 export async function claimTransfer(
   by: { claimToken?: string; friendCode?: string },
   recipientId: string,
-): Promise<{ eventId: string }> {
-  const result = (await callTransferRpc('attend_claim_transfer', {
+): Promise<void> {
+  await callTransferRpc('attend_claim_transfer', {
     claim_token: by.claimToken ?? null,
     friend_code: by.friendCode ?? null,
     recipient_id: recipientId,
-  })) as RpcResult & { event_id?: string }
-  return { eventId: result.event_id ?? '' }
+  })
 }

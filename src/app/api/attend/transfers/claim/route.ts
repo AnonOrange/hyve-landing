@@ -27,8 +27,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const result = await claimTransfer({ claimToken: token, friendCode: code }, user.id)
-    return NextResponse.json({ ok: true, ...result })
+    await claimTransfer({ claimToken: token, friendCode: code }, user.id)
+    return NextResponse.json({ ok: true })
   } catch (err) {
     if (err instanceof ValidationError) {
       return NextResponse.json({ error: err.message }, { status: 400 })
