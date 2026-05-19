@@ -42,24 +42,38 @@ export async function findPaymentByIntent(
 }
 
 /**
- * Record a webhook delivery. Returns true if newly recorded, false if the
- * `provider_event_id` was already present (a duplicate delivery). Decided by
- * HTTP status — never depends on parsing the response body.
+ * Record a received webhook event. Idempotent: a duplicate delivery hits the
+ * `unique(provider_event_id)` constraint (409), which is fine — the row exists.
  */
-export async function markWebhookSeen(
+export async function recordWebhookEvent(
   provider: string,
   providerEventId: string,
   eventType: string,
   payload: unknown,
-): Promise<boolean> {
+): Promise<void> {
   const res = await supaPost(
     'attend_webhook_events',
     { provider, provider_event_id: providerEventId, event_type: eventType, payload },
     'return=minimal',
   )
-  if (res.ok) return true
-  if (res.status === 409) return false // unique(provider_event_id) — already seen
-  throw new Error(`attend_webhook_events insert failed: ${res.status} ${await res.text()}`)
+  if (!res.ok && res.status !== 409) {
+    throw new Error(`attend_webhook_events insert failed: ${res.status} ${await res.text()}`)
+  }
+}
+
+/**
+ * True once this event's handler has completed successfully. The webhook
+ * deduplicates on this — not on mere receipt — so a delivery whose handler
+ * failed is retried by Stripe and re-processed.
+ */
+export async function isWebhookProcessed(providerEventId: string): Promise<boolean> {
+  const res = await supaGet(
+    'attend_webhook_events',
+    `provider_event_id=eq.${providerEventId}&select=processed_at`,
+  )
+  if (!res.ok) throw new Error(`attend_webhook_events query failed: ${res.status}`)
+  const rows = (await res.json()) as { processed_at: string | null }[]
+  return rows.length > 0 && rows[0].processed_at !== null
 }
 
 export async function markWebhookProcessed(providerEventId: string): Promise<void> {

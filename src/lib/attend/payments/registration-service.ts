@@ -2,7 +2,7 @@
 // session and fulfil it (record the payment, run the atomic RPC).
 import type Stripe from 'stripe'
 import { attendStripe, REGISTRATION_FEE_CENTS } from '@/lib/attend/payments/stripe'
-import { insertPayment } from '@/lib/attend/payments/payments-repository'
+import { insertPayment, findPaymentByIntent } from '@/lib/attend/payments/payments-repository'
 import { getEventById } from '@/lib/attend/events/repository'
 import { ForbiddenError, NotFoundError, ValidationError } from '@/lib/attend/events/service'
 import { supaPost } from '@/lib/supabase'
@@ -59,18 +59,22 @@ export async function fulfilRegistration(session: Stripe.Checkout.Session): Prom
       ? session.payment_intent
       : (session.payment_intent?.id ?? null)
 
-  const payment = await insertPayment({
-    kind: 'REGISTRATION_FEE',
-    order_id: null,
-    event_id: eventId,
-    profile_id: actor,
-    amount_cents: REGISTRATION_FEE_CENTS,
-    currency: session.currency ?? 'usd',
-    status: 'SUCCEEDED',
-    stripe_payment_intent_id: paymentIntentId,
-    stripe_charge_id: null,
-    stripe_refund_id: null,
-  })
+  // Idempotent: reuse the payment if a prior webhook delivery already recorded it.
+  let payment = paymentIntentId ? await findPaymentByIntent(paymentIntentId) : null
+  if (!payment) {
+    payment = await insertPayment({
+      kind: 'REGISTRATION_FEE',
+      order_id: null,
+      event_id: eventId,
+      profile_id: actor,
+      amount_cents: REGISTRATION_FEE_CENTS,
+      currency: session.currency ?? 'usd',
+      status: 'SUCCEEDED',
+      stripe_payment_intent_id: paymentIntentId,
+      stripe_charge_id: null,
+      stripe_refund_id: null,
+    })
+  }
 
   // PostgREST keys the RPC body by the function's jsonb parameter name.
   const res = await supaPost('rpc/attend_pay_registration', {
