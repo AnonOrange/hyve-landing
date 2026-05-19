@@ -1,6 +1,6 @@
 // Server-side: resolve the current Attend user to a profile and ensure the
 // CREATOR role. Used by every creator-only route handler and page.
-import { getAttendUser, ensureProfile } from '@/lib/attend/identity/auth'
+import { getAttendUser, ensureProfile, type AttendUser } from '@/lib/attend/identity/auth'
 import { supaGet, supaPatch } from '@/lib/supabase'
 
 export interface CreatorProfile {
@@ -30,4 +30,16 @@ export async function requireCreator(): Promise<CreatorProfile | null> {
     profile.role = 'CREATOR'
   }
   return profile
+}
+
+/**
+ * The current Attend user with a provisioned profile, or null if not signed
+ * in. Unlike requireCreator this does NOT promote the role — buyers stay USER.
+ * `user.id` is the profile id (attend_profiles.id == auth.users.id).
+ */
+export async function requireAttendUser(): Promise<AttendUser | null> {
+  const user = await getAttendUser()
+  if (!user) return null
+  await ensureProfile(user)
+  return user
 }
