@@ -43,3 +43,21 @@ export async function requireAttendUser(): Promise<AttendUser | null> {
   await ensureProfile(user)
   return user
 }
+
+/**
+ * The current user's profile if they are an ADMIN or REVIEWER, else null.
+ * Unlike requireCreator this never promotes — back-office access is appointed,
+ * not self-serve.
+ */
+export async function requireReviewer(): Promise<CreatorProfile | null> {
+  const user = await getAttendUser()
+  if (!user) return null
+  await ensureProfile(user)
+
+  const res = await supaGet('attend_profiles', `id=eq.${user.id}&select=id,email,role`)
+  if (!res.ok) throw new Error(`attend_profiles lookup failed: ${res.status}`)
+  const rows = (await res.json()) as CreatorProfile[]
+  const profile = rows[0]
+  if (!profile || (profile.role !== 'ADMIN' && profile.role !== 'REVIEWER')) return null
+  return profile
+}

@@ -71,6 +71,16 @@ export async function listDiscoverableEvents(): Promise<EventRow[]> {
   )
 }
 
+/** All non-deleted events in a given status, oldest-updated first (a FIFO queue). */
+export async function listEventsByStatus(status: EventStatus): Promise<EventRow[]> {
+  return rows(
+    await supaGet(
+      'attend_events',
+      `status=eq.${status}&deleted_at=is.null&select=*&order=updated_at.asc`,
+    ),
+  )
+}
+
 /** Slugs starting with `base` — used to pick a collision-free slug. */
 export async function listSlugsLike(base: string): Promise<string[]> {
   const res = await supaGet('attend_events', `slug=like.${base}*&select=slug`)
