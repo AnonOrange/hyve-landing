@@ -22,7 +22,7 @@
 - **Imports:** the `@/` alias → `./src`.
 - **Route handlers:** `export const runtime = 'nodejs'`; return `NextResponse.json(...)`; on auth failure return `401`; validate input and return `400` on bad input.
 - **Auth in handlers:** call `getAttendUser()` (Phase 1, `@/lib/attend/identity/auth`); if `null`, return `401`.
-- **Data access:** `supaGet/supaPost/supaPatch` from `@/lib/supabase`; these return raw `Response` — always check `res.ok` and `await res.json()`.
+- **Data access:** `supaGet/supaPost/supaPatch/supaDelete` from `@/lib/supabase`; these return raw `Response` — always check `res.ok` and `await res.json()`.
 - **Tests:** Vitest; pure logic is unit-tested. Run a single file with `npx vitest run <path>`.
 - **Commits:** conventional-commit, `feat(attend): ...`, one per task.
 
