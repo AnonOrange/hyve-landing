@@ -9,14 +9,17 @@ const humanize = (s: string) =>
 
 const fmtWhen = (iso: string | null) => (iso ? iso.slice(0, 16).replace('T', ' ') : null)
 
-// Wall-clock ISO text (YYYY-MM-DDTHH:MM…) -> Google Calendar's YYYYMMDDTHHMMSSZ.
-const calDate = (iso: string) => `${iso.slice(0, 16).replace(/[-:]/g, '')}00Z`
+// Wall-clock ISO text (YYYY-MM-DDTHH:MM…) -> a Google Calendar local datetime
+// (YYYYMMDDTHHMMSS, no trailing Z). The timezone is passed separately as `ctz`
+// so the time is not misread as UTC.
+const calDate = (iso: string) => `${iso.slice(0, 16).replace(/[-:]/g, '')}00`
 
-function calendarUrl(title: string, startsAt: string, endsAt: string): string {
+function calendarUrl(title: string, startsAt: string, endsAt: string, tz: string): string {
   const params = new URLSearchParams({
     action: 'TEMPLATE',
     text: title,
     dates: `${calDate(startsAt)}/${calDate(endsAt)}`,
+    ctz: tz,
   })
   return `https://calendar.google.com/calendar/render?${params.toString()}`
 }
@@ -94,7 +97,7 @@ export default async function EventPage({ params }: { params: { slug: string } }
                 <p className="mt-1 text-xs text-[#9e8a55]">{event.timezone}</p>
                 {event.starts_at && event.ends_at && (
                   <a
-                    href={calendarUrl(event.title, event.starts_at, event.ends_at)}
+                    href={calendarUrl(event.title, event.starts_at, event.ends_at, event.timezone)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-3 inline-block text-xs font-bold tracking-wider text-[#E8C456] hover:underline"

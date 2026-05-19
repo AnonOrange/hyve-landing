@@ -6,6 +6,7 @@ import {
   draftTargetStatus,
   DISCOVERABLE_STATUSES,
   isDiscoverable,
+  isPubliclyViewable,
   eventTiming,
 } from '@/lib/attend/events/lifecycle'
 
@@ -105,5 +106,11 @@ describe('discoverability + timing', () => {
     for (const s of ['PUBLISHED', 'ON_SALE', 'SALES_PAUSED'] as const) {
       expect(eventTiming(s)).toBe('UPCOMING')
     }
+  })
+  it('isPubliclyViewable requires a PUBLIC event in a discoverable status', () => {
+    expect(isPubliclyViewable('ON_SALE', 'PUBLIC')).toBe(true)
+    expect(isPubliclyViewable('LIVE', 'PUBLIC')).toBe(true)
+    expect(isPubliclyViewable('ON_SALE', 'PRIVATE')).toBe(false)
+    expect(isPubliclyViewable('DRAFT', 'PUBLIC')).toBe(false)
   })
 })

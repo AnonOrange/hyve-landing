@@ -6,7 +6,7 @@ import {
   listDiscoverableEvents,
   getEventBySlug,
 } from '@/lib/attend/events/repository'
-import { eventTiming, isDiscoverable } from '@/lib/attend/events/lifecycle'
+import { eventTiming, isPubliclyViewable } from '@/lib/attend/events/lifecycle'
 import {
   type TicketTypeRow,
   listTicketTypesByEvent,
@@ -47,12 +47,12 @@ export interface EventPageData {
 
 /**
  * The full event page for a slug, or null if the event is missing, soft-
- * deleted, or not in a buyer-discoverable status (a DRAFT/setup event must
- * not be viewable by slug).
+ * deleted, not PUBLIC, or not in a buyer-discoverable status. A PRIVATE event
+ * is hidden here even when published; a DRAFT/setup event is never viewable.
  */
 export async function getEventPage(slug: string): Promise<EventPageData | null> {
   const event = await getEventBySlug(slug)
-  if (!event || !isDiscoverable(event.status)) return null
+  if (!event || !isPubliclyViewable(event.status, event.visibility)) return null
 
   // Show ACTIVE/PAUSED/SOLD_OUT tiers; only a HIDDEN tier is withheld.
   const ticketTypes = (await listTicketTypesByEvent(event.id)).filter(

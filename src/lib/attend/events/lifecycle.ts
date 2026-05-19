@@ -74,6 +74,13 @@ export function isDiscoverable(status: EventStatus): boolean {
   return DISCOVERABLE_STATUSES.includes(status)
 }
 
+// A buyer-facing event page is shown only for a PUBLIC event in a discoverable
+// status. A PRIVATE event stays hidden here even once published — it is reached
+// by direct invite (a later phase), never by guessing its slug.
+export function isPubliclyViewable(status: EventStatus, visibility: string): boolean {
+  return visibility === 'PUBLIC' && isDiscoverable(status)
+}
+
 export type EventTiming = 'LIVE' | 'UPCOMING'
 
 // A discoverable event is either happening now or still upcoming — the two
