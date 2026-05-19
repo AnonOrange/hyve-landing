@@ -57,7 +57,7 @@ const config = {
           "img-src 'self' data: blob: https:",
           "media-src 'self' blob: https:",
           "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://googleads.g.doubleclick.net https://*.googlesyndication.com https://translate.googleapis.com https://melvis-preview.vercel.app",
-          "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://firebasestorage.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://*.gstatic.com https://api.stripe.com https://m.stripe.network https://r.stripe.com https://api.resend.com https://translate.googleapis.com https://*.supabase.co wss://*.firebaseio.com wss://*.supabase.co https://pagead2.googlesyndication.com",
+          "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://firebasestorage.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://*.gstatic.com https://api.stripe.com https://m.stripe.network https://r.stripe.com https://api.resend.com https://translate.googleapis.com https://*.supabase.co https://stream.mux.com wss://*.firebaseio.com wss://*.supabase.co https://pagead2.googlesyndication.com",
           "worker-src 'self' blob:",
           "object-src 'none'",
           "base-uri 'self'",
