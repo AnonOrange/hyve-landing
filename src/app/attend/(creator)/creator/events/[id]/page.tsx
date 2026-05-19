@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { requireCreator } from '@/lib/attend/identity/roles'
 import { getCreatorEvent, ForbiddenError, NotFoundError } from '@/lib/attend/events/service'
@@ -20,12 +21,22 @@ export default async function EventDashboardPage({ params }: { params: { id: str
       getEventStream(params.id),
     ])
     return (
-      <EventDashboardClient
-        event={event}
-        ticketTypes={ticketTypes}
-        payoutsEnabled={payouts}
-        stream={stream}
-      />
+      <>
+        <div className="flex justify-end pt-6">
+          <Link
+            href={`/attend/creator/events/${params.id}/promotion`}
+            className="text-xs font-bold text-[#9e8a55] transition hover:text-[#E8C456]"
+          >
+            Promotion →
+          </Link>
+        </div>
+        <EventDashboardClient
+          event={event}
+          ticketTypes={ticketTypes}
+          payoutsEnabled={payouts}
+          stream={stream}
+        />
+      </>
     )
   } catch (err) {
     if (err instanceof NotFoundError || err instanceof ForbiddenError) notFound()
