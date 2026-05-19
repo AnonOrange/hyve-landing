@@ -215,6 +215,39 @@ export default function EventDashboardClient({
           </section>
         )
       }
+      case 'ON_SALE':
+      case 'SALES_PAUSED':
+        return wrap(
+          'Show day',
+          'When you are ready to begin, start the show-day soundcheck.',
+          <button onClick={() => patchAction('start-soundcheck')} disabled={busy} className={actionBtn}>
+            {busy ? 'Working…' : 'Start soundcheck'}
+          </button>,
+        )
+      case 'SOUNDCHECK':
+        return wrap(
+          'Soundcheck',
+          'Open the doors when you are ready to let ticket-holders into the room.',
+          <button onClick={() => patchAction('open-doors')} disabled={busy} className={actionBtn}>
+            {busy ? 'Working…' : 'Open the doors'}
+          </button>,
+        )
+      case 'DOORS_OPEN':
+        return wrap(
+          'Doors are open',
+          'Ticket-holders can enter the room. Go live in your broadcast software — the show moves to LIVE automatically once Mux detects your stream.',
+          <button disabled className={actionBtn}>
+            Waiting for your stream…
+          </button>,
+        )
+      case 'LIVE':
+        return wrap(
+          'You are live',
+          'Your show is broadcasting. End the show when the performance is over.',
+          <button onClick={() => patchAction('end-show')} disabled={busy} className={actionBtn}>
+            {busy ? 'Working…' : 'End the show'}
+          </button>,
+        )
       default:
         return null
     }

@@ -200,3 +200,26 @@ export async function submitForReview(
   assertTransition(event.status, 'SUBMITTED_FOR_REVIEW')
   await updateEvent(id, { status: 'SUBMITTED_FOR_REVIEW', updated_by: creatorId })
 }
+
+/**
+ * System-driven: a DOORS_OPEN event whose Mux stream went active goes LIVE.
+ * A no-op if the event is not DOORS_OPEN — safe under webhook retries. No
+ * ownership check: the Mux webhook, not the creator, drives this.
+ */
+export async function markEventLive(eventId: string): Promise<void> {
+  const event = await getEventById(eventId)
+  if (!event || event.status !== 'DOORS_OPEN') return
+  assertTransition(event.status, 'LIVE')
+  await updateEvent(eventId, { status: 'LIVE', updated_by: 'system' })
+}
+
+/**
+ * System-driven: a LIVE event whose Mux stream ended goes ENDED. A no-op if
+ * the event is not LIVE — safe under webhook retries.
+ */
+export async function markEventEnded(eventId: string): Promise<void> {
+  const event = await getEventById(eventId)
+  if (!event || event.status !== 'LIVE') return
+  assertTransition(event.status, 'ENDED')
+  await updateEvent(eventId, { status: 'ENDED', updated_by: 'system' })
+}
