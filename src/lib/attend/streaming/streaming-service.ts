@@ -17,6 +17,7 @@ import {
   markEventLive,
   markEventEnded,
 } from '@/lib/attend/events/service'
+import { supaPost } from '@/lib/supabase'
 
 export type { StreamRow }
 
@@ -90,5 +91,30 @@ export async function applyMuxStreamEvent(
     await markEventLive(stream.event_id)
   } else if (eventType === 'video.live_stream.idle') {
     await markEventEnded(stream.event_id)
+    await finalizeEventAttendance(stream.event_id)
+  }
+}
+
+/**
+ * Finalize an ended event's attendance — close open sessions, mark tickets
+ * USED / NO_SHOW. Best-effort: a failure is logged, not thrown, so it never
+ * fails the webhook (the event has already been ended).
+ */
+export async function finalizeEventAttendance(eventId: string): Promise<void> {
+  try {
+    const res = await supaPost('rpc/attend_finalize_attendance', {
+      p_args: { event_id: eventId },
+    })
+    if (!res.ok) {
+      console.error(
+        `[attend streaming] attend_finalize_attendance failed for ${eventId}: ` +
+          `${res.status} ${await res.text()}`,
+      )
+    }
+  } catch (err) {
+    console.error(
+      `[attend streaming] finalize attendance error for ${eventId}:`,
+      (err as Error).message,
+    )
   }
 }
