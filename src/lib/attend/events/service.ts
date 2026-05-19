@@ -8,7 +8,7 @@ import {
   listSlugsLike,
   updateEvent,
 } from '@/lib/attend/events/repository'
-import { assertTransition, EventStatus } from '@/lib/attend/events/lifecycle'
+import { assertTransition, draftTargetStatus, EventStatus } from '@/lib/attend/events/lifecycle'
 import { slugifyTitle, uniqueSlug } from '@/lib/attend/events/slug'
 
 /** The caller is not allowed to act on this resource. */
@@ -151,4 +151,31 @@ export async function advanceSetup(
     return 'STREAM_SETUP_REQUIRED'
   }
   throw new ValidationError('There is nothing to advance for this event')
+}
+
+/**
+ * Move a finished DRAFT into the setup chain: a paid show to
+ * REGISTRATION_PENDING, a FREE_EVENT straight to STREAM_SETUP_REQUIRED.
+ * `ticketTypeCount` is supplied by the caller — the route composes events +
+ * ticketing, so this module stays free of ticketing-module imports.
+ */
+export async function submitDraft(
+  id: string,
+  creatorId: string,
+  ticketTypeCount: number,
+): Promise<EventStatus> {
+  const event = await loadOwned(id, creatorId)
+  if (event.status !== 'DRAFT') {
+    throw new ValidationError('Only a draft event can be moved into setup')
+  }
+  if (!event.starts_at || !event.ends_at) {
+    throw new ValidationError('Set the event start and end times before continuing')
+  }
+  const target = draftTargetStatus(event.show_type)
+  if (target === 'REGISTRATION_PENDING' && ticketTypeCount < 1) {
+    throw new ValidationError('Add at least one ticket type before continuing')
+  }
+  assertTransition(event.status, target)
+  await updateEvent(id, { status: target, updated_by: creatorId })
+  return target
 }

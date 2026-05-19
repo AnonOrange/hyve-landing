@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { canTransition, assertTransition, ALL_STATUSES } from '@/lib/attend/events/lifecycle'
+import {
+  canTransition,
+  assertTransition,
+  ALL_STATUSES,
+  draftTargetStatus,
+} from '@/lib/attend/events/lifecycle'
 
 describe('canTransition', () => {
   it('allows the documented paid-show setup chain', () => {
@@ -66,5 +71,20 @@ describe('assertTransition', () => {
 describe('ALL_STATUSES', () => {
   it('lists the 18 event statuses', () => {
     expect(ALL_STATUSES).toHaveLength(18)
+  })
+})
+
+describe('draftTargetStatus', () => {
+  it('routes a free event straight to stream setup', () => {
+    expect(draftTargetStatus('FREE_EVENT')).toBe('STREAM_SETUP_REQUIRED')
+  })
+  it('routes a paid show to the registration fee', () => {
+    expect(draftTargetStatus('HUMAN_LIVE_BROADCAST')).toBe('REGISTRATION_PENDING')
+    expect(draftTargetStatus('PRIVATE_EVENT')).toBe('REGISTRATION_PENDING')
+  })
+  it('only ever returns a legal successor of DRAFT', () => {
+    for (const showType of ['FREE_EVENT', 'HUMAN_LIVE_BROADCAST', 'PRIVATE_EVENT']) {
+      expect(canTransition('DRAFT', draftTargetStatus(showType))).toBe(true)
+    }
   })
 })

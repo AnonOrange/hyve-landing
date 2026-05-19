@@ -56,3 +56,10 @@ export function assertTransition(from: EventStatus, to: EventStatus): void {
     throw new Error(`Illegal event transition: ${from} -> ${to}`)
   }
 }
+
+// DRAFT has two legal successors (see BASE_TRANSITIONS.DRAFT): which one an
+// event takes depends on its show type. A FREE_EVENT skips the registration
+// fee + payout gates (spec §6.9); every other MVP show type pays first.
+export function draftTargetStatus(showType: string): EventStatus {
+  return showType === 'FREE_EVENT' ? 'STREAM_SETUP_REQUIRED' : 'REGISTRATION_PENDING'
+}

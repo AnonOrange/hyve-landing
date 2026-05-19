@@ -5,10 +5,12 @@ import {
   updateEventDetails,
   changeEventStatus,
   advanceSetup,
+  submitDraft,
   ForbiddenError,
   NotFoundError,
   ValidationError,
 } from '@/lib/attend/events/service'
+import { listEventTicketTypes } from '@/lib/attend/ticketing/ticket-type-service'
 import { payoutsEnabled } from '@/lib/attend/payments/connect-service'
 
 export const runtime = 'nodejs'
@@ -32,8 +34,8 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   }
 }
 
-// PATCH /api/attend/events/[id] — a `status` field triggers a lifecycle
-// transition; any other fields are a draft-details edit.
+// PATCH /api/attend/events/[id] — an `action` triggers a guarded lifecycle
+// step; an actionless body is a draft-details edit.
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const profile = await requireCreator()
   if (!profile) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
@@ -46,6 +48,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   try {
+    if (body.action === 'start-setup') {
+      const ticketTypes = await listEventTicketTypes(params.id, profile.id)
+      const status = await submitDraft(params.id, profile.id, ticketTypes.length)
+      return NextResponse.json({ ok: true, status })
+    }
     if (body.action === 'advance-setup') {
       const status = await advanceSetup(params.id, profile.id, await payoutsEnabled(profile.id))
       return NextResponse.json({ ok: true, status })
