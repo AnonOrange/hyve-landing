@@ -98,13 +98,16 @@ export async function editTicketType(
 ): Promise<void> {
   await ownedTicketType(id, creatorId)
   validate(input)
-  await updateTicketType(id, {
+  // Only patch optional fields when supplied, so an edit that omits `kind`
+  // or `maxPerOrder` does not clobber a previously-set value.
+  const patch: Record<string, unknown> = {
     name: input.name.trim(),
-    kind: input.kind ?? 'GENERAL_ADMISSION',
     price_cents: input.priceCents,
     quantity_total: input.quantityTotal,
-    max_per_order: input.maxPerOrder ?? 10,
-  })
+  }
+  if (input.kind !== undefined) patch.kind = input.kind
+  if (input.maxPerOrder !== undefined) patch.max_per_order = input.maxPerOrder
+  await updateTicketType(id, patch)
 }
 
 export async function removeTicketType(id: string, creatorId: string): Promise<void> {

@@ -45,6 +45,9 @@ export async function createDraftEvent(creatorId: string, input: EventInput): Pr
     throw new ValidationError(`Show type "${input.showType}" is not available in the MVP`)
   }
 
+  // Check-then-insert race: two creators with the same title can compute the
+  // same slug. The DB's unique(slug) constraint backstops it (one INSERT
+  // fails); harden with retry-on-conflict or the §5.3 atomic RPC in a later phase.
   const base = slugifyTitle(input.title)
   const slug = uniqueSlug(base, await listSlugsLike(base))
 
@@ -102,7 +105,12 @@ export async function updateEventDetails(
   await updateEvent(id, clean)
 }
 
-/** Move the event to a new status, enforcing the §6.9 transition topology. */
+/**
+ * Move the event to a new status, enforcing the §6.9 transition topology.
+ * NOTE: only topology is checked here. Guard *conditions* ($50 paid, stream
+ * tested) and transition *authority* (admin-only approve/reject) land in
+ * Phase 2b — until then this PATCH surface is creator-reachable.
+ */
 export async function changeEventStatus(
   id: string,
   creatorId: string,

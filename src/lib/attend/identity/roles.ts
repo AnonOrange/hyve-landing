@@ -20,6 +20,7 @@ export async function requireCreator(): Promise<CreatorProfile | null> {
   await ensureProfile(user)
 
   const res = await supaGet('attend_profiles', `id=eq.${user.id}&select=id,email,role`)
+  if (!res.ok) throw new Error(`attend_profiles lookup failed: ${res.status}`)
   const rows = (await res.json()) as CreatorProfile[]
   if (rows.length === 0) return null
   const profile = rows[0]
