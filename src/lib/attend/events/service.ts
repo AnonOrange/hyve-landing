@@ -223,3 +223,28 @@ export async function markEventEnded(eventId: string): Promise<void> {
   assertTransition(event.status, 'ENDED')
   await updateEvent(eventId, { status: 'ENDED', updated_by: 'system' })
 }
+
+/**
+ * Reviewer approves a submitted event: SUBMITTED_FOR_REVIEW -> PUBLISHED. No
+ * ownership check — the route gates on the ADMIN/REVIEWER role instead.
+ */
+export async function reviewApprove(eventId: string, reviewerId: string): Promise<void> {
+  const event = await getEventById(eventId)
+  if (!event) throw new NotFoundError('Event not found')
+  if (event.status !== 'SUBMITTED_FOR_REVIEW') {
+    throw new ValidationError('This event is not awaiting review')
+  }
+  assertTransition(event.status, 'PUBLISHED')
+  await updateEvent(eventId, { status: 'PUBLISHED', updated_by: reviewerId })
+}
+
+/** Reviewer rejects a submitted event back to the creator: -> DRAFT. */
+export async function reviewReject(eventId: string, reviewerId: string): Promise<void> {
+  const event = await getEventById(eventId)
+  if (!event) throw new NotFoundError('Event not found')
+  if (event.status !== 'SUBMITTED_FOR_REVIEW') {
+    throw new ValidationError('This event is not awaiting review')
+  }
+  assertTransition(event.status, 'DRAFT')
+  await updateEvent(eventId, { status: 'DRAFT', updated_by: reviewerId })
+}
