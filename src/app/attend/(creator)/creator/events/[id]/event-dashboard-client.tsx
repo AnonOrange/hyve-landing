@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import type { EventRow } from '@/lib/attend/events/repository'
 import type { TicketTypeRow } from '@/lib/attend/ticketing/ticket-type-repository'
+import type { StreamRow } from '@/lib/attend/streaming/stream-repository'
 import SetupProgress from './setup-progress'
 import EventDetailsPanel from './event-details-panel'
 import TicketTypesPanel from './ticket-types-panel'
@@ -17,10 +18,12 @@ export default function EventDashboardClient({
   event,
   ticketTypes,
   payoutsEnabled,
+  stream,
 }: {
   event: EventRow
   ticketTypes: TicketTypeRow[]
   payoutsEnabled: boolean
+  stream: StreamRow | null
 }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -62,6 +65,25 @@ export default function EventDashboardClient({
         return
       }
       setError(data.error ?? failMsg)
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // POST to provision the event's Mux stream, then reload.
+  async function createStream() {
+    setBusy(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/attend/events/${event.id}/stream`, { method: 'POST' })
+      if (res.ok) {
+        window.location.reload()
+        return
+      }
+      const data = (await res.json().catch(() => ({}))) as { error?: string }
+      setError(data.error ?? 'Stream setup could not be completed')
     } catch {
       setError('Something went wrong. Please try again.')
     } finally {
@@ -137,14 +159,62 @@ export default function EventDashboardClient({
                 {busy ? 'Opening…' : 'Connect payouts'}
               </button>,
             )
-      case 'STREAM_SETUP_REQUIRED':
-        return wrap(
-          'Stream setup',
-          'Live-stream setup and the show-day controls arrive in an upcoming release.',
-          <button disabled className={actionBtn}>
-            Stream setup — coming soon
-          </button>,
+      case 'STREAM_SETUP_REQUIRED': {
+        if (!stream) {
+          return wrap(
+            'Set up your live stream',
+            'Create your Mux live stream to get an RTMP ingest URL and key for your broadcast software.',
+            <button onClick={createStream} disabled={busy} className={actionBtn}>
+              {busy ? 'Creating…' : 'Create stream'}
+            </button>,
+          )
+        }
+        const tested = stream.test_passed_at != null
+        return (
+          <section className="rounded border border-[#2a2135] bg-[#111111] px-4 py-4">
+            <h2 className="text-xs font-black tracking-[0.2em] text-[#E8C456]">NEXT STEP</h2>
+            <p className="mt-2 text-sm font-bold">
+              {tested ? 'Submit for review' : 'Test your live stream'}
+            </p>
+            <p className="mt-1 text-xs text-[#9e8a55]">
+              {tested
+                ? 'Your stream test passed. Submit the event for review.'
+                : 'Point your broadcast software at the ingest below and go live once, then reload this page.'}
+            </p>
+            <dl className="mt-3 flex flex-col gap-2">
+              <div>
+                <dt className="text-[10px] uppercase tracking-wider text-[#9e8a55]">
+                  RTMP ingest URL
+                </dt>
+                <dd className="break-all font-mono text-xs text-[#ede8d8]">{stream.rtmp_url}</dd>
+              </div>
+              <div>
+                <dt className="text-[10px] uppercase tracking-wider text-[#9e8a55]">
+                  Stream key — keep secret
+                </dt>
+                <dd className="mt-0.5 break-all rounded border border-[#2a2135] bg-[#08070a] px-2 py-1 font-mono text-xs text-[#ede8d8]">
+                  {stream.stream_key}
+                </dd>
+              </div>
+            </dl>
+            <p className="mt-3 font-mono text-[10px] tracking-widest text-[#9e8a55]">
+              STREAM TEST:{' '}
+              <span className={tested ? 'text-[#39FF14]' : 'text-[#9e8a55]'}>
+                {tested ? 'PASSED ✓' : 'NOT YET RUN'}
+              </span>
+            </p>
+            <div className="mt-3 flex">
+              <button
+                onClick={() => patchAction('submit-for-review')}
+                disabled={busy || !tested}
+                className={actionBtn}
+              >
+                {busy ? 'Working…' : 'Submit for review'}
+              </button>
+            </div>
+          </section>
         )
+      }
       default:
         return null
     }

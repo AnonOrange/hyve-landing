@@ -3,6 +3,7 @@ import { requireCreator } from '@/lib/attend/identity/roles'
 import { getCreatorEvent, ForbiddenError, NotFoundError } from '@/lib/attend/events/service'
 import { listEventTicketTypes } from '@/lib/attend/ticketing/ticket-type-service'
 import { payoutsEnabled } from '@/lib/attend/payments/connect-service'
+import { getEventStream } from '@/lib/attend/streaming/streaming-service'
 import EventDashboardClient from './event-dashboard-client'
 
 export const metadata = { title: 'Event — HYVE Attend' }
@@ -12,13 +13,19 @@ export default async function EventDashboardPage({ params }: { params: { id: str
   const profile = await requireCreator()
   if (!profile) redirect('/attend/login')
   try {
-    const [event, ticketTypes, payouts] = await Promise.all([
+    const [event, ticketTypes, payouts, stream] = await Promise.all([
       getCreatorEvent(params.id, profile.id),
       listEventTicketTypes(params.id, profile.id),
       payoutsEnabled(profile.id),
+      getEventStream(params.id),
     ])
     return (
-      <EventDashboardClient event={event} ticketTypes={ticketTypes} payoutsEnabled={payouts} />
+      <EventDashboardClient
+        event={event}
+        ticketTypes={ticketTypes}
+        payoutsEnabled={payouts}
+        stream={stream}
+      />
     )
   } catch (err) {
     if (err instanceof NotFoundError || err instanceof ForbiddenError) notFound()
