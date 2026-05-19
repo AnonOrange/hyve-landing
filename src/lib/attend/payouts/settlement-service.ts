@@ -12,6 +12,7 @@ import {
   type CreatorPayoutRow,
 } from '@/lib/attend/payouts/payouts-repository'
 import { listEventsByStatus } from '@/lib/attend/events/repository'
+import { assessAndRecordEventRisk } from '@/lib/attend/risk/risk-service'
 import { supaPost } from '@/lib/supabase'
 
 export type { CreatorPayoutRow }
@@ -23,8 +24,11 @@ export async function settleEndedEvents(): Promise<{ scanned: number; settled: n
   for (const event of events) {
     try {
       const net = computeArtistNet(await getEventLedgerEntries(event.id))
+      // A HIGH-risk event holds its payout longer (§16/§26).
+      const risk = await assessAndRecordEventRisk(event.id)
+      const holdDays = risk.band === 'HIGH' ? 21 : 7
       const res = await supaPost('rpc/attend_settle_event', {
-        p_args: { event_id: event.id, amount_cents: net },
+        p_args: { event_id: event.id, amount_cents: net, hold_days: holdDays },
       })
       if (!res.ok) {
         console.error(
