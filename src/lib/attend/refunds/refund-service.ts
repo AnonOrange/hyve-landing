@@ -126,17 +126,32 @@ async function approveRefund(request: RefundRequestRow, reviewerId: string): Pro
     { idempotencyKey: `attend-refund-${request.id}` },
   )
 
-  // Atomic record: request -> PROCESSED, ticket -> REFUNDED, ledger + order.
+  // Record the refund atomically. attend_process_refund reads the amount from
+  // the request row itself, so it is not passed here.
   const res = await supaPost('rpc/attend_process_refund', {
     p_args: {
       refund_request_id: request.id,
       reviewer_id: reviewerId,
       stripe_refund_id: refund.id,
       stripe_payment_intent_id: paymentIntentId,
-      amount_cents: amountCents,
     },
   })
   if (!res.ok) {
-    throw new Error(`attend_process_refund RPC failed: ${res.status} ${await res.text()}`)
+    const detail = await res.text()
+    // The Stripe refund has already completed — the money has moved. The
+    // request stays open, so re-running approve recovers it (Stripe and the
+    // RPC are both idempotent); this log carries the refund id so the
+    // divergent state is recoverable even without a retry.
+    console.error(
+      `[attend refund] CRITICAL: Stripe refund ${refund.id} for request ${request.id} ` +
+        `succeeded but attend_process_refund failed (${res.status}). ` +
+        `Re-run the approve to record it. Detail: ${detail}`,
+    )
+    throw new Error(`attend_process_refund RPC failed: ${res.status} ${detail}`)
+  }
+  // A PROCESSED replay means another reviewer already resolved this request.
+  const result = (await res.json()) as { already_done?: boolean }
+  if (result.already_done) {
+    throw new ValidationError('This refund has already been processed')
   }
 }

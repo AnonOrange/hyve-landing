@@ -28,6 +28,8 @@ export default function WalletTicket({ ticket }: { ticket: OwnedTicket }) {
   const [refundReason, setRefundReason] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [refundBusy, setRefundBusy] = useState(false)
+  const [refundError, setRefundError] = useState<string | null>(null)
 
   const idle = IDLE_STATES.includes(ticket.state)
   const pending = PENDING_STATES.includes(ticket.state)
@@ -83,8 +85,8 @@ export default function WalletTicket({ ticket }: { ticket: OwnedTicket }) {
   }
 
   async function requestRefund() {
-    setBusy(true)
-    setError(null)
+    setRefundBusy(true)
+    setRefundError(null)
     try {
       const res = await fetch(`/api/attend/tickets/${ticket.id}/refund`, {
         method: 'POST',
@@ -97,11 +99,11 @@ export default function WalletTicket({ ticket }: { ticket: OwnedTicket }) {
         return
       }
       const data = (await res.json().catch(() => ({}))) as { error?: string }
-      setError(data.error ?? 'Refund request could not be opened')
+      setRefundError(data.error ?? 'Refund request could not be opened')
     } catch {
-      setError('Something went wrong. Please try again.')
+      setRefundError('Something went wrong. Please try again.')
     } finally {
-      setBusy(false)
+      setRefundBusy(false)
     }
   }
 
@@ -191,11 +193,16 @@ export default function WalletTicket({ ticket }: { ticket: OwnedTicket }) {
             Submitting a request does not guarantee a refund. HYVE reviews each
             request against attendance and event records.
           </p>
+          {refundError && <p className="text-xs text-red-400">{refundError}</p>}
           <div className="flex gap-2">
-            <button onClick={requestRefund} disabled={busy} className={actionBtn}>
-              {busy ? 'Working…' : 'Submit request'}
+            <button onClick={requestRefund} disabled={refundBusy} className={actionBtn}>
+              {refundBusy ? 'Working…' : 'Submit request'}
             </button>
-            <button onClick={() => setRefundOpen(false)} disabled={busy} className={ghostBtn}>
+            <button
+              onClick={() => setRefundOpen(false)}
+              disabled={refundBusy}
+              className={ghostBtn}
+            >
               Cancel
             </button>
           </div>
