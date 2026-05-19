@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { requireAttendUser } from '@/lib/attend/identity/roles'
 import { getWallet } from '@/lib/attend/wallet/wallet-service'
+import WalletTicket from './wallet-ticket'
 
 export const metadata = { title: 'Your tickets — HYVE Attend' }
 export const dynamic = 'force-dynamic'
@@ -9,10 +10,6 @@ export const dynamic = 'force-dynamic'
 const card = 'rounded border border-[#2a2135] bg-[#111111] px-4 py-4'
 
 const fmtWhen = (iso: string | null) => (iso ? iso.slice(0, 16).replace('T', ' ') : 'Date TBA')
-
-const humanize = (s: string) =>
-  s.charAt(0).toUpperCase() + s.slice(1).toLowerCase().replace(/_/g, ' ')
-const stateLabel = (s: string) => (s === 'ASSIGNED_TO_BUYER' ? 'Confirmed' : humanize(s))
 
 export default async function WalletPage() {
   const user = await requireAttendUser()
@@ -48,15 +45,7 @@ export default async function WalletPage() {
               </div>
               <ul className="mt-3 flex flex-col gap-2">
                 {g.tickets.map((t) => (
-                  <li
-                    key={t.id}
-                    className="flex items-center justify-between gap-3 rounded border border-[#2a2135] px-3 py-2"
-                  >
-                    <span className="text-sm font-bold">{t.attend_ticket_types.name}</span>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#E8C456]">
-                      {stateLabel(t.state)}
-                    </span>
-                  </li>
+                  <WalletTicket key={t.id} ticket={t} />
                 ))}
               </ul>
             </li>

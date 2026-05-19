@@ -17,6 +17,7 @@ function tk(over: Partial<OwnedTicket> & { eventId: string }): OwnedTicket {
       status: 'ON_SALE',
     },
     attend_ticket_types: { name: 'GA', kind: 'GENERAL_ADMISSION' },
+    attend_ticket_transfers: [],
     ...rest,
   }
 }
