@@ -7,6 +7,7 @@ import {
   markWebhookProcessed,
 } from '@/lib/attend/payments/payments-repository'
 import { fulfilRegistration } from '@/lib/attend/payments/registration-service'
+import { syncAccountStatus } from '@/lib/attend/payments/connect-service'
 
 export const runtime = 'nodejs'
 
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
         await fulfilRegistration(session)
       }
     } else if (event.type === 'account.updated') {
-      // Connect account-status sync is wired in Task 6 (needs connect-service).
+      await syncAccountStatus((event.data.object as Stripe.Account).id)
     }
 
     await markWebhookProcessed(event.id)
