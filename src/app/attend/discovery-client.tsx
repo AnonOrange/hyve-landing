@@ -33,17 +33,19 @@ export default function DiscoveryClient({
 }) {
   const [filter, setFilter] = useState('ALL')
 
-  // Fire one impression beacon per page view for the featured campaigns.
+  // Fire one impression beacon per distinct featured set. The dependency is a
+  // stable joined string, so a fresh `featured` array reference carrying the
+  // same ids does not re-fire (and double-count) the beacon.
+  const featuredIds = featured.map((f) => f.campaignId).join(',')
   useEffect(() => {
-    if (featured.length === 0) return
-    const campaignIds = featured.map((f) => f.campaignId)
+    if (!featuredIds) return
     fetch('/api/attend/promotion/impressions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ campaignIds }),
+      body: JSON.stringify({ campaignIds: featuredIds.split(',') }),
       keepalive: true,
     }).catch(() => {})
-  }, [featured])
+  }, [featuredIds])
 
   const apply = (events: EventRow[]) =>
     filter === 'ALL' ? events : events.filter((e) => e.show_type === filter)

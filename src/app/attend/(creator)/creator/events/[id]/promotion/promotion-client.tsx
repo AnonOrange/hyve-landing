@@ -51,6 +51,7 @@ export default function PromotionClient({
           <label className="text-xs text-[#9e8a55]">Headline</label>
           <input
             value={headline}
+            maxLength={200}
             onChange={(e) => {
               setHeadline(e.target.value)
               setSaved(false)
@@ -60,6 +61,7 @@ export default function PromotionClient({
           <label className="mt-2 text-xs text-[#9e8a55]">Body</label>
           <textarea
             value={body}
+            maxLength={600}
             onChange={(e) => {
               setBody(e.target.value)
               setSaved(false)
