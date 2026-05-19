@@ -10,7 +10,10 @@ export async function broadcastToRoom(
 ): Promise<void> {
   const key = process.env.SUPABASE_SERVICE_KEY
   const base = process.env.SUPABASE_URL
-  if (!key || !base) return
+  if (!key || !base) {
+    console.error('[attend broadcast] SUPABASE_URL / SUPABASE_SERVICE_KEY not set')
+    return
+  }
 
   try {
     const res = await fetch(`${base}/realtime/v1/api/broadcast`, {

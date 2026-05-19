@@ -35,7 +35,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   try {
     const profile = await getProfileById(user.id)
-    const displayName = profile?.display_name ?? user.email
+    // Fall back to the de-identified handle (the same one ensureProfile sets),
+    // never the raw email — the message rides an open broadcast channel.
+    const displayName = profile?.display_name ?? user.email.split('@')[0]
     await postChatMessage(params.id, user.id, displayName, body.body)
     return NextResponse.json({ ok: true })
   } catch (err) {

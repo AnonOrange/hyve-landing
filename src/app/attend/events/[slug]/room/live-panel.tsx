@@ -56,7 +56,8 @@ export default function LivePanel({ eventId }: { eventId: string }) {
         setMessages((m) => [...m, { id: p.id, name: p.displayName, body: p.body }])
       })
       .on('broadcast', { event: 'reaction' }, () => {
-        setReactionCount((c) => c + 1)
+        // Cap the counter so the meter falls responsively after a burst.
+        setReactionCount((c) => Math.min(40, c + 1))
       })
       .subscribe()
 
