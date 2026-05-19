@@ -215,6 +215,22 @@ export default function EventDashboardClient({
           </section>
         )
       }
+      case 'SUBMITTED_FOR_REVIEW':
+        return wrap(
+          'Submitted for review',
+          'An Attend reviewer is checking your event. Once it is approved you can put tickets on sale.',
+          <button disabled className={actionBtn}>
+            Awaiting review
+          </button>,
+        )
+      case 'PUBLISHED':
+        return wrap(
+          'Approved — ready to sell',
+          'Your event has been approved. Put tickets on sale when you are ready.',
+          <button onClick={() => patchAction('open-sales')} disabled={busy} className={actionBtn}>
+            {busy ? 'Working…' : 'Put tickets on sale'}
+          </button>,
+        )
       case 'ON_SALE':
       case 'SALES_PAUSED':
         return wrap(
