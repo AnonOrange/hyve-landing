@@ -89,7 +89,11 @@ export async function ingestDisputeCreated(dispute: Stripe.Dispute): Promise<voi
 
 /** Record a closed Stripe dispute: WON / LOST, releasing the ledger hold. */
 export async function ingestDisputeClosed(dispute: Stripe.Dispute): Promise<void> {
-  const outcome = dispute.status === 'won' ? 'WON' : 'LOST'
+  // Only a genuinely lost dispute is a chargeback. `won` and the terminal
+  // inquiry status `warning_closed` release the hold without a debit;
+  // defaulting any other terminal status to WON errs on the safe side (it
+  // never posts a wrongful CHARGEBACK_DEBIT).
+  const outcome = dispute.status === 'lost' ? 'LOST' : 'WON'
   const res = await supaPost('rpc/attend_close_dispute', {
     p_args: { stripe_dispute_id: dispute.id, outcome },
   })
