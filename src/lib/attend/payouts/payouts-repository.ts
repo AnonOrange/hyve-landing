@@ -64,7 +64,7 @@ export async function getCreatorPayouts(creatorId: string): Promise<CreatorPayou
   const res = await supaGet(
     'attend_payouts',
     `select=id,amount_cents,status,scheduled_release_at,released_at,created_at,` +
-      `attend_events!inner(title,creator_id)&attend_events.creator_id=eq.${creatorId}` +
+      `attend_events!inner(title)&attend_events.creator_id=eq.${creatorId}` +
       `&order=created_at.desc`,
   )
   if (!res.ok) throw new Error(`attend_payouts creator query failed: ${res.status}`)
