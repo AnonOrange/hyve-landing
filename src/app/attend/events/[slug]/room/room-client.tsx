@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import MuxPlayer from './mux-player'
+import LivePanel from './live-panel'
 
 export default function RoomClient({
   slug,
@@ -53,14 +54,17 @@ export default function RoomClient({
 
       {error && <p className="mt-3 text-xs text-red-400">{error}</p>}
 
-      <div className="mt-6">
-        {playbackId && playbackToken ? (
-          <MuxPlayer playbackId={playbackId} playbackToken={playbackToken} />
-        ) : (
-          <div className="flex aspect-video w-full items-center justify-center rounded border border-[#2a2135] bg-[#111111]">
-            <p className="text-sm text-[#9e8a55]">The stream is not available yet.</p>
-          </div>
-        )}
+      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          {playbackId && playbackToken ? (
+            <MuxPlayer playbackId={playbackId} playbackToken={playbackToken} />
+          ) : (
+            <div className="flex aspect-video w-full items-center justify-center rounded border border-[#2a2135] bg-[#111111]">
+              <p className="text-sm text-[#9e8a55]">The stream is not available yet.</p>
+            </div>
+          )}
+        </div>
+        <LivePanel eventId={eventId} />
       </div>
     </div>
   )
