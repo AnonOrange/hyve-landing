@@ -30,7 +30,8 @@ export async function createEventStream(
     throw new ValidationError('This event is not awaiting stream setup')
   }
 
-  // Idempotent: never create a second Mux stream for an event.
+  // Idempotent: a second call returns the existing row. attend_streams.event_id
+  // is unique, so a rare concurrent double-call fails the loser's insert.
   const existing = await getStreamByEventId(eventId)
   if (existing) return existing
 
