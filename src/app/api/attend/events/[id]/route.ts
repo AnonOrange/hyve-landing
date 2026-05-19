@@ -64,6 +64,18 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       await submitForReview(params.id, profile.id, stream?.test_passed_at != null)
       return NextResponse.json({ ok: true, status: 'SUBMITTED_FOR_REVIEW' })
     }
+    if (body.action === 'start-soundcheck') {
+      await changeEventStatus(params.id, profile.id, 'SOUNDCHECK')
+      return NextResponse.json({ ok: true, status: 'SOUNDCHECK' })
+    }
+    if (body.action === 'open-doors') {
+      await changeEventStatus(params.id, profile.id, 'DOORS_OPEN')
+      return NextResponse.json({ ok: true, status: 'DOORS_OPEN' })
+    }
+    if (body.action === 'end-show') {
+      await changeEventStatus(params.id, profile.id, 'ENDED')
+      return NextResponse.json({ ok: true, status: 'ENDED' })
+    }
     if (body.action === 'cancel') {
       await changeEventStatus(params.id, profile.id, 'CANCELLED')
       return NextResponse.json({ ok: true, status: 'CANCELLED' })

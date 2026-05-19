@@ -10,7 +10,13 @@ import {
 } from '@/lib/attend/streaming/stream-repository'
 import { streamProvider } from '@/lib/attend/streaming/provider'
 import { getEventById } from '@/lib/attend/events/repository'
-import { ForbiddenError, NotFoundError, ValidationError } from '@/lib/attend/events/service'
+import {
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+  markEventLive,
+  markEventEnded,
+} from '@/lib/attend/events/service'
 
 export type { StreamRow }
 
@@ -73,7 +79,16 @@ export async function applyMuxStreamEvent(
   } else if (eventType === 'video.live_stream.disconnected') {
     patch.status = 'DISCONNECTED'
   } else {
-    return // not an event we act on in Phase 5a
+    return // not an event we act on
   }
   await updateStream(stream.id, patch)
+
+  // Drive the event lifecycle off the stream. disconnected is a transient
+  // state inside Mux's reconnect window — it must NOT end the show; only idle
+  // (the definitive stream end) does. Both calls are guarded no-ops otherwise.
+  if (eventType === 'video.live_stream.active') {
+    await markEventLive(stream.event_id)
+  } else if (eventType === 'video.live_stream.idle') {
+    await markEventEnded(stream.event_id)
+  }
 }
