@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { lookupSession } from '@/lib/admin/session'
 
+// Brand-alias domain that should masquerade as the /attend section of the
+// umbrella. Lives at the top of middleware so it short-circuits before any
+// /spy or /admin work.
+const ATTEND_ALIAS_HOSTS = new Set(['hyveattend.com', 'www.hyveattend.com'])
+
 // Public admin pages that don't require a session
 const ADMIN_PUBLIC = new Set([
   '/admin/login',
@@ -70,6 +75,26 @@ function redirectToUpgrade(req: NextRequest, requiredTier: 'basic' | 'pro'): Nex
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl
 
+  // ── hyveattend.com host masking ───────────────────────────────────────────
+  // When a request comes in on hyveattend.com (or www.), rewrite the path
+  // into /attend/* so the browser URL stays at hyveattend.com but the
+  // content served is the Attend section of the umbrella. Skip paths that
+  // already start with /attend, /_next, or /api so we don't re-rewrite or
+  // touch framework + API routes.
+  const host = (req.headers.get('host') ?? '').toLowerCase().split(':')[0]
+  if (ATTEND_ALIAS_HOSTS.has(host)) {
+    const skip =
+      pathname.startsWith('/attend') ||
+      pathname.startsWith('/_next') ||
+      pathname.startsWith('/api/')
+    if (!skip) {
+      const url = req.nextUrl.clone()
+      url.pathname = pathname === '/' ? '/attend' : `/attend${pathname}`
+      return NextResponse.rewrite(url)
+    }
+    return NextResponse.next()
+  }
+
   // ── Spy PWA gate (/spy/app/*) ─────────────────────────────────────────────
   if (pathname.startsWith('/spy/app')) {
     if (pathname === '/spy/app/manifest.json') return NextResponse.next()
@@ -131,5 +156,14 @@ function redirectToLogin(req: NextRequest): NextResponse {
 }
 
 export const config = {
-  matcher: ['/spy/app/:path*', '/admin/:path*'],
+  // The first two matchers serve the spy + admin gates. The third is
+  // broad — it has to be, because we need the middleware to see requests
+  // to / on hyveattend.com so we can rewrite them. The function itself
+  // short-circuits on non-matching hosts so the umbrella domain pays
+  // essentially zero cost.
+  matcher: [
+    '/spy/app/:path*',
+    '/admin/:path*',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
 }

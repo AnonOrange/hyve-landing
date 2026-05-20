@@ -95,23 +95,9 @@ const config = {
         source: '/RealityShield/:path*',
         destination: 'https://hyvetrus.vercel.app/RealityShield/:path*',
       },
-      // hyveattend.com is a brand alias that should masquerade as the
-      // /attend section of the umbrella. Requests to the apex or www of
-      // hyveattend.com get internally rewritten to /attend/* — the browser
-      // URL stays as hyveattend.com so the brand isn't lost, but the
-      // underlying pages, data, auth, and crons are the same as
-      // www.hyveapp.co/attend. The domain must also be added to the
-      // Vercel project so the request reaches us before we can rewrite it.
-      {
-        source: '/',
-        has: [{ type: 'host', value: '(www\\.)?hyveattend\\.com' }],
-        destination: '/attend',
-      },
-      {
-        source: '/:path*',
-        has: [{ type: 'host', value: '(www\\.)?hyveattend\\.com' }],
-        destination: '/attend/:path*',
-      },
+      // hyveattend.com masking lives in src/middleware.ts now — the
+      // regex-host rewrite that was here didn't fire reliably at Vercel's
+      // edge.
     ]
   },
 }
