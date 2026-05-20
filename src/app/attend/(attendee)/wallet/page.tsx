@@ -23,7 +23,7 @@ export default async function WalletPage() {
       {groups.length === 0 ? (
         <p className="mt-4 text-sm text-[#9e8a55]">
           No tickets yet —{' '}
-          <Link href="/attend" className="font-bold text-[#E8C456] hover:underline">
+          <Link href="/attend/events" className="font-bold text-[#E8C456] hover:underline">
             browse events
           </Link>
           .

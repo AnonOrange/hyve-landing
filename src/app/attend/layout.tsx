@@ -18,7 +18,7 @@ export default function AttendLayout({ children }: { children: React.ReactNode }
           HYVE ATTEND
         </Link>
         <nav className="flex gap-5 text-xs font-bold tracking-[0.2em] text-[#9e8a55]">
-          <Link href="/attend" className="hover:text-[#E8C456]">DISCOVER</Link>
+          <Link href="/attend/events" className="hover:text-[#E8C456]">DISCOVER</Link>
           <Link href="/attend/wallet" className="hover:text-[#E8C456]">WALLET</Link>
           <Link href="/attend/creator" className="hover:text-[#E8C456]">CREATE</Link>
         </nav>
