@@ -134,10 +134,12 @@ function ForCreators() {
         and your audience watches from any browser.
       </p>
       <ul className="mt-5 flex flex-col gap-2 text-sm">
+        <Bullet>
+          <span className="font-bold text-[#E8C456]">First 2 shows free</span> — no $50 registration fee, the promotion campaign still runs
+        </Bullet>
         <Bullet>Low-fee ticketing, all-in itemised at checkout</Bullet>
         <Bullet>Stripe Connect payouts, released after a short settlement hold</Bullet>
         <Bullet>Real-time browser event room — chat, reactions, attendance log</Bullet>
-        <Bullet>$50 promotion campaign that goes live with the show</Bullet>
         <Bullet>Automated refund + dispute evidence packets</Bullet>
         <Bullet>Ticket transfers by email or friend code, built in</Bullet>
       </ul>
@@ -185,7 +187,7 @@ function HowItWorks() {
           title="If you are hosting"
           steps={[
             'Create the show — title, time, ticket types.',
-            'Pay the $50 promotion fee — funds your campaign.',
+            'Register the show — first 2 are free, $50 after that. Funds the promotion campaign.',
             'Connect your payout account (Stripe Connect Express).',
             'Run a stream test, submit for review, publish.',
             'Go live from your RTMP source — your audience joins in their browser.',
@@ -312,14 +314,15 @@ function Pricing() {
     <section className="mt-20 rounded-2xl border border-[#2a2135] bg-[#0E1E3A] p-8">
       <p className={eyebrow}>Pricing</p>
       <h2 className="mt-3 text-3xl font-black md:text-4xl">
-        $50 to host. Itemised platform fee on tickets.
+        <span className="text-[#E8C456]">First 2 shows free.</span> $50 to host after that. Itemised platform fee on tickets.
       </h2>
       <p className="mt-4 max-w-3xl text-base text-[#94A3B8]">
-        Hosting a show is a one-time $50 promotion registration — that fee funds
-        your built-in HYVE promotion campaign for the event. Ticket sales carry a
-        platform fee that is shown in the checkout breakdown, every time. Stripe
-        processor fees and any tax are itemised the same way. No subscriptions, no
-        per-seat charges hiding in fine print.
+        Your first two shows register for free — the same built-in HYVE promotion
+        campaign goes live with them, on the house. From show three onward, hosting
+        is a one-time $50 promotion registration per event, which funds that show's
+        campaign. Ticket sales carry a platform fee that's shown in the checkout
+        breakdown, every time. Stripe processor fees and any tax are itemised the
+        same way. No subscriptions, no per-seat charges hiding in fine print.
       </p>
     </section>
   )

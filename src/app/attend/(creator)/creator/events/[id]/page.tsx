@@ -5,6 +5,7 @@ import { getCreatorEvent, ForbiddenError, NotFoundError } from '@/lib/attend/eve
 import { listEventTicketTypes } from '@/lib/attend/ticketing/ticket-type-service'
 import { payoutsEnabled } from '@/lib/attend/payments/connect-service'
 import { getEventStream } from '@/lib/attend/streaming/streaming-service'
+import { freeRegistrationsRemaining } from '@/lib/attend/payments/registration-service'
 import EventDashboardClient from './event-dashboard-client'
 
 export const metadata = { title: 'Event — HYVE Attend' }
@@ -14,11 +15,12 @@ export default async function EventDashboardPage({ params }: { params: { id: str
   const profile = await requireCreator()
   if (!profile) redirect('/attend/login')
   try {
-    const [event, ticketTypes, payouts, stream] = await Promise.all([
+    const [event, ticketTypes, payouts, stream, freeRemaining] = await Promise.all([
       getCreatorEvent(params.id, profile.id),
       listEventTicketTypes(params.id, profile.id),
       payoutsEnabled(profile.id),
       getEventStream(params.id),
+      freeRegistrationsRemaining(profile.id),
     ])
     return (
       <>
@@ -35,6 +37,7 @@ export default async function EventDashboardPage({ params }: { params: { id: str
           ticketTypes={ticketTypes}
           payoutsEnabled={payouts}
           stream={stream}
+          freeRegistrationsRemaining={freeRemaining}
         />
       </>
     )

@@ -1,11 +1,69 @@
 // HYVE Attend — the $50 show-registration fee: start a Stripe Checkout
 // session and fulfil it (record the payment, run the atomic RPC).
+//
+// Also home to the "first 2 shows free" credit logic: freeRegistrationsRemaining
+// asks the DB how many free slots a creator has left, and grantFreeRegistration
+// consumes a slot via the atomic attend_grant_free_registration RPC.
 import type Stripe from 'stripe'
 import { attendStripe, REGISTRATION_FEE_CENTS } from '@/lib/attend/payments/stripe'
 import { insertPayment, findPaymentBySession } from '@/lib/attend/payments/payments-repository'
 import { getEventById } from '@/lib/attend/events/repository'
 import { ForbiddenError, NotFoundError, ValidationError } from '@/lib/attend/events/service'
-import { supaPost } from '@/lib/supabase'
+import { supaGet, supaPost } from '@/lib/supabase'
+
+export const FREE_REGISTRATION_CAP = 2
+
+/**
+ * How many free-registration slots this creator has left. The DB is the
+ * source of truth — this is the count for UI hints. The RPC also re-checks
+ * under a row lock, so a stale read here can't cause an over-grant.
+ */
+export async function freeRegistrationsRemaining(creatorId: string): Promise<number> {
+  const res = await supaGet(
+    'attend_events',
+    `select=id&creator_id=eq.${encodeURIComponent(creatorId)}&was_free_registration=eq.true&deleted_at=is.null`,
+  )
+  if (!res.ok) {
+    throw new Error(`free-registrations count failed: ${res.status} ${await res.text()}`)
+  }
+  const rows = (await res.json()) as Array<{ id: string }>
+  return Math.max(0, FREE_REGISTRATION_CAP - rows.length)
+}
+
+/**
+ * Consume one of the creator's free-registration credits for this event.
+ * Mirrors startRegistrationCheckout's guards (ownership + status) and then
+ * delegates the atomic state changes to the DB RPC.
+ */
+export async function grantFreeRegistration(
+  eventId: string,
+  creatorId: string,
+): Promise<{ ok: true; free: true; used: number; remaining: number }> {
+  const event = await getEventById(eventId)
+  if (!event) throw new NotFoundError('Event not found')
+  if (event.creator_id !== creatorId) throw new ForbiddenError('This is not your event')
+  if (event.status !== 'REGISTRATION_PENDING') {
+    throw new ValidationError('This event is not awaiting the registration fee')
+  }
+
+  const res = await supaPost('rpc/attend_grant_free_registration', {
+    p_args: { event_id: eventId, actor: creatorId },
+  })
+  if (!res.ok) {
+    const body = await res.text()
+    if (body.includes('NO_FREE_CREDITS')) {
+      throw new ValidationError('No free registrations remaining')
+    }
+    throw new Error(`attend_grant_free_registration RPC failed: ${res.status} ${body}`)
+  }
+  const data = (await res.json()) as { used?: number; remaining?: number }
+  return {
+    ok: true,
+    free: true,
+    used: data.used ?? FREE_REGISTRATION_CAP,
+    remaining: data.remaining ?? 0,
+  }
+}
 
 /** Open a one-time Stripe Checkout session for the $50 registration fee. */
 export async function startRegistrationCheckout(

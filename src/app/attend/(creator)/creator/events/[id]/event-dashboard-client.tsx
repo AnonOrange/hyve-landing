@@ -19,11 +19,13 @@ export default function EventDashboardClient({
   ticketTypes,
   payoutsEnabled,
   stream,
+  freeRegistrationsRemaining,
 }: {
   event: EventRow
   ticketTypes: TicketTypeRow[]
   payoutsEnabled: boolean
   stream: StreamRow | null
+  freeRegistrationsRemaining: number
 }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -52,16 +54,26 @@ export default function EventDashboardClient({
     }
   }
 
-  // POST to an endpoint that returns { url } (Stripe Checkout / Connect) and
-  // send the browser there.
+  // POST to an endpoint that returns either { url } (Stripe Checkout / Connect)
+  // for a redirect, or { ok, ... } for an in-place success that should reload
+  // the dashboard so the new state is visible. The free-registration path
+  // returns the second shape.
   async function redirectTo(endpoint: string, failMsg: string) {
     setBusy(true)
     setError(null)
     try {
       const res = await fetch(endpoint, { method: 'POST' })
-      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string }
+      const data = (await res.json().catch(() => ({}))) as {
+        url?: string
+        ok?: boolean
+        error?: string
+      }
       if (data.url) {
         window.location.href = data.url
+        return
+      }
+      if (data.ok) {
+        window.location.reload()
         return
       }
       setError(data.error ?? failMsg)
@@ -110,23 +122,36 @@ export default function EventDashboardClient({
             {busy ? 'Working…' : 'Start setup'}
           </button>,
         )
-      case 'REGISTRATION_PENDING':
+      case 'REGISTRATION_PENDING': {
+        const free = freeRegistrationsRemaining > 0
+        const ordinal = freeRegistrationsRemaining === 2 ? '1st' : '2nd'
         return wrap(
-          'Pay the registration fee',
-          'A one-time $50 fee registers your show and opens its promotion campaign.',
+          free ? 'Promote your show (free)' : 'Pay the registration fee',
+          free
+            ? `Your ${ordinal} show is on the house — registration opens its promotion campaign at no charge. Platform percentages on ticket sales still apply.`
+            : 'A one-time $50 fee registers your show and opens its promotion campaign.',
           <button
             onClick={() =>
               redirectTo(
                 `/api/attend/events/${event.id}/pay-registration`,
-                'Failed to start the registration checkout',
+                free
+                  ? 'Failed to register your free show'
+                  : 'Failed to start the registration checkout',
               )
             }
             disabled={busy}
             className={actionBtn}
           >
-            {busy ? 'Opening…' : 'Pay $50 registration'}
+            {busy
+              ? free
+                ? 'Registering…'
+                : 'Opening…'
+              : free
+                ? `Promote (${ordinal} free)`
+                : 'Pay $50 registration'}
           </button>,
         )
+      }
       case 'PROMOTION_FEE_PAID':
         return wrap(
           'Continue setup',
