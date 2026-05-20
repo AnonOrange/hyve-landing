@@ -1,15 +1,33 @@
 // /attend — HYVE Attend product landing. Explains what the platform is, who
 // it's for, how it works, and the pricing model. The live events feed lives
 // at /attend/events.
+import Image from 'next/image'
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'HYVE Attend — Live events, browser-first',
+  title: 'HYVE Attend — Bringing events to life',
   description:
-    'A live-events platform with ticketing, browser event rooms, evidence-based ' +
-    'refunds, and Stripe Connect payouts. For the artists, organisers, and ' +
-    'audiences who would rather watch a show than fight a dashboard.',
+    'A live-events platform with ticketing, browser event rooms, virtual venues, ' +
+    'engagement tools, and Stripe Connect payouts. For the artists, organisers, ' +
+    'and audiences who would rather watch a show than fight a dashboard.',
+  openGraph: {
+    title: 'HYVE Attend — Bringing events to life',
+    description:
+      'A live-events platform with ticketing, browser event rooms, virtual venues, ' +
+      'engagement tools, and Stripe Connect payouts.',
+    images: ['/attend/logo.png'],
+  },
 }
+
+// Background gallery — every stage image in the brand library, shown on the
+// landing so the visual identity has a clear gallery moment.
+const VENUE_BGS = [
+  '/attend/backgrounds/bg-4.png',
+  '/attend/backgrounds/bg-7.png',
+  '/attend/backgrounds/bg-8.png',
+  '/attend/backgrounds/bg-9.png',
+  '/attend/backgrounds/bg-11.png',
+]
 
 const primaryCTA =
   'inline-flex items-center justify-center rounded bg-[#E8C456] px-5 py-3 text-sm ' +
@@ -20,19 +38,29 @@ const ghostCTA =
   'text-sm font-black tracking-wider text-[#9e8a55] transition hover:border-[#E8C456] ' +
   'hover:text-[#E8C456]'
 
-const card = 'rounded border border-[#2a2135] bg-[#111111] p-6'
+const ghostCTAOnImage =
+  'inline-flex items-center justify-center rounded border border-white/40 ' +
+  'bg-black/30 px-5 py-3 text-sm font-black tracking-wider text-white backdrop-blur ' +
+  'transition hover:border-[#E8C456] hover:text-[#E8C456]'
+
+const card = 'rounded border border-[#2a2135] bg-[#0E1E3A] p-6'
 const eyebrow = 'text-[10px] font-black uppercase tracking-[0.3em] text-[#E8C456]'
+
+// Showcase grid — every ad image the brand has, in numeric order.
+const SHOWCASE_ADS = Array.from({ length: 20 }, (_, i) => `/attend/ads/ad-${21 + i}.png`)
 
 export default function AttendLanding() {
   return (
-    <div className="py-12">
+    <div className="pb-12">
       <Hero />
-      <section className="mt-24 grid gap-6 lg:grid-cols-2">
+      <Intro />
+      <section className="mt-20 grid gap-6 lg:grid-cols-2">
         <ForCreators />
         <ForAttendees />
       </section>
       <HowItWorks />
-      <WhatsDifferent />
+      <FeaturesShowcase />
+      <VenuesGallery />
       <Pricing />
       <FinalCTA />
     </div>
@@ -41,24 +69,54 @@ export default function AttendLanding() {
 
 function Hero() {
   return (
-    <section className="max-w-4xl">
-      <p className={eyebrow}>HYVE ATTEND</p>
-      <h1 className="mt-4 text-4xl font-black leading-[1.05] md:text-6xl">
-        Live shows, in any browser.
-      </h1>
-      <p className="mt-5 max-w-2xl text-base text-[#9e8a55] md:text-lg">
-        A live-events platform for the artists, organisers, and audiences who would
-        rather watch a show than fight a dashboard. Ticketing, a real browser event
-        room, refunds that work on evidence, and payouts that land in your account.
-      </p>
-      <div className="mt-8 flex flex-wrap gap-3">
-        <Link href="/attend/events" className={primaryCTA}>
-          Browse events
-        </Link>
-        <Link href="/attend/signup" className={ghostCTA}>
-          Host a show
-        </Link>
+    <section className="relative -mx-6 mt-2 overflow-hidden sm:rounded-2xl sm:mx-0">
+      <Image
+        src="/attend/backgrounds/bg-1.png"
+        alt="A live HYVE Attend show with an audience and stage lighting"
+        width={1920}
+        height={1080}
+        priority
+        className="h-[68vh] min-h-[460px] w-full object-cover"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#08111e] via-[#08111e]/70 to-transparent" />
+      <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-12">
+        <p className={eyebrow}>HYVE ATTEND</p>
+        <h1 className="mt-4 max-w-4xl text-4xl font-black leading-[1.05] text-white drop-shadow-[0_2px_24px_rgba(0,0,0,0.6)] md:text-6xl lg:text-7xl">
+          Bringing events to life.
+        </h1>
+        <p className="mt-5 max-w-2xl text-base text-white/85 md:text-lg">
+          A live-events platform with ticketing, browser event rooms, virtual venues,
+          and Stripe Connect payouts. Built for the artists, organisers, and audiences
+          who would rather watch a show than fight a dashboard.
+        </p>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link href="/attend/events" className={primaryCTA}>
+            Browse events
+          </Link>
+          <Link href="/attend/signup" className={ghostCTAOnImage}>
+            Host a show
+          </Link>
+        </div>
       </div>
+    </section>
+  )
+}
+
+function Intro() {
+  return (
+    <section className="mt-20 max-w-4xl">
+      <p className={eyebrow}>What it is</p>
+      <h2 className="mt-3 text-3xl font-black md:text-4xl">
+        A working live-events business in your browser.
+      </h2>
+      <p className="mt-5 text-base text-[#9e8a55] md:text-lg">
+        HYVE Attend is a complete platform for putting on live shows — low-fee
+        ticketing, a real browser event room with chat and reactions, automated
+        refund evidence, Stripe Connect payouts, and a built-in promotion campaign
+        that goes live with every show. Powered by virtual venues, immersive
+        experiences, and real-time engagement that connects performers and
+        audiences anywhere in the world.
+      </p>
     </section>
   )
 }
@@ -70,7 +128,7 @@ function ForCreators() {
       <h2 className="mt-3 text-2xl font-black md:text-3xl">
         Run a live show like a working business.
       </h2>
-      <p className="mt-3 text-sm text-[#9e8a55]">
+      <p className="mt-3 text-sm text-[#94A3B8]">
         Ticketing, payouts, promotion, and a real event room — under one roof.
         Pricing is itemised at checkout, payouts settle through Stripe Connect,
         and your audience watches from any browser.
@@ -97,7 +155,7 @@ function ForAttendees() {
       <h2 className="mt-3 text-2xl font-black md:text-3xl">
         Watch from any browser. Calm checkout, no surprises.
       </h2>
-      <p className="mt-3 text-sm text-[#9e8a55]">
+      <p className="mt-3 text-sm text-[#94A3B8]">
         Buy a ticket in seconds, see the full breakdown, and join the show with one
         click. Transfer a ticket if your plans change. If something goes wrong,
         request a refund right from your wallet — no support ticket needed.
@@ -119,11 +177,9 @@ function ForAttendees() {
 
 function HowItWorks() {
   return (
-    <section className="mt-24">
+    <section className="mt-20">
       <p className={eyebrow}>How it works</p>
-      <h2 className="mt-3 text-2xl font-black md:text-3xl">
-        Two clear paths, same room.
-      </h2>
+      <h2 className="mt-3 text-3xl font-black md:text-4xl">Two clear paths, same room.</h2>
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <Flow
           title="If you are hosting"
@@ -171,50 +227,85 @@ function Flow({ title, steps }: { title: string; steps: string[] }) {
   )
 }
 
-function WhatsDifferent() {
+function FeaturesShowcase() {
   return (
-    <section className="mt-24">
-      <p className={eyebrow}>Why HYVE Attend</p>
-      <h2 className="mt-3 text-2xl font-black md:text-3xl">What makes it different.</h2>
-      <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Pillar
-          title="Browser-first"
-          body="No app to install — for hosts or audiences. The event room runs in any modern browser, with chat and reactions baked in."
+    <section className="mt-20">
+      <p className={eyebrow}>One platform · endless possibilities</p>
+      <h2 className="mt-3 text-3xl font-black md:text-4xl">The full picture.</h2>
+      <p className="mt-3 max-w-2xl text-base text-[#9e8a55]">
+        Live broadcasts, virtual venues, ticketing, payouts, engagement tools, and
+        analytics. One platform connecting artists, venues, and audiences.
+      </p>
+
+      <div className="mt-8 overflow-hidden rounded-xl border border-[#2a2135] bg-[#0E1E3A]">
+        <Image
+          src="/attend/ads/ad-composite.png"
+          alt="HYVE Attend — bringing events to life, virtual venues, real possibilities, scan-build-rent, monetise your venue 24/7, more engagement, actionable insights, secure and reliable"
+          width={2000}
+          height={1125}
+          className="w-full"
         />
-        <Pillar
-          title="Evidence-based refunds"
-          body="Every refund decision is backed by an attendance, ticket, and stream-health record — calm, quick, and out of the support queue."
-        />
-        <Pillar
-          title="Transparent fees"
-          body="Every charge is itemised at checkout. No hidden fees, no aggressive 'no refunds ever' copy, no surprises."
-        />
-        <Pillar
-          title="Real payouts"
-          body="Stripe Connect settles your funds after a short hold — they land in your account, not a platform-locked balance."
-        />
+      </div>
+
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        {SHOWCASE_ADS.map((src, i) => (
+          <div
+            key={src}
+            className="overflow-hidden rounded border border-[#2a2135] bg-[#0E1E3A] transition hover:border-[#E8C456]"
+          >
+            <Image
+              src={src}
+              alt={`HYVE Attend feature ${i + 1}`}
+              width={800}
+              height={1000}
+              className="h-auto w-full"
+            />
+          </div>
+        ))}
       </div>
     </section>
   )
 }
 
-function Pillar({ title, body }: { title: string; body: string }) {
+function VenuesGallery() {
   return (
-    <article className={card}>
-      <h3 className="text-base font-black">{title}</h3>
-      <p className="mt-2 text-sm text-[#9e8a55]">{body}</p>
-    </article>
+    <section className="mt-20">
+      <p className={eyebrow}>Built for every stage</p>
+      <h2 className="mt-3 text-3xl font-black md:text-4xl">Venues at every scale.</h2>
+      <p className="mt-3 max-w-2xl text-base text-[#9e8a55]">
+        From intimate club sets to amphitheatre broadcasts and fully virtual venues —
+        HYVE Attend renders for every kind of stage your audience can join from
+        their browser.
+      </p>
+      <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+        {VENUE_BGS.map((src, i) => (
+          <div
+            key={src}
+            className="relative aspect-[4/5] overflow-hidden rounded border border-[#2a2135] transition hover:border-[#E8C456]"
+          >
+            <Image
+              src={src}
+              alt={`HYVE Attend venue ${i + 1}`}
+              width={800}
+              height={1000}
+              className="h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#08111e]/80 via-transparent to-transparent" />
+          </div>
+        ))}
+      </div>
+    </section>
   )
 }
 
 function Pricing() {
   return (
-    <section className="mt-24 rounded border border-[#2a2135] bg-[#111111] p-8">
+    <section className="mt-20 rounded-2xl border border-[#2a2135] bg-[#0E1E3A] p-8">
       <p className={eyebrow}>Pricing</p>
-      <h2 className="mt-3 text-2xl font-black md:text-3xl">
+      <h2 className="mt-3 text-3xl font-black md:text-4xl">
         $50 to host. Itemised platform fee on tickets.
       </h2>
-      <p className="mt-3 max-w-3xl text-sm text-[#9e8a55]">
+      <p className="mt-4 max-w-3xl text-base text-[#94A3B8]">
         Hosting a show is a one-time $50 promotion registration — that fee funds
         your built-in HYVE promotion campaign for the event. Ticket sales carry a
         platform fee that is shown in the checkout breakdown, every time. Stripe
@@ -227,21 +318,32 @@ function Pricing() {
 
 function FinalCTA() {
   return (
-    <section className="mt-24 flex flex-col items-start gap-4 rounded border border-[#E8C456] bg-[#15120c] p-8 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <h2 className="text-2xl font-black md:text-3xl">Ready when you are.</h2>
-        <p className="mt-2 text-sm text-[#9e8a55]">
-          Reserve a ticket or host your first show — both start with the same
-          calm, transparent flow.
+    <section className="relative mt-20 -mx-6 overflow-hidden sm:rounded-2xl sm:mx-0">
+      <Image
+        src="/attend/backgrounds/bg-10.png"
+        alt=""
+        width={1920}
+        height={1080}
+        className="h-[420px] w-full object-cover md:h-[480px]"
+      />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#08111e] via-[#08111e]/60 to-transparent" />
+      <div className="absolute inset-0 flex flex-col items-start justify-center p-6 sm:p-12">
+        <p className={eyebrow}>Get started</p>
+        <h2 className="mt-4 max-w-2xl text-3xl font-black leading-[1.1] text-white drop-shadow-[0_2px_24px_rgba(0,0,0,0.6)] md:text-5xl">
+          Ready when you are.
+        </h2>
+        <p className="mt-4 max-w-xl text-base text-white/85 md:text-lg">
+          Reserve a ticket or host your first show — both start with the same calm,
+          transparent flow.
         </p>
-      </div>
-      <div className="flex flex-wrap gap-3">
-        <Link href="/attend/events" className={primaryCTA}>
-          Browse events
-        </Link>
-        <Link href="/attend/signup" className={ghostCTA}>
-          Host a show
-        </Link>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link href="/attend/events" className={primaryCTA}>
+            Browse events
+          </Link>
+          <Link href="/attend/signup" className={ghostCTAOnImage}>
+            Host a show
+          </Link>
+        </div>
       </div>
     </section>
   )

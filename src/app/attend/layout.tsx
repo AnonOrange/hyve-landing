@@ -12,7 +12,7 @@ export const metadata = {
 
 export default function AttendLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#08070a] font-sans text-[#ede8d8]">
+    <div className="min-h-screen bg-[#08111e] font-sans text-[#ede8d8]">
       <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
         <Link href="/attend" className="text-sm font-black tracking-[0.3em] text-[#E8C456]">
           HYVE ATTEND

@@ -51,13 +51,8 @@ export default function DiscoveryClient({
     filter === 'ALL' ? events : events.filter((e) => e.show_type === filter)
 
   return (
-    <div className="py-10">
-      <h1 className="text-3xl font-black md:text-4xl">Live events, browser-first.</h1>
-      <p className="mt-2 text-sm text-[#9e8a55]">
-        Discover live performances and join the show from any browser.
-      </p>
-
-      <div className="mt-6 flex flex-wrap gap-2">
+    <div className="pb-10">
+      <div className="flex flex-wrap gap-2">
         <button onClick={() => setFilter('ALL')} className={filterPill(filter === 'ALL')}>
           All
         </button>
