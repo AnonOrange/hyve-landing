@@ -1,7 +1,25 @@
+import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { getEventPage } from '@/lib/attend/discovery/discovery-service'
 import { getAttendUser } from '@/lib/attend/identity/auth'
 import CheckoutClient from './checkout-client'
+
+// Deterministically pick one of the stage backgrounds for the event hero
+// based on the slug, so an individual event's page always looks the same
+// while the catalogue as a whole rotates through the library.
+const EVENT_HERO_BGS = [
+  '/attend/backgrounds/bg-1.png',
+  '/attend/backgrounds/bg-4.png',
+  '/attend/backgrounds/bg-7.png',
+  '/attend/backgrounds/bg-8.png',
+  '/attend/backgrounds/bg-9.png',
+  '/attend/backgrounds/bg-11.png',
+]
+function pickEventHero(slug: string): string {
+  let hash = 0
+  for (let i = 0; i < slug.length; i++) hash = (hash * 31 + slug.charCodeAt(i)) | 0
+  return EVENT_HERO_BGS[Math.abs(hash) % EVENT_HERO_BGS.length]
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -35,20 +53,37 @@ export default async function EventPage({ params }: { params: { slug: string } }
   const starts = fmtWhen(event.starts_at)
   const ends = fmtWhen(event.ends_at)
 
-  return (
-    <div className="py-10">
-      {/* Placeholder hero — hero media (image/video) is a later phase. */}
-      <div className="rounded-lg bg-gradient-to-br from-[#2a2135] to-[#08070a] px-6 py-16 sm:py-24">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-[#9e8a55]">
-          {humanize(event.show_type)}
-        </span>
-        <h1 className="mt-2 text-3xl font-black md:text-5xl">{event.title}</h1>
-        <p className="mt-2 font-mono text-[11px] tracking-widest text-[#E8C456]">
-          {humanize(event.status)}
-        </p>
-      </div>
+  const heroBg = pickEventHero(event.slug)
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+  return (
+    <div>
+      {/* Event hero: stage background + the event title + show type + live
+          status. Replaces the earlier placeholder gradient. */}
+      <section className="relative -mx-6 mt-2 h-[300px] overflow-hidden sm:rounded-2xl sm:mx-0 sm:h-[380px]">
+        <Image
+          src={heroBg}
+          alt=""
+          width={1920}
+          height={1080}
+          priority
+          sizes="(min-width: 1280px) 1280px, 100vw"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#08111e] via-[#08111e]/60 to-transparent" />
+        <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-9">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[#E8C456]">
+            {humanize(event.show_type)}
+          </span>
+          <h1 className="mt-2 text-3xl font-black leading-[1.05] text-white drop-shadow-[0_2px_24px_rgba(0,0,0,0.6)] md:text-5xl">
+            {event.title}
+          </h1>
+          <p className="mt-3 font-mono text-[11px] tracking-widest text-[#E8C456]">
+            {humanize(event.status)}
+          </p>
+        </div>
+      </section>
+
+      <div className="mt-8 grid gap-4 lg:grid-cols-3">
         <div className="flex flex-col gap-4 lg:col-span-2">
           <section className={card}>
             <h2 className="text-xs font-black tracking-[0.2em] text-[#9e8a55]">ARTIST</h2>
@@ -120,6 +155,7 @@ export default async function EventPage({ params }: { params: { slug: string } }
           />
         </div>
       </div>
+      <div className="pb-10" />
     </div>
   )
 }

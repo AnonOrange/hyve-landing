@@ -1,4 +1,5 @@
 import { getRefundQueue } from '@/lib/attend/refunds/refund-service'
+import { BrandAd } from '@/app/attend/_components/brand-ad'
 import RefundDecisionClient from './refund-decision-client'
 
 export const metadata = { title: 'Refund queue — Attend admin' }
@@ -20,7 +21,18 @@ export default async function RefundQueuePage() {
         REFUND REQUESTS AWAITING A DECISION
       </h2>
       {queue.length === 0 ? (
-        <p className="mt-3 text-sm text-[#9e8a55]">No refund requests to review.</p>
+        <div className="mt-3 grid gap-6 lg:grid-cols-[1fr_360px] lg:items-start">
+          <p className="text-sm text-[#9e8a55]">
+            No refund requests to review. New requests appear here with an automated
+            APPROVE / DENY / NEEDS_HUMAN recommendation based on attendance + event
+            records.
+          </p>
+          <BrandAd
+            src="/attend/ads/ad-26.png"
+            alt="HYVE Attend — refunds backed by evidence"
+            caption="Every request is auto-scored against attendance, room entries, and event lifecycle records."
+          />
+        </div>
       ) : (
         <ul className="mt-4 flex flex-col gap-3">
           {queue.map((r) => (

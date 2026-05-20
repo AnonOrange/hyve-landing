@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import MuxPlayer from './mux-player'
 import LivePanel from './live-panel'
@@ -59,8 +60,30 @@ export default function RoomClient({
           {playbackId && playbackToken ? (
             <MuxPlayer playbackId={playbackId} playbackToken={playbackToken} />
           ) : (
-            <div className="flex aspect-video w-full items-center justify-center rounded border border-[#2a2135] bg-[#111111]">
-              <p className="text-sm text-[#9e8a55]">The stream is not available yet.</p>
+            // Stage-background placeholder while the stream isn't live yet,
+            // so the room doesn't look like a broken flat box during the
+            // pre-show window.
+            <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded border border-[#2a2135] bg-[#111111]">
+              <Image
+                src="/attend/backgrounds/bg-11.png"
+                alt=""
+                width={1920}
+                height={1080}
+                priority
+                className="absolute inset-0 h-full w-full object-cover opacity-40"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#08111e] via-[#08111e]/40 to-transparent" />
+              <div className="relative flex flex-col items-center gap-2 text-center">
+                <span className="font-mono text-[10px] tracking-[0.3em] text-[#E8C456]">
+                  WAITING ROOM
+                </span>
+                <p className="text-sm font-bold text-white drop-shadow-[0_2px_24px_rgba(0,0,0,0.6)]">
+                  The stream is not available yet.
+                </p>
+                <p className="text-xs text-white/70">
+                  You&rsquo;re checked in — the player will switch on when the host goes live.
+                </p>
+              </div>
             </div>
           )}
         </div>

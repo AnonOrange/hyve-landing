@@ -1,5 +1,6 @@
 import { getDisputeQueue } from '@/lib/attend/disputes/dispute-service'
 import { isDisputeDueSoon } from '@/lib/attend/disputes/dispute-recommendation'
+import { BrandAd } from '@/app/attend/_components/brand-ad'
 import DisputeActionClient from './dispute-action-client'
 
 export const metadata = { title: 'Disputes — Attend admin' }
@@ -16,7 +17,18 @@ export default async function DisputeQueuePage() {
     <div>
       <h2 className="text-xs font-black tracking-[0.2em] text-[#9e8a55]">CARD DISPUTES</h2>
       {disputes.length === 0 ? (
-        <p className="mt-3 text-sm text-[#9e8a55]">No disputes.</p>
+        <div className="mt-3 grid gap-6 lg:grid-cols-[1fr_360px] lg:items-start">
+          <p className="text-sm text-[#9e8a55]">
+            No disputes. When Stripe notifies us of one, the evidence packet (attendance
+            log, room sessions, refund history, event policy) is assembled automatically
+            and queued here for review.
+          </p>
+          <BrandAd
+            src="/attend/ads/ad-28.png"
+            alt="HYVE Attend — secure and reliable"
+            caption="Card disputes get an auto-built evidence packet. Reviewers accept, contest, or escalate."
+          />
+        </div>
       ) : (
         <ul className="mt-4 flex flex-col gap-3">
           {disputes.map((d) => {

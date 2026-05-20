@@ -1,5 +1,6 @@
 import { listEventsByStatus } from '@/lib/attend/events/repository'
 import { evaluateEventRisk } from '@/lib/attend/risk/risk-service'
+import { BrandAd } from '@/app/attend/_components/brand-ad'
 import ReviewClient from './review-client'
 
 export const metadata = { title: 'Attend admin' }
@@ -23,7 +24,18 @@ export default async function AdminPage() {
         EVENTS AWAITING REVIEW
       </h2>
       {events.length === 0 ? (
-        <p className="mt-3 text-sm text-[#9e8a55]">No events awaiting review.</p>
+        <div className="mt-3 grid gap-6 lg:grid-cols-[1fr_360px] lg:items-start">
+          <p className="text-sm text-[#9e8a55]">
+            No events awaiting review. New submissions appear here with an automatic
+            risk band (LOW / MEDIUM / HIGH) so the highest-signal submissions get human
+            eyes first.
+          </p>
+          <BrandAd
+            src="/attend/ads/ad-30.png"
+            alt="HYVE Attend — actionable insights"
+            caption="Submissions are auto-scored against event details, creator history, ticket pricing, and timing signals."
+          />
+        </div>
       ) : (
         <ul className="mt-4 flex flex-col gap-3">
           {events.map((ev, i) => (
