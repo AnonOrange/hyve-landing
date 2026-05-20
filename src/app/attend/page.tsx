@@ -247,18 +247,23 @@ function FeaturesShowcase() {
         />
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      {/* 2-col grid at large viewports so each marketing poster renders ~700px
+          wide and the headline + body copy embedded in the artwork is actually
+          readable. Width/height match the source 16:9 aspect (828×466) so
+          Next.js reserves a correctly-shaped slot. */}
+      <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
         {SHOWCASE_ADS.map((src, i) => (
           <div
             key={src}
-            className="overflow-hidden rounded border border-[#2a2135] bg-[#0E1E3A] transition hover:border-[#E8C456]"
+            className="overflow-hidden rounded-lg border border-[#2a2135] bg-[#0E1E3A] transition hover:border-[#E8C456]"
           >
             <Image
               src={src}
               alt={`HYVE Attend feature ${i + 1}`}
-              width={800}
-              height={1000}
+              width={1280}
+              height={720}
               className="h-auto w-full"
+              sizes="(min-width: 1024px) 50vw, 100vw"
             />
           </div>
         ))}
@@ -277,20 +282,24 @@ function VenuesGallery() {
         HYVE Attend renders for every kind of stage your audience can join from
         their browser.
       </p>
-      <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+      {/* Stage backgrounds are landscape 16:9, so the tile uses aspect-video.
+          The portrait aspect-[4/5] + object-cover combination we had before
+          was throwing away the sides of every room. */}
+      <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {VENUE_BGS.map((src, i) => (
           <div
             key={src}
-            className="relative aspect-[4/5] overflow-hidden rounded border border-[#2a2135] transition hover:border-[#E8C456]"
+            className="relative aspect-video overflow-hidden rounded-lg border border-[#2a2135] transition hover:border-[#E8C456]"
           >
             <Image
               src={src}
               alt={`HYVE Attend venue ${i + 1}`}
-              width={800}
-              height={1000}
+              width={1280}
+              height={720}
               className="h-full w-full object-cover"
+              sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#08111e]/80 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#08111e]/70 via-transparent to-transparent" />
           </div>
         ))}
       </div>
