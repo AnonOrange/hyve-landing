@@ -3,6 +3,7 @@
 // at /attend/events.
 import Image from 'next/image'
 import Link from 'next/link'
+import { ATTEND_BETA_MODE } from '@/lib/attend/config'
 
 export const metadata = {
   title: 'HYVE Attend — Bringing events to life',
@@ -53,6 +54,7 @@ export default function AttendLanding() {
   return (
     <div className="pb-12">
       <Hero />
+      {ATTEND_BETA_MODE && <BetaDisclaimer />}
       <Intro />
       <section className="mt-20 grid gap-6 lg:grid-cols-2">
         <ForCreators />
@@ -64,6 +66,34 @@ export default function AttendLanding() {
       <Pricing />
       <FinalCTA />
     </div>
+  )
+}
+
+function BetaDisclaimer() {
+  return (
+    <section
+      className="mt-8 flex flex-col gap-3 rounded-2xl border border-[#E8C456]/60 bg-[#E8C456]/[0.06] p-6 sm:flex-row sm:items-center sm:gap-5 sm:p-7"
+      role="note"
+      aria-label="HYVE Attend beta disclaimer"
+    >
+      <span className="self-start rounded-full border border-[#E8C456] bg-[#E8C456]/15 px-2.5 py-1 font-mono text-[10px] font-black uppercase tracking-[0.25em] text-[#E8C456]">
+        Beta
+      </span>
+      <div className="flex-1">
+        <h2 className="text-base font-black text-white sm:text-lg">
+          We&rsquo;re live in beta — every show registers free.
+        </h2>
+        <p className="mt-1.5 text-sm leading-relaxed text-[#ede8d8]/85">
+          HYVE Attend is currently in public beta while we work the bugs out.{' '}
+          <span className="font-bold text-[#E8C456]">Every show is free to register</span>{' '}
+          during this window — the $50 promotion-registration fee is waived for everyone.
+          We still earn our platform percentage on ticket sales (so attendees still see an
+          itemised checkout, and creators still see Stripe Connect payouts). The $50 fee
+          turns on at full launch; after that, the first 2 shows you host are still on us.
+          If something breaks, please tell us.
+        </p>
+      </div>
+    </section>
   )
 }
 
@@ -135,7 +165,15 @@ function ForCreators() {
       </p>
       <ul className="mt-5 flex flex-col gap-2 text-sm">
         <Bullet>
-          <span className="font-bold text-[#E8C456]">First 2 shows free</span> — no $50 registration fee, the promotion campaign still runs
+          {ATTEND_BETA_MODE ? (
+            <>
+              <span className="font-bold text-[#E8C456]">Free during beta</span> — every show registers free; first 2 stay free at full launch
+            </>
+          ) : (
+            <>
+              <span className="font-bold text-[#E8C456]">First 2 shows free</span> — no $50 registration fee, the promotion campaign still runs
+            </>
+          )}
         </Bullet>
         <Bullet>Low-fee ticketing, all-in itemised at checkout</Bullet>
         <Bullet>Stripe Connect payouts, released after a short settlement hold</Bullet>
@@ -187,7 +225,9 @@ function HowItWorks() {
           title="If you are hosting"
           steps={[
             'Create the show — title, time, ticket types.',
-            'Register the show — first 2 are free, $50 after that. Funds the promotion campaign.',
+            ATTEND_BETA_MODE
+              ? 'Register the show — free during beta. Opens the promotion campaign.'
+              : 'Register the show — first 2 are free, $50 after that. Funds the promotion campaign.',
             'Connect your payout account (Stripe Connect Express).',
             'Run a stream test, submit for review, publish.',
             'Go live from your RTMP source — your audience joins in their browser.',
@@ -313,17 +353,36 @@ function Pricing() {
   return (
     <section className="mt-20 rounded-2xl border border-[#2a2135] bg-[#0E1E3A] p-8">
       <p className={eyebrow}>Pricing</p>
-      <h2 className="mt-3 text-3xl font-black md:text-4xl">
-        <span className="text-[#E8C456]">First 2 shows free.</span> $50 to host after that. Itemised platform fee on tickets.
-      </h2>
-      <p className="mt-4 max-w-3xl text-base text-[#94A3B8]">
-        Your first two shows register for free — the same built-in HYVE promotion
-        campaign goes live with them, on the house. From show three onward, hosting
-        is a one-time $50 promotion registration per event, which funds that show's
-        campaign. Ticket sales carry a platform fee that's shown in the checkout
-        breakdown, every time. Stripe processor fees and any tax are itemised the
-        same way. No subscriptions, no per-seat charges hiding in fine print.
-      </p>
+      {ATTEND_BETA_MODE ? (
+        <>
+          <h2 className="mt-3 text-3xl font-black md:text-4xl">
+            <span className="text-[#E8C456]">Every show free during beta.</span> Itemised platform fee on tickets.
+          </h2>
+          <p className="mt-4 max-w-3xl text-base text-[#94A3B8]">
+            While HYVE Attend is in beta, every show registers for free — no $50 promotion
+            fee, full HYVE promotion campaign included. We earn our platform percentage on
+            ticket sales the same as we will at full launch, so attendees still see the
+            itemised checkout breakdown and creators still see Stripe Connect payouts.
+            At full launch the $50 registration fee turns on for everyone, with the first
+            2 shows on us — and the percentage on tickets stays exactly as it is today. No
+            subscriptions, no per-seat charges hiding in fine print.
+          </p>
+        </>
+      ) : (
+        <>
+          <h2 className="mt-3 text-3xl font-black md:text-4xl">
+            <span className="text-[#E8C456]">First 2 shows free.</span> $50 to host after that. Itemised platform fee on tickets.
+          </h2>
+          <p className="mt-4 max-w-3xl text-base text-[#94A3B8]">
+            Your first two shows register for free — the same built-in HYVE promotion
+            campaign goes live with them, on the house. From show three onward, hosting
+            is a one-time $50 promotion registration per event, which funds that show's
+            campaign. Ticket sales carry a platform fee that's shown in the checkout
+            breakdown, every time. Stripe processor fees and any tax are itemised the
+            same way. No subscriptions, no per-seat charges hiding in fine print.
+          </p>
+        </>
+      )}
     </section>
   )
 }

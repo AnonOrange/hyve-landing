@@ -31,6 +31,31 @@ export async function freeRegistrationsRemaining(creatorId: string): Promise<num
 }
 
 /**
+ * Beta path: grant the show registration with no fee and no credit
+ * consumption. The was_beta_registration column on attend_events marks
+ * the row for later reporting. Guards match the paid + free paths so
+ * the same ownership + lifecycle errors come back consistently.
+ */
+export async function grantBetaRegistration(
+  eventId: string,
+  creatorId: string,
+): Promise<{ ok: true; beta: true }> {
+  const event = await getEventById(eventId)
+  if (!event) throw new NotFoundError('Event not found')
+  if (event.creator_id !== creatorId) throw new ForbiddenError('This is not your event')
+  if (event.status !== 'REGISTRATION_PENDING') {
+    throw new ValidationError('This event is not awaiting the registration fee')
+  }
+  const res = await supaPost('rpc/attend_grant_beta_registration', {
+    p_args: { event_id: eventId, actor: creatorId },
+  })
+  if (!res.ok) {
+    throw new Error(`attend_grant_beta_registration RPC failed: ${res.status} ${await res.text()}`)
+  }
+  return { ok: true, beta: true }
+}
+
+/**
  * Consume one of the creator's free-registration credits for this event.
  * Mirrors startRegistrationCheckout's guards (ownership + status) and then
  * delegates the atomic state changes to the DB RPC.

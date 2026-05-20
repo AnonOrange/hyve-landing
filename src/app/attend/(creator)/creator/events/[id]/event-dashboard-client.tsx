@@ -5,6 +5,7 @@ import Link from 'next/link'
 import type { EventRow } from '@/lib/attend/events/repository'
 import type { TicketTypeRow } from '@/lib/attend/ticketing/ticket-type-repository'
 import type { StreamRow } from '@/lib/attend/streaming/stream-repository'
+import { ATTEND_BETA_MODE } from '@/lib/attend/config'
 import SetupProgress from './setup-progress'
 import EventDetailsPanel from './event-details-panel'
 import TicketTypesPanel from './ticket-types-panel'
@@ -123,32 +124,43 @@ export default function EventDashboardClient({
           </button>,
         )
       case 'REGISTRATION_PENDING': {
-        const free = freeRegistrationsRemaining > 0
+        // Three-way branch matches the API route: beta > welcome offer > paid.
+        const beta = ATTEND_BETA_MODE
+        const free = !beta && freeRegistrationsRemaining > 0
         const ordinal = freeRegistrationsRemaining === 2 ? '1st' : '2nd'
-        return wrap(
-          free ? 'Promote your show (free)' : 'Pay the registration fee',
-          free
+        const title = beta
+          ? 'Register your show (free during beta)'
+          : free
+            ? 'Promote your show (free)'
+            : 'Pay the registration fee'
+        const body = beta
+          ? 'HYVE Attend is in beta — all shows register for free, no $50 fee. Platform percentages on ticket sales still apply. The fee starts at full launch.'
+          : free
             ? `Your ${ordinal} show is on the house — registration opens its promotion campaign at no charge. Platform percentages on ticket sales still apply.`
-            : 'A one-time $50 fee registers your show and opens its promotion campaign.',
+            : 'A one-time $50 fee registers your show and opens its promotion campaign.'
+        const label = busy
+          ? beta || free
+            ? 'Registering…'
+            : 'Opening…'
+          : beta
+            ? 'Register (free during beta)'
+            : free
+              ? `Promote (${ordinal} free)`
+              : 'Pay $50 registration'
+        const failMsg = beta
+          ? 'Failed to register your show'
+          : free
+            ? 'Failed to register your free show'
+            : 'Failed to start the registration checkout'
+        return wrap(
+          title,
+          body,
           <button
-            onClick={() =>
-              redirectTo(
-                `/api/attend/events/${event.id}/pay-registration`,
-                free
-                  ? 'Failed to register your free show'
-                  : 'Failed to start the registration checkout',
-              )
-            }
+            onClick={() => redirectTo(`/api/attend/events/${event.id}/pay-registration`, failMsg)}
             disabled={busy}
             className={actionBtn}
           >
-            {busy
-              ? free
-                ? 'Registering…'
-                : 'Opening…'
-              : free
-                ? `Promote (${ordinal} free)`
-                : 'Pay $50 registration'}
+            {label}
           </button>,
         )
       }

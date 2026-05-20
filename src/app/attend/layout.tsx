@@ -3,6 +3,7 @@
 // here and in nested layouts — never in the shared src/middleware.ts.
 
 import Link from 'next/link'
+import { ATTEND_BETA_MODE } from '@/lib/attend/config'
 
 export const metadata = {
   title: 'HYVE Attend — Live events, browser-first',
@@ -14,8 +15,15 @@ export default function AttendLayout({ children }: { children: React.ReactNode }
   return (
     <div className="min-h-screen bg-[#08111e] font-sans text-[#ede8d8]">
       <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-        <Link href="/attend" className="text-sm font-black tracking-[0.3em] text-[#E8C456]">
-          HYVE ATTEND
+        <Link href="/attend" className="flex items-center gap-2.5">
+          <span className="text-sm font-black tracking-[0.3em] text-[#E8C456]">
+            HYVE ATTEND
+          </span>
+          {ATTEND_BETA_MODE && (
+            <span className="rounded-full border border-[#E8C456] bg-[#E8C456]/10 px-2 py-0.5 font-mono text-[9px] font-black uppercase tracking-[0.2em] text-[#E8C456]">
+              Beta
+            </span>
+          )}
         </Link>
         <nav className="flex gap-5 text-xs font-bold tracking-[0.2em] text-[#9e8a55]">
           <Link href="/attend/events" className="hover:text-[#E8C456]">DISCOVER</Link>
