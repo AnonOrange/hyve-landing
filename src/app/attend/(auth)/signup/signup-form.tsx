@@ -32,8 +32,12 @@ export default function SignupForm() {
       }
       await fetch('/api/attend/auth/sync', { method: 'POST' })
       window.location.href = '/attend/creator'
-    } catch {
-      setError('Something went wrong. Please try again.')
+    } catch (err) {
+      // Surface the actual error rather than swallowing it. Catch-alls like
+      // "Something went wrong" make field-reported bugs impossible to diagnose
+      // — the missing NEXT_PUBLIC_SUPABASE_* env vars looked identical to a
+      // failed network call from the user's side.
+      setError((err as Error)?.message || 'Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }

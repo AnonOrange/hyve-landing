@@ -25,8 +25,11 @@ export default function LoginForm() {
       }
       await fetch('/api/attend/auth/sync', { method: 'POST' })
       window.location.href = '/attend/creator'
-    } catch {
-      setError('Something went wrong. Please try again.')
+    } catch (err) {
+      // Surface the actual error rather than swallowing it — see signup-form.tsx
+      // for the rationale (the missing NEXT_PUBLIC_SUPABASE_* env vars looked
+      // identical to a network failure from the user's side).
+      setError((err as Error)?.message || 'Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
