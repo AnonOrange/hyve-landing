@@ -18,10 +18,13 @@ export async function getTransferForClaim(by: {
   claimToken?: string
   friendCode?: string
 }): Promise<TransferForClaim | null> {
+  // encodeURIComponent: claimToken/friendCode are attacker-chosen + the claim
+  // flow is anonymous. Unencoded, a value with '&' could inject extra PostgREST
+  // params (widen the embedded select to leak buyer PII, drop guards, etc.).
   const filter = by.claimToken
-    ? `claim_token=eq.${by.claimToken}`
+    ? `claim_token=eq.${encodeURIComponent(by.claimToken)}`
     : by.friendCode
-      ? `friend_code=eq.${by.friendCode}`
+      ? `friend_code=eq.${encodeURIComponent(by.friendCode)}`
       : null
   if (!filter) return null
 

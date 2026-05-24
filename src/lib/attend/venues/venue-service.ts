@@ -14,9 +14,29 @@ import {
   insertVenue,
   insertVenueAsset,
   listVenueSlugs,
+  getVenueById,
 } from '@/lib/attend/venues/venue-repository'
 import { slugifyTitle, uniqueSlug } from '@/lib/attend/events/slug'
-import { ValidationError } from '@/lib/attend/events/service'
+import { ValidationError, ForbiddenError, NotFoundError } from '@/lib/attend/events/service'
+
+// Per-tier upload size caps (bytes). Routes reject on file.size BEFORE reading
+// the body into memory (the real DoS guard); the service re-checks byteLength
+// as a backstop. An unbounded upload is a memory + storage-cost DoS.
+export const MAX_PANO_BYTES = 30 * 1024 * 1024 // 360° equirect (spec ≤25 MB)
+export const MAX_MESH_BYTES = 80 * 1024 * 1024 // optimized .glb
+export const MAX_SPLAT_BYTES = 350 * 1024 * 1024 // Gaussian splat
+
+// Magic-byte sniff so a non-image can't be stored as a "pano" by spoofing the
+// client Content-Type. Covers JPEG / PNG / WebP (RIFF....WEBP).
+function looksLikeImage(bytes: ArrayBuffer): boolean {
+  const b = new Uint8Array(bytes.slice(0, 12))
+  const jpeg = b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff
+  const png = b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47
+  const webp =
+    b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 &&
+    b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50
+  return jpeg || png || webp
+}
 
 /**
  * Validate a manifest and persist the resulting asset row. Returns the new id,
@@ -72,8 +92,17 @@ export async function uploadVenuePanoAsset(input: {
   scaleDescription: string
   scaleMeters: number
 }) {
-  if (!input.file.contentType.startsWith('image/')) {
-    throw new ValidationError('Pano must be an image (equirectangular JPEG/PNG)')
+  // AUTHORIZATION: the caller must manage this venue. Without this, any creator
+  // could write a scan into any venue by id (IDOR) and hijack its 3D room.
+  const venue = await getVenueById(input.venueId)
+  if (!venue) throw new NotFoundError('Venue not found')
+  if (venue.managed_by !== input.actor) throw new ForbiddenError('This is not your venue')
+
+  if (input.file.bytes.byteLength > MAX_PANO_BYTES) {
+    throw new ValidationError('Pano is too large (max 30 MB)')
+  }
+  if (!input.file.contentType.startsWith('image/') || !looksLikeImage(input.file.bytes)) {
+    throw new ValidationError('Pano must be an image (equirectangular JPEG/PNG/WebP)')
   }
   const path = `${input.venueId}/${Date.now()}.${input.file.ext}`
   await uploadVenueObject(path, input.file.bytes, input.file.contentType)
@@ -115,6 +144,12 @@ export async function uploadVenueMeshAsset(input: {
   scaleDescription: string
   scaleMeters: number
 }) {
+  // Reviewer-invoked (any venue), but the venue must exist — else we'd write an
+  // orphan storage object whose DB insert then fails on the FK.
+  if (!(await getVenueById(input.venueId))) throw new NotFoundError('Venue not found')
+  if (input.file.bytes.byteLength > MAX_MESH_BYTES) {
+    throw new ValidationError('Mesh is too large (max 80 MB)')
+  }
   const path = `${input.venueId}/mesh-${Date.now()}.glb`
   await uploadVenueObject(path, input.file.bytes, input.file.contentType || 'model/gltf-binary')
   const manifest = buildNavMeshManifest({
@@ -158,6 +193,13 @@ export async function uploadVenueSplatAsset(input: {
   scaleDescription: string
   scaleMeters: number
 }) {
+  if (!(await getVenueById(input.venueId))) throw new NotFoundError('Venue not found')
+  if (input.splat.bytes.byteLength > MAX_SPLAT_BYTES) {
+    throw new ValidationError('Splat is too large (max 350 MB)')
+  }
+  if (input.proxy.bytes.byteLength > MAX_MESH_BYTES) {
+    throw new ValidationError('Proxy mesh is too large (max 80 MB)')
+  }
   const stamp = Date.now()
   const splatExt = ['ksplat', 'ply', 'splat'].includes(input.splat.ext) ? input.splat.ext : 'ksplat'
   const splatPath = `${input.venueId}/splat-${stamp}.${splatExt}`

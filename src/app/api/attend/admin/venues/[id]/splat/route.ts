@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireReviewer } from '@/lib/attend/identity/roles'
-import { uploadVenueSplatAsset } from '@/lib/attend/venues/venue-service'
-import { ValidationError } from '@/lib/attend/events/service'
+import {
+  uploadVenueSplatAsset,
+  MAX_SPLAT_BYTES,
+  MAX_MESH_BYTES,
+} from '@/lib/attend/venues/venue-service'
+import { ValidationError, NotFoundError } from '@/lib/attend/events/service'
 import { writeAuditLog } from '@/lib/attend/audit/audit-log'
 
 export const runtime = 'nodejs'
@@ -17,6 +21,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const proxy = form.get('proxy') as File | null
     if (!splat) return NextResponse.json({ error: 'No splat file provided' }, { status: 400 })
     if (!proxy) return NextResponse.json({ error: 'A proxy .glb is required for splats' }, { status: 400 })
+    if (splat.size > MAX_SPLAT_BYTES) {
+      return NextResponse.json({ error: 'Splat is too large (max 350 MB)' }, { status: 413 })
+    }
+    if (proxy.size > MAX_MESH_BYTES) {
+      return NextResponse.json({ error: 'Proxy mesh is too large (max 80 MB)' }, { status: 413 })
+    }
 
     const ext = (splat.name.split('.').pop() ?? 'ksplat').toLowerCase()
     const result = await uploadVenueSplatAsset({
@@ -45,6 +55,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json(result)
   } catch (err) {
     if (err instanceof ValidationError) return NextResponse.json({ error: err.message }, { status: 400 })
+    if (err instanceof NotFoundError) return NextResponse.json({ error: err.message }, { status: 404 })
     console.error('[attend venue splat]:', (err as Error).message)
     return NextResponse.json({ error: 'Splat upload failed' }, { status: 500 })
   }

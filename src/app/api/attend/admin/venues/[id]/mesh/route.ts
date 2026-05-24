@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireReviewer } from '@/lib/attend/identity/roles'
-import { uploadVenueMeshAsset } from '@/lib/attend/venues/venue-service'
-import { ValidationError } from '@/lib/attend/events/service'
+import { uploadVenueMeshAsset, MAX_MESH_BYTES } from '@/lib/attend/venues/venue-service'
+import { ValidationError, NotFoundError } from '@/lib/attend/events/service'
 import { writeAuditLog } from '@/lib/attend/audit/audit-log'
 
 export const runtime = 'nodejs'
@@ -15,6 +15,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const form = await req.formData()
     const file = form.get('file') as File | null
     if (!file) return NextResponse.json({ error: 'No .glb file provided' }, { status: 400 })
+    if (file.size > MAX_MESH_BYTES) {
+      return NextResponse.json({ error: 'Mesh is too large (max 80 MB)' }, { status: 413 })
+    }
 
     const result = await uploadVenueMeshAsset({
       venueId: params.id,
@@ -41,6 +44,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json(result)
   } catch (err) {
     if (err instanceof ValidationError) return NextResponse.json({ error: err.message }, { status: 400 })
+    if (err instanceof NotFoundError) return NextResponse.json({ error: err.message }, { status: 404 })
     console.error('[attend venue mesh]:', (err as Error).message)
     return NextResponse.json({ error: 'Mesh upload failed' }, { status: 500 })
   }

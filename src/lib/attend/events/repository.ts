@@ -43,12 +43,19 @@ export async function insertEvent(row: NewEventRow): Promise<EventRow> {
 }
 
 export async function getEventById(id: string): Promise<EventRow | null> {
-  const r = await rows(await supaGet('attend_events', `id=eq.${id}&deleted_at=is.null&select=*`))
+  const r = await rows(
+    await supaGet('attend_events', `id=eq.${encodeURIComponent(id)}&deleted_at=is.null&select=*`),
+  )
   return r[0] ?? null
 }
 
 export async function getEventBySlug(slug: string): Promise<EventRow | null> {
-  const r = await rows(await supaGet('attend_events', `slug=eq.${slug}&deleted_at=is.null&select=*`))
+  // encodeURIComponent: slug is the raw URL path segment (unauthenticated).
+  // Unencoded, a crafted slug could inject PostgREST params to surface
+  // DRAFT/soft-deleted events or widen the projection.
+  const r = await rows(
+    await supaGet('attend_events', `slug=eq.${encodeURIComponent(slug)}&deleted_at=is.null&select=*`),
+  )
   return r[0] ?? null
 }
 

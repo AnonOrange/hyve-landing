@@ -10,6 +10,16 @@ export interface VenueRow {
   managed_by: string | null
 }
 
+export async function getVenueById(id: string): Promise<VenueRow | null> {
+  const res = await supaGet(
+    'attend_venues',
+    `id=eq.${encodeURIComponent(id)}&deleted_at=is.null&select=id,slug,name,managed_by`,
+  )
+  if (!res.ok) throw new Error(`getVenueById failed: ${res.status} ${await res.text()}`)
+  const rows = (await res.json()) as VenueRow[]
+  return rows[0] ?? null
+}
+
 export async function getVenueBySlug(slug: string): Promise<VenueRow | null> {
   const res = await supaGet(
     'attend_venues',
