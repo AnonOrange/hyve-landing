@@ -2,11 +2,16 @@
 // DB and renders them, plus the section nav + copyright. The DB read is wrapped
 // in try/catch — this footer is on every Attend page, so a momentary DB blip
 // must degrade to "no sponsors" rather than 500 the whole page.
+import { unstable_noStore as noStore } from 'next/cache'
 import Link from 'next/link'
 import { listActiveSponsors, type SponsorRow } from '@/lib/attend/sponsors/sponsor-service'
 import { SponsorLogo } from './sponsor-logo'
 
 export default async function AttendFooter() {
+  // Opt the footer out of static caching so the sponsor list is always fresh —
+  // otherwise statically-prerendered pages (the landing, auth) would bake an
+  // empty footer at build time and never reflect admin add/on-off changes.
+  noStore()
   let sponsors: SponsorRow[] = []
   try {
     sponsors = await listActiveSponsors()
