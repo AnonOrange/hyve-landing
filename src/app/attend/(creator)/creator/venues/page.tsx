@@ -17,9 +17,7 @@ export default async function CreatorVenuesPage() {
   const withScan: VenueWithScan[] = await Promise.all(
     venues.map(async (v) => {
       const asset = await getVenueActiveScan(v.id)
-      const scan = asset
-        ? venueScanFromManifest(asset.manifest, publicVenueUrl(asset.storagePath))
-        : null
+      const scan = asset ? venueScanFromManifest(asset.manifest, publicVenueUrl) : null
       return { id: v.id, slug: v.slug, name: v.name, scan }
     }),
   )

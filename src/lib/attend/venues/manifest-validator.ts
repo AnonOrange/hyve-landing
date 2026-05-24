@@ -19,7 +19,9 @@ export function validateManifest(input: unknown): ManifestValidation {
   const m = input as Partial<VenueManifest>
 
   if (!m.manifestVersion) errors.push('MISSING_MANIFEST_VERSION')
-  if (m.tier !== 'PANO_360' && m.tier !== 'NAV_MESH') errors.push('UNSUPPORTED_TIER')
+  if (m.tier !== 'PANO_360' && m.tier !== 'NAV_MESH' && m.tier !== 'SPLAT') {
+    errors.push('UNSUPPORTED_TIER')
+  }
 
   if (!m.world || m.world.unit !== 'meter') errors.push('WRONG_UNIT')
   if (!m.world || m.world.upAxis !== 'Y') errors.push('WRONG_UP_AXIS')
@@ -37,7 +39,9 @@ export function validateManifest(input: unknown): ManifestValidation {
   if (a?.stageScreen) {
     const ss = a.stageScreen as Record<string, unknown>
     if (m.tier === 'PANO_360' && ss.kind !== 'angular') errors.push('PANO_REQUIRES_ANGULAR_STAGE')
-    if (m.tier === 'NAV_MESH' && ss.kind !== 'rect') errors.push('MESH_REQUIRES_NODE_STAGE')
+    if ((m.tier === 'NAV_MESH' || m.tier === 'SPLAT') && ss.kind !== 'rect') {
+      errors.push('MESH_REQUIRES_NODE_STAGE')
+    }
     // Aspect warning only applies to rect screens; renderer letterboxes others.
     if (
       ss.kind === 'rect' &&
@@ -53,6 +57,11 @@ export function validateManifest(input: unknown): ManifestValidation {
 
   if (a?.scaleReference && !(a.scaleReference.realMeters > 0)) {
     errors.push('INVALID_SCALE_REFERENCE')
+  }
+
+  // A splat has no surfaces, so it must ship a parallel proxy mesh for anchors.
+  if (m.tier === 'SPLAT' && !m.asset?.splatProxy) {
+    errors.push('SPLAT_REQUIRES_PROXY')
   }
 
   if (Array.isArray(m.adSurfaces)) {

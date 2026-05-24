@@ -55,7 +55,7 @@ export async function getRoomView(slug: string, profileId: string): Promise<Room
   let venueScan: VenueScan | null = null
   if (access.event.venue_id) {
     const asset = await getVenueActiveScan(access.event.venue_id)
-    if (asset) venueScan = venueScanFromManifest(asset.manifest, publicVenueUrl(asset.storagePath))
+    if (asset) venueScan = venueScanFromManifest(asset.manifest, publicVenueUrl)
   }
 
   return { event: access.event, ticketId: access.ticketId, playbackId, playbackToken, venueScan }

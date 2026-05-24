@@ -57,6 +57,17 @@ export interface NavMeshInput {
   brandingCleared: boolean
 }
 
+/** Build a Tier-3 (SPLAT) manifest: the splat file + a parallel proxy .glb
+ *  (the proxy supplies anchors + navigation, since splats have no surfaces). */
+export function buildSplatManifest(input: NavMeshInput & { proxyFile: string }): VenueManifest {
+  const m = buildNavMeshManifest(input)
+  return {
+    ...m,
+    tier: 'SPLAT',
+    asset: { type: 'splat', files: [input.file], splatProxy: input.proxyFile },
+  }
+}
+
 /** Build a Tier-2 (NAV_MESH) manifest for a contracted .glb scan. */
 export function buildNavMeshManifest(input: NavMeshInput): VenueManifest {
   return {

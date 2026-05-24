@@ -2,7 +2,7 @@
 // HYVE Attend renderer. See docs/superpowers/specs/2026-05-24-venue-3d-scan-
 // requirements-design.md. Pure types; no I/O.
 
-export type VenueTier = 'PANO_360' | 'NAV_MESH'
+export type VenueTier = 'PANO_360' | 'NAV_MESH' | 'SPLAT'
 
 export type StageScreenAnchor =
   | { kind: 'rect'; node: string; widthM: number; heightM: number; aspect?: string }
@@ -29,7 +29,7 @@ export interface AdSurface {
 export interface VenueManifest {
   manifestVersion: string
   tier: VenueTier
-  asset: { type: 'equirect' | 'glb'; files: string[]; splatProxy?: string | null }
+  asset: { type: 'equirect' | 'glb' | 'splat'; files: string[]; splatProxy?: string | null }
   world: { unit: 'meter'; upAxis: 'Y'; forwardAxis: '-Z' }
   anchors: {
     stageScreen: StageScreenAnchor
@@ -51,6 +51,7 @@ export type ManifestErrorCode =
   | 'MISSING_STAGE_SCREEN'
   | 'PANO_REQUIRES_ANGULAR_STAGE'
   | 'MESH_REQUIRES_NODE_STAGE'
+  | 'SPLAT_REQUIRES_PROXY'
   | 'MISSING_SPAWN'
   | 'MISSING_SCALE_REFERENCE'
   | 'INVALID_SCALE_REFERENCE'

@@ -107,15 +107,37 @@ export default function VenueViewer({
     let lat = 0
     const camPos = new THREE.Vector3(0, 0, 0)
     const keys = new Set<string>()
-    const isMesh = scan.tier === 'NAV_MESH'
+    // NAV_MESH and SPLAT share the navigable-mesh path; SPLAT loads its proxy
+    // .glb for anchors/nav and overlays the Gaussian splat on top (best-effort).
+    const isMesh = scan.tier === 'NAV_MESH' || scan.tier === 'SPLAT'
+    const meshUrl = scan.tier === 'SPLAT' ? scan.proxyUrl : scan.url
+    let splatViewer: { update?: () => void; dispose?: () => void } | null = null
 
-    if (isMesh) {
+    if (isMesh && meshUrl) {
       const sp = scan.spawn ?? { positionM: [0, 1.6, 8], yawDeg: 0 }
       camPos.set(sp.positionM[0], sp.positionM[1], sp.positionM[2])
       lon = sp.yawDeg
       scene.add(new THREE.HemisphereLight(0xffffff, 0x334155, 1.1))
       const amb = new THREE.AmbientLight(0xffffff, 0.4)
       scene.add(amb)
+
+      // Tier 3: overlay the Gaussian splat. Experimental + unverified — wrapped
+      // so any failure leaves the navigable proxy mesh fully working.
+      if (scan.tier === 'SPLAT' && scan.url) {
+        void import('@mkkellogg/gaussian-splats-3d')
+          .then((GS) => {
+            if (disposed) return
+            try {
+              const v = new GS.DropInViewer({ gpuAcceleratedSort: false, sharedMemoryForWorkers: false })
+              v.addSplatScene(scan.url, { showLoadingUI: false })
+              scene.add(v)
+              splatViewer = v
+            } catch (e) {
+              console.error('[venue splat] init failed', e)
+            }
+          })
+          .catch((e) => console.error('[venue splat] import failed', e))
+      }
 
       const stageSize = scan.meshStage ?? { node: 'ANCHOR_stage_screen', widthM: 8, heightM: 4.5 }
       const draco = new DRACOLoader()
@@ -124,7 +146,7 @@ export default function VenueViewer({
       loader.setDRACOLoader(draco)
       loader.setMeshoptDecoder(MeshoptDecoder)
       loader.load(
-        scan.url,
+        meshUrl,
         (gltf) => {
           if (disposed) return
           scene.add(gltf.scene)
@@ -238,6 +260,7 @@ export default function VenueViewer({
       camera.position.copy(camPos)
       target.set(camPos.x + d.x, camPos.y + d.y, camPos.z + d.z)
       camera.lookAt(target)
+      splatViewer?.update?.()
       renderer.render(scene, camera)
       raf = requestAnimationFrame(render)
     }
@@ -266,6 +289,11 @@ export default function VenueViewer({
         video.load()
       }
       videoTex?.dispose()
+      try {
+        splatViewer?.dispose?.()
+      } catch {
+        /* experimental lib — ignore dispose errors */
+      }
       scene.traverse((obj) => {
         const m = obj as THREE.Mesh
         if (m.geometry) m.geometry.dispose()

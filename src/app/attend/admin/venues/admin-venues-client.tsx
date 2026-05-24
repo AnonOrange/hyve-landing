@@ -22,7 +22,9 @@ export default function AdminVenuesClient({ venues }: { venues: Venue[] }) {
 
 function MeshUpload({ venue }: { venue: Venue }) {
   const [open, setOpen] = useState(false)
+  const [isSplat, setIsSplat] = useState(false)
   const [file, setFile] = useState<File | null>(null)
+  const [proxyFile, setProxyFile] = useState<File | null>(null)
   const [stageNode, setStageNode] = useState('ANCHOR_stage_screen')
   const [w, setW] = useState(8)
   const [h, setH] = useState(4.5)
@@ -37,14 +39,19 @@ function MeshUpload({ venue }: { venue: Venue }) {
 
   async function submit() {
     if (!file) {
-      setMsg('Choose a .glb file first')
+      setMsg(isSplat ? 'Choose a splat file first' : 'Choose a .glb file first')
+      return
+    }
+    if (isSplat && !proxyFile) {
+      setMsg('A proxy .glb is required for splats')
       return
     }
     setBusy(true)
     setMsg(null)
     try {
       const fd = new FormData()
-      fd.append('file', file)
+      fd.append(isSplat ? 'splat' : 'file', file)
+      if (isSplat && proxyFile) fd.append('proxy', proxyFile)
       fd.append('stageNode', stageNode)
       fd.append('stageWidthM', String(w))
       fd.append('stageHeightM', String(h))
@@ -54,10 +61,10 @@ function MeshUpload({ venue }: { venue: Venue }) {
       fd.append('spawnYawDeg', String(yaw))
       fd.append('scaleDescription', scaleDesc)
       fd.append('scaleMeters', String(scaleMeters))
-      const res = await fetch(`/api/attend/admin/venues/${venue.id}/mesh`, {
-        method: 'POST',
-        body: fd,
-      })
+      const res = await fetch(
+        `/api/attend/admin/venues/${venue.id}/${isSplat ? 'splat' : 'mesh'}`,
+        { method: 'POST', body: fd },
+      )
       const data = (await res.json().catch(() => ({}))) as {
         status?: string
         validation?: { errors?: string[] }
@@ -92,12 +99,30 @@ function MeshUpload({ venue }: { venue: Venue }) {
       </div>
       {open && (
         <div className="mt-4 flex flex-col gap-3">
-          <input
-            type="file"
-            accept=".glb,model/gltf-binary"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            className="block w-full text-sm text-[#9e8a55] file:mr-3 file:rounded file:border-0 file:bg-[#E8C456] file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-black"
-          />
+          <label className="flex items-center gap-2 text-xs text-[#9e8a55]">
+            <input type="checkbox" checked={isSplat} onChange={(e) => setIsSplat(e.target.checked)} className="accent-[#E8C456]" />
+            Gaussian splat (Tier 3) — needs a proxy .glb for anchors
+          </label>
+          <label className="text-[10px] font-bold tracking-widest text-[#9e8a55]">
+            {isSplat ? 'SPLAT FILE (.ksplat / .ply / .splat)' : 'MESH (.glb)'}
+            <input
+              type="file"
+              accept={isSplat ? '.ksplat,.ply,.splat' : '.glb,model/gltf-binary'}
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className="mt-1 block w-full text-sm text-[#9e8a55] file:mr-3 file:rounded file:border-0 file:bg-[#E8C456] file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-black"
+            />
+          </label>
+          {isSplat && (
+            <label className="text-[10px] font-bold tracking-widest text-[#9e8a55]">
+              PROXY MESH (.glb)
+              <input
+                type="file"
+                accept=".glb,model/gltf-binary"
+                onChange={(e) => setProxyFile(e.target.files?.[0] ?? null)}
+                className="mt-1 block w-full text-sm text-[#9e8a55] file:mr-3 file:rounded file:border-0 file:bg-[#E8C456] file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-black"
+              />
+            </label>
+          )}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <Labeled label="Stage node">
               <input value={stageNode} onChange={(e) => setStageNode(e.target.value)} className={`${inputClass} w-full`} />

@@ -56,31 +56,43 @@ export function angularStageFromManifest(
 // on `tier`: PANO_360 uses `stage` (angular); NAV_MESH uses `meshStage` (the
 // stage node + dims) and `spawn`.
 export interface VenueScan {
-  tier: 'PANO_360' | 'NAV_MESH'
+  tier: 'PANO_360' | 'NAV_MESH' | 'SPLAT'
   url: string
+  /** SPLAT only: the parallel proxy .glb for anchors + navigation. */
+  proxyUrl?: string
   stage?: AngularStage
   meshStage?: { node: string; widthM: number; heightM: number }
   spawn?: { positionM: [number, number, number]; yawDeg: number }
 }
 
-/** Normalize a stored manifest + public asset URL into a VenueScan, or null. */
+/** Normalize a stored manifest into a VenueScan. `toUrl` maps a storage path
+ *  to its public URL (a splat also resolves its proxy mesh). Returns null if
+ *  the manifest is incomplete for its tier. */
 export function venueScanFromManifest(
   manifest: Record<string, unknown> | null | undefined,
-  url: string,
+  toUrl: (storagePath: string) => string,
 ): VenueScan | null {
   const tier = manifest?.tier
+  const asset = manifest?.asset as { files?: string[]; splatProxy?: string | null } | undefined
+  const primary = asset?.files?.[0]
+  if (!primary) return null
+  const url = toUrl(primary)
   const anchors = manifest?.anchors as Record<string, unknown> | undefined
   const ss = anchors?.stageScreen as Record<string, unknown> | undefined
+
   if (tier === 'PANO_360') {
     const stage = angularStageFromManifest(manifest)
     return stage ? { tier, url, stage } : null
   }
-  if (tier === 'NAV_MESH' && ss && ss.kind === 'rect') {
+
+  if ((tier === 'NAV_MESH' || tier === 'SPLAT') && ss && ss.kind === 'rect') {
+    if (tier === 'SPLAT' && !asset?.splatProxy) return null
     const spawnRaw = anchors?.spawn as Record<string, unknown> | undefined
     const pos = Array.isArray(spawnRaw?.positionM) ? (spawnRaw!.positionM as number[]) : [0, 1.6, 8]
     return {
       tier,
       url,
+      proxyUrl: tier === 'SPLAT' ? toUrl(asset!.splatProxy as string) : undefined,
       meshStage: {
         node: String(ss.node ?? 'ANCHOR_stage_screen'),
         widthM: Number(ss.widthM) || 8,

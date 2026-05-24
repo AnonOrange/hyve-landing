@@ -4,7 +4,11 @@
 import type { VenueManifest, VenueTier } from '@/lib/attend/venues/manifest-types'
 import { validateManifest } from '@/lib/attend/venues/manifest-validator'
 import { buildVenueAssetRecord } from '@/lib/attend/venues/venue-record'
-import { buildPano360Manifest, buildNavMeshManifest } from '@/lib/attend/venues/manifest-builder'
+import {
+  buildPano360Manifest,
+  buildNavMeshManifest,
+  buildSplatManifest,
+} from '@/lib/attend/venues/manifest-builder'
 import { uploadVenueObject } from '@/lib/attend/venues/venue-storage'
 import {
   insertVenue,
@@ -132,6 +136,54 @@ export async function uploadVenueMeshAsset(input: {
     tier: 'NAV_MESH',
     manifest,
     storagePath: path,
+    actor: input.actor,
+  })
+}
+
+/**
+ * Tier-3 contracted intake (reviewer-only): a Gaussian splat + its parallel
+ * proxy .glb (the proxy supplies anchors/navigation since splats have no
+ * surfaces). Stores both, builds the SPLAT manifest, validates + persists.
+ */
+export async function uploadVenueSplatAsset(input: {
+  venueId: string
+  actor: string
+  splat: { bytes: ArrayBuffer; contentType: string; ext: string }
+  proxy: { bytes: ArrayBuffer; contentType: string }
+  stageNode: string
+  stageWidthM: number
+  stageHeightM: number
+  spawnPositionM: [number, number, number]
+  spawnYawDeg: number
+  scaleDescription: string
+  scaleMeters: number
+}) {
+  const stamp = Date.now()
+  const splatExt = ['ksplat', 'ply', 'splat'].includes(input.splat.ext) ? input.splat.ext : 'ksplat'
+  const splatPath = `${input.venueId}/splat-${stamp}.${splatExt}`
+  const proxyPath = `${input.venueId}/splat-proxy-${stamp}.glb`
+  await uploadVenueObject(splatPath, input.splat.bytes, input.splat.contentType || 'application/octet-stream')
+  await uploadVenueObject(proxyPath, input.proxy.bytes, input.proxy.contentType || 'model/gltf-binary')
+  const manifest = buildSplatManifest({
+    file: splatPath,
+    proxyFile: proxyPath,
+    stageNode: input.stageNode || 'ANCHOR_stage_screen',
+    stageWidthM: input.stageWidthM,
+    stageHeightM: input.stageHeightM,
+    spawnPositionM: input.spawnPositionM,
+    spawnYawDeg: input.spawnYawDeg,
+    scaleReference: { description: input.scaleDescription, realMeters: input.scaleMeters },
+    capturedAt: new Date().toISOString().slice(0, 10),
+    method: 'hyve-contracted',
+    operator: 'hyve-contracted',
+    ownerWarrantsRights: true,
+    brandingCleared: true,
+  })
+  return persistVenueAsset({
+    venueId: input.venueId,
+    tier: 'SPLAT',
+    manifest,
+    storagePath: splatPath,
     actor: input.actor,
   })
 }
