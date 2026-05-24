@@ -4,7 +4,7 @@
 import type { VenueManifest, VenueTier } from '@/lib/attend/venues/manifest-types'
 import { validateManifest } from '@/lib/attend/venues/manifest-validator'
 import { buildVenueAssetRecord } from '@/lib/attend/venues/venue-record'
-import { buildPano360Manifest } from '@/lib/attend/venues/manifest-builder'
+import { buildPano360Manifest, buildNavMeshManifest } from '@/lib/attend/venues/manifest-builder'
 import { uploadVenueObject } from '@/lib/attend/venues/venue-storage'
 import {
   insertVenue,
@@ -88,6 +88,48 @@ export async function uploadVenuePanoAsset(input: {
   return persistVenueAsset({
     venueId: input.venueId,
     tier: 'PANO_360',
+    manifest,
+    storagePath: path,
+    actor: input.actor,
+  })
+}
+
+/**
+ * Tier-2 contracted intake (reviewer-only): upload an optimized .glb to the
+ * bucket, build its NAV_MESH manifest, validate + persist. Venues can't
+ * self-produce these, so this runs from the admin area.
+ */
+export async function uploadVenueMeshAsset(input: {
+  venueId: string
+  actor: string
+  file: { bytes: ArrayBuffer; contentType: string }
+  stageNode: string
+  stageWidthM: number
+  stageHeightM: number
+  spawnPositionM: [number, number, number]
+  spawnYawDeg: number
+  scaleDescription: string
+  scaleMeters: number
+}) {
+  const path = `${input.venueId}/mesh-${Date.now()}.glb`
+  await uploadVenueObject(path, input.file.bytes, input.file.contentType || 'model/gltf-binary')
+  const manifest = buildNavMeshManifest({
+    file: path,
+    stageNode: input.stageNode || 'ANCHOR_stage_screen',
+    stageWidthM: input.stageWidthM,
+    stageHeightM: input.stageHeightM,
+    spawnPositionM: input.spawnPositionM,
+    spawnYawDeg: input.spawnYawDeg,
+    scaleReference: { description: input.scaleDescription, realMeters: input.scaleMeters },
+    capturedAt: new Date().toISOString().slice(0, 10),
+    method: 'hyve-contracted',
+    operator: 'hyve-contracted',
+    ownerWarrantsRights: true,
+    brandingCleared: true,
+  })
+  return persistVenueAsset({
+    venueId: input.venueId,
+    tier: 'NAV_MESH',
     manifest,
     storagePath: path,
     actor: input.actor,

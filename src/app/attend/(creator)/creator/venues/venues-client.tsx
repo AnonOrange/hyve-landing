@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { equirectClickToAngles } from '@/lib/attend/venues/equirect'
-import type { ViewerStage } from '@/app/attend/_components/venue-viewer'
+import type { VenueScan } from '@/lib/attend/venues/viewer-math'
 
 // Three.js viewer is heavy + WebGL-only, so it's code-split and client-only;
 // it loads only when a creator opens a preview.
@@ -22,14 +22,14 @@ const primaryBtn =
   'rounded bg-[#E8C456] px-4 py-2 text-sm font-bold text-black transition hover:brightness-110 disabled:opacity-50'
 const card = 'rounded-lg border border-[#2a2135] bg-[#0E1E3A] p-5'
 
-export type VenueWithPano = {
+export type VenueWithScan = {
   id: string
   slug: string
   name: string
-  pano: { url: string; stage: ViewerStage } | null
+  scan: VenueScan | null
 }
 
-export default function VenuesClient({ venues }: { venues: VenueWithPano[] }) {
+export default function VenuesClient({ venues }: { venues: VenueWithScan[] }) {
   return (
     <div className="py-8">
       <NewVenue />
@@ -99,7 +99,7 @@ function NewVenue() {
 type Placement = { xPct: number; yPct: number; azimuthDeg: number; elevationDeg: number }
 type UploadResult = { status: string; warnings: string[]; errors: string[] }
 
-function VenueUploader({ venue }: { venue: VenueWithPano }) {
+function VenueUploader({ venue }: { venue: VenueWithScan }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [placement, setPlacement] = useState<Placement | null>(null)
@@ -179,7 +179,7 @@ function VenueUploader({ venue }: { venue: VenueWithPano }) {
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-base font-black">{venue.name}</h2>
         <div className="flex items-center gap-3">
-          {venue.pano && (
+          {venue.scan && (
             <button
               onClick={() => setShow3d((v) => !v)}
               className="rounded border border-[#E8C456] px-2.5 py-1 text-[10px] font-bold tracking-widest text-[#E8C456] transition hover:bg-[#E8C456]/10"
@@ -191,17 +191,19 @@ function VenueUploader({ venue }: { venue: VenueWithPano }) {
         </div>
       </div>
 
-      {venue.pano && show3d && (
+      {venue.scan && show3d && (
         <div className="mt-4">
-          <VenueViewer panoUrl={venue.pano.url} stage={venue.pano.stage} />
+          <VenueViewer scan={venue.scan} />
           <p className="mt-2 text-[10px] text-[#9e8a55]">
-            Drag to look around. The gold frame marks where the live stage screen sits.
+            {venue.scan.tier === 'NAV_MESH'
+              ? 'Drag to look, WASD to walk. The panel marks the live stage screen.'
+              : 'Drag to look around. The gold frame marks where the live stage screen sits.'}
           </p>
         </div>
       )}
 
       <label className="mt-4 block text-xs font-bold tracking-[0.2em] text-[#9e8a55]">
-        {venue.pano ? '360° PANO — upload a new one to replace' : '360° PANO (equirectangular 2:1)'}
+        {venue.scan ? '360° PANO — upload a new one to replace' : '360° PANO (equirectangular 2:1)'}
       </label>
       <input
         type="file"

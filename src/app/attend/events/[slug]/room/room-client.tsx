@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
-import type { ViewerStage } from '@/app/attend/_components/venue-viewer'
+import type { VenueScan } from '@/lib/attend/venues/viewer-math'
 import MuxPlayer from './mux-player'
 import LivePanel from './live-panel'
 
@@ -26,7 +26,7 @@ export default function RoomClient({
   eventStatus,
   playbackId,
   playbackToken,
-  venuePano,
+  venueScan,
 }: {
   slug: string
   eventId: string
@@ -34,7 +34,7 @@ export default function RoomClient({
   eventStatus: string
   playbackId: string | null
   playbackToken: string | null
-  venuePano: { url: string; stage: ViewerStage } | null
+  venueScan: VenueScan | null
 }) {
   const [error, setError] = useState<string | null>(null)
   const [view3d, setView3d] = useState(false)
@@ -67,7 +67,7 @@ export default function RoomClient({
       <div className="mt-4 flex items-center justify-between gap-4">
         <h1 className="text-2xl font-black">{eventTitle}</h1>
         <div className="flex items-center gap-3">
-          {venuePano && (
+          {venueScan && (
             <button
               onClick={() => setView3d((v) => !v)}
               className="rounded border border-[#E8C456] px-2.5 py-1 text-[10px] font-bold tracking-widest text-[#E8C456] transition hover:bg-[#E8C456]/10"
@@ -83,10 +83,9 @@ export default function RoomClient({
 
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          {view3d && venuePano ? (
+          {view3d && venueScan ? (
             <VenueViewer
-              panoUrl={venuePano.url}
-              stage={venuePano.stage}
+              scan={venueScan}
               videoUrl={
                 playbackId && playbackToken
                   ? `https://stream.mux.com/${playbackId}.m3u8?token=${playbackToken}`

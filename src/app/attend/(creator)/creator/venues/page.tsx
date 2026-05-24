@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation'
 import { requireCreator } from '@/lib/attend/identity/roles'
-import { listVenuesManagedBy, getVenueActivePano } from '@/lib/attend/venues/venue-repository'
+import { listVenuesManagedBy, getVenueActiveScan } from '@/lib/attend/venues/venue-repository'
 import { publicVenueUrl } from '@/lib/attend/venues/venue-storage'
-import { angularStageFromManifest } from '@/lib/attend/venues/viewer-math'
+import { venueScanFromManifest } from '@/lib/attend/venues/viewer-math'
 import { PageHero } from '@/app/attend/_components/page-hero'
-import VenuesClient, { type VenueWithPano } from './venues-client'
+import VenuesClient, { type VenueWithScan } from './venues-client'
 
 export const metadata = { title: 'Venues — HYVE Attend' }
 export const dynamic = 'force-dynamic'
@@ -14,16 +14,13 @@ export default async function CreatorVenuesPage() {
   if (!profile) redirect('/attend/login')
   const venues = await listVenuesManagedBy(profile.id)
 
-  const withPano: VenueWithPano[] = await Promise.all(
+  const withScan: VenueWithScan[] = await Promise.all(
     venues.map(async (v) => {
-      const pano = await getVenueActivePano(v.id)
-      const stage = pano ? angularStageFromManifest(pano.manifest) : null
-      return {
-        id: v.id,
-        slug: v.slug,
-        name: v.name,
-        pano: pano && stage ? { url: publicVenueUrl(pano.storagePath), stage } : null,
-      }
+      const asset = await getVenueActiveScan(v.id)
+      const scan = asset
+        ? venueScanFromManifest(asset.manifest, publicVenueUrl(asset.storagePath))
+        : null
+      return { id: v.id, slug: v.slug, name: v.name, scan }
     }),
   )
 
@@ -36,7 +33,7 @@ export default async function CreatorVenuesPage() {
         subtitle="Upload a 360° scan of your space, mark where the stage screen sits, and it becomes a virtual venue for your shows. Bigger captures (walkable 3D) can be scanned by HYVE."
         back={{ href: '/attend/creator', label: 'Back to events' }}
       />
-      <VenuesClient venues={withPano} />
+      <VenuesClient venues={withScan} />
     </>
   )
 }

@@ -51,3 +51,46 @@ export function angularStageFromManifest(
     hFovDeg: Number(ss.hFovDeg) || 60,
   }
 }
+
+// A normalized, render-ready description of a venue scan. The viewer branches
+// on `tier`: PANO_360 uses `stage` (angular); NAV_MESH uses `meshStage` (the
+// stage node + dims) and `spawn`.
+export interface VenueScan {
+  tier: 'PANO_360' | 'NAV_MESH'
+  url: string
+  stage?: AngularStage
+  meshStage?: { node: string; widthM: number; heightM: number }
+  spawn?: { positionM: [number, number, number]; yawDeg: number }
+}
+
+/** Normalize a stored manifest + public asset URL into a VenueScan, or null. */
+export function venueScanFromManifest(
+  manifest: Record<string, unknown> | null | undefined,
+  url: string,
+): VenueScan | null {
+  const tier = manifest?.tier
+  const anchors = manifest?.anchors as Record<string, unknown> | undefined
+  const ss = anchors?.stageScreen as Record<string, unknown> | undefined
+  if (tier === 'PANO_360') {
+    const stage = angularStageFromManifest(manifest)
+    return stage ? { tier, url, stage } : null
+  }
+  if (tier === 'NAV_MESH' && ss && ss.kind === 'rect') {
+    const spawnRaw = anchors?.spawn as Record<string, unknown> | undefined
+    const pos = Array.isArray(spawnRaw?.positionM) ? (spawnRaw!.positionM as number[]) : [0, 1.6, 8]
+    return {
+      tier,
+      url,
+      meshStage: {
+        node: String(ss.node ?? 'ANCHOR_stage_screen'),
+        widthM: Number(ss.widthM) || 8,
+        heightM: Number(ss.heightM) || 4.5,
+      },
+      spawn: {
+        positionM: [Number(pos[0]) || 0, Number(pos[1]) || 1.6, Number(pos[2]) || 8],
+        yawDeg: Number(spawnRaw?.yawDeg) || 0,
+      },
+    }
+  }
+  return null
+}

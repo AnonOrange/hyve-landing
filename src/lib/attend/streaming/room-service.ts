@@ -5,9 +5,9 @@ import { ValidationError } from '@/lib/attend/events/service'
 import { getEventStream } from '@/lib/attend/streaming/streaming-service'
 import { streamProvider } from '@/lib/attend/streaming/provider'
 import { listRoomTicketsForOwner } from '@/lib/attend/streaming/attendance-repository'
-import { getVenueActivePano } from '@/lib/attend/venues/venue-repository'
+import { getVenueActiveScan } from '@/lib/attend/venues/venue-repository'
 import { publicVenueUrl } from '@/lib/attend/venues/venue-storage'
-import { angularStageFromManifest, type AngularStage } from '@/lib/attend/venues/viewer-math'
+import { venueScanFromManifest, type VenueScan } from '@/lib/attend/venues/viewer-math'
 import { supaPost } from '@/lib/supabase'
 
 const LIVE_ROOM_STATUSES = ['SOUNDCHECK', 'DOORS_OPEN', 'LIVE']
@@ -35,11 +35,11 @@ export interface RoomView {
   ticketId: string
   playbackId: string | null
   playbackToken: string | null
-  venuePano: { url: string; stage: AngularStage } | null
+  venueScan: VenueScan | null
 }
 
 /** The room page's data: access, a signed Mux playback token, and (if the
- *  event is linked to a venue) that venue's 360° pano for the 3D view. */
+ *  event is linked to a venue) that venue's scan for the 3D view. */
 export async function getRoomView(slug: string, profileId: string): Promise<RoomView | null> {
   const access = await getRoomAccess(slug, profileId)
   if (!access) return null
@@ -52,14 +52,13 @@ export async function getRoomView(slug: string, profileId: string): Promise<Room
     playbackToken = await streamProvider().signPlaybackToken(stream.mux_playback_id)
   }
 
-  let venuePano: RoomView['venuePano'] = null
+  let venueScan: VenueScan | null = null
   if (access.event.venue_id) {
-    const pano = await getVenueActivePano(access.event.venue_id)
-    const stage = pano ? angularStageFromManifest(pano.manifest) : null
-    if (pano && stage) venuePano = { url: publicVenueUrl(pano.storagePath), stage }
+    const asset = await getVenueActiveScan(access.event.venue_id)
+    if (asset) venueScan = venueScanFromManifest(asset.manifest, publicVenueUrl(asset.storagePath))
   }
 
-  return { event: access.event, ticketId: access.ticketId, playbackId, playbackToken, venuePano }
+  return { event: access.event, ticketId: access.ticketId, playbackId, playbackToken, venueScan }
 }
 
 export interface CheckInContext {

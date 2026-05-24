@@ -55,6 +55,16 @@ export async function listVenueAssets(venueId: string): Promise<unknown[]> {
   return (await res.json()) as unknown[]
 }
 
+/** All non-deleted venues — admin (reviewer) view for contracted mesh intake. */
+export async function listAllVenues(): Promise<VenueRow[]> {
+  const res = await supaGet(
+    'attend_venues',
+    `deleted_at=is.null&order=created_at.desc&select=id,slug,name,managed_by`,
+  )
+  if (!res.ok) throw new Error(`listAllVenues failed: ${res.status} ${await res.text()}`)
+  return (await res.json()) as VenueRow[]
+}
+
 export async function listVenuesManagedBy(profileId: string): Promise<VenueRow[]> {
   const res = await supaGet(
     'attend_venues',
@@ -70,15 +80,21 @@ export async function listVenueSlugs(): Promise<string[]> {
   return ((await res.json()) as { slug: string }[]).map((r) => r.slug)
 }
 
-/** The latest displayable PANO_360 scan for a venue, or null. */
-export async function getVenueActivePano(
+/** The latest displayable scan for a venue (either tier), or null. */
+export async function getVenueActiveScan(
   venueId: string,
-): Promise<{ storagePath: string; manifest: Record<string, unknown> } | null> {
+): Promise<{ tier: string; storagePath: string; manifest: Record<string, unknown> } | null> {
   const res = await supaGet(
     'attend_venue_assets',
-    `venue_id=eq.${encodeURIComponent(venueId)}&tier=eq.PANO_360&status=in.(VALIDATED,ACTIVE)&deleted_at=is.null&order=created_at.desc&limit=1&select=storage_path,manifest`,
+    `venue_id=eq.${encodeURIComponent(venueId)}&status=in.(VALIDATED,ACTIVE)&deleted_at=is.null&order=created_at.desc&limit=1&select=tier,storage_path,manifest`,
   )
-  if (!res.ok) throw new Error(`getVenueActivePano failed: ${res.status} ${await res.text()}`)
-  const rows = (await res.json()) as { storage_path: string; manifest: Record<string, unknown> }[]
-  return rows[0] ? { storagePath: rows[0].storage_path, manifest: rows[0].manifest } : null
+  if (!res.ok) throw new Error(`getVenueActiveScan failed: ${res.status} ${await res.text()}`)
+  const rows = (await res.json()) as {
+    tier: string
+    storage_path: string
+    manifest: Record<string, unknown>
+  }[]
+  return rows[0]
+    ? { tier: rows[0].tier, storagePath: rows[0].storage_path, manifest: rows[0].manifest }
+    : null
 }
