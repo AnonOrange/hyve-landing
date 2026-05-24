@@ -2,6 +2,7 @@
 // order, and fulfil it once payment confirms. The money-critical multi-table
 // writes are the attend_create_pending_order / attend_complete_checkout RPCs.
 import type Stripe from 'stripe'
+import { ATTEND_BETA_MODE } from '@/lib/attend/config'
 import { attendStripe } from '@/lib/attend/payments/stripe'
 import { calculateFees, type ShowType } from '@/lib/attend/payments/fee-calculator'
 import { priceSelections, type Selection } from '@/lib/attend/payments/checkout-pricing'
@@ -37,6 +38,10 @@ export async function startCheckout(
     taxEstimateCents: 0,
     discountsCents: 0,
     currency: 'usd',
+    // Beta window: HYVE takes 0% — the stored hyve_fee_cents is 0, which
+    // flows into ARTIST_NET_PENDING (attend_complete_checkout) and on to
+    // settlement, so creators keep 100% of sales (less Stripe's fee).
+    waivePlatformFee: ATTEND_BETA_MODE,
   })
 
   // Atomic: hold inventory + create the PENDING order and its HELD_IN_CART tickets.

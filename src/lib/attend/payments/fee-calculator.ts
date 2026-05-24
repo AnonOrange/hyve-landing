@@ -27,6 +27,14 @@ export interface FeeInput {
   taxEstimateCents: number
   discountsCents: number
   currency: string
+  /**
+   * Beta window: waive every HYVE charge. The platform fee and the $50
+   * promotion-registration fee both go to 0, so the artist keeps 100% of
+   * the ticket subtotal (less the processor fee, which is Stripe's charge,
+   * not ours, and cannot be waived). Drive this from ATTEND_BETA_MODE at
+   * the call site — the calculator itself stays pure.
+   */
+  waivePlatformFee?: boolean
 }
 
 export interface FeeBreakdown {
@@ -55,7 +63,11 @@ const REGISTRATION_FEE_CENTS = 5_000
 export function calculateFees(input: FeeInput): FeeBreakdown {
   const subtotal = Math.max(0, input.ticketSubtotalCents - input.discountsCents)
 
-  const hyvePlatformFeeCents = percentOf(subtotal, HYVE_FEE_PERCENT[input.showType])
+  // Beta waives the HYVE platform fee entirely; the processor fee is Stripe's
+  // and is never waived.
+  const hyvePlatformFeeCents = input.waivePlatformFee
+    ? 0
+    : percentOf(subtotal, HYVE_FEE_PERCENT[input.showType])
   const processorFeeCents =
     input.processorFeeEstimateCents ??
     (subtotal > 0 ? percentOf(subtotal, STRIPE_PERCENT) + STRIPE_FIXED_CENTS : 0)
@@ -75,7 +87,8 @@ export function calculateFees(input: FeeInput): FeeBreakdown {
       : subtotal
 
   const isPaid = subtotal > 0
-  const promotionRegistrationFeeCents = isPaid ? REGISTRATION_FEE_CENTS : 0
+  const promotionRegistrationFeeCents =
+    isPaid && !input.waivePlatformFee ? REGISTRATION_FEE_CENTS : 0
 
   return {
     ticketSubtotalCents: subtotal,

@@ -81,15 +81,16 @@ function BetaDisclaimer() {
       </span>
       <div className="flex-1">
         <h2 className="text-base font-black text-white sm:text-lg">
-          We&rsquo;re live in beta — every show registers free.
+          We&rsquo;re live in beta — everything&rsquo;s free right now.
         </h2>
         <p className="mt-1.5 text-sm leading-relaxed text-[#ede8d8]/85">
-          HYVE Attend is currently in public beta while we work the bugs out.{' '}
-          <span className="font-bold text-[#E8C456]">Every show is free to register</span>{' '}
-          during this window — the $50 promotion-registration fee is waived for everyone.
-          We still earn our platform percentage on ticket sales (so attendees still see an
-          itemised checkout, and creators still see Stripe Connect payouts). The $50 fee
-          turns on at full launch; after that, the first 2 shows you host are still on us.
+          HYVE Attend is in public beta while we work the bugs out, so{' '}
+          <span className="font-bold text-[#E8C456]">HYVE charges you nothing</span> during
+          this window: no $50 registration fee, and 0% platform fee on ticket sales. You
+          keep 100% of every ticket — the only deduction is the card processor&rsquo;s own
+          fee (Stripe&rsquo;s ~2.9% + 30¢), which isn&rsquo;t ours to waive. Payouts still
+          run through Stripe Connect exactly as they will at launch. When beta ends the
+          $50 fee and platform percentage turn on — and your first 2 shows stay free.
           If something breaks, please tell us.
         </p>
       </div>
@@ -140,12 +141,13 @@ function Intro() {
         A working live-events business in your browser.
       </h2>
       <p className="mt-5 text-base text-[#9e8a55] md:text-lg">
-        HYVE Attend is a complete platform for putting on live shows — low-fee
-        ticketing, a real browser event room with chat and reactions, automated
-        refund evidence, Stripe Connect payouts, and a built-in promotion campaign
-        that goes live with every show. Powered by virtual venues, immersive
-        experiences, and real-time engagement that connects performers and
-        audiences anywhere in the world.
+        HYVE Attend is a complete platform for putting on live shows —{' '}
+        {ATTEND_BETA_MODE ? 'free-to-host-in-beta' : 'low-fee'} ticketing, a real
+        browser event room with chat and reactions, automated refund evidence,
+        Stripe Connect payouts, and a built-in promotion campaign that goes live
+        with every show. Powered by virtual venues, immersive experiences, and
+        real-time engagement that connects performers and audiences anywhere in
+        the world.
       </p>
     </section>
   )
@@ -167,7 +169,7 @@ function ForCreators() {
         <Bullet>
           {ATTEND_BETA_MODE ? (
             <>
-              <span className="font-bold text-[#E8C456]">Free during beta</span> — every show registers free; first 2 stay free at full launch
+              <span className="font-bold text-[#E8C456]">Free during beta</span> — no $50 fee, 0% platform fee; you keep 100% of ticket sales
             </>
           ) : (
             <>
@@ -175,7 +177,11 @@ function ForCreators() {
             </>
           )}
         </Bullet>
-        <Bullet>Low-fee ticketing, all-in itemised at checkout</Bullet>
+        <Bullet>
+          {ATTEND_BETA_MODE
+            ? 'Only card processing applies in beta — itemised all-in at checkout'
+            : 'Low-fee ticketing, all-in itemised at checkout'}
+        </Bullet>
         <Bullet>Stripe Connect payouts, released after a short settlement hold</Bullet>
         <Bullet>Real-time browser event room — chat, reactions, attendance log</Bullet>
         <Bullet>Automated refund + dispute evidence packets</Bullet>
@@ -226,7 +232,7 @@ function HowItWorks() {
           steps={[
             'Create the show — title, time, ticket types.',
             ATTEND_BETA_MODE
-              ? 'Register the show — free during beta. Opens the promotion campaign.'
+              ? 'Register the show — free in beta (no $50 fee, 0% platform fee). Opens the promotion campaign.'
               : 'Register the show — first 2 are free, $50 after that. Funds the promotion campaign.',
             'Connect your payout account (Stripe Connect Express).',
             'Run a stream test, submit for review, publish.',
@@ -356,16 +362,18 @@ function Pricing() {
       {ATTEND_BETA_MODE ? (
         <>
           <h2 className="mt-3 text-3xl font-black md:text-4xl">
-            <span className="text-[#E8C456]">Every show free during beta.</span> Itemised platform fee on tickets.
+            <span className="text-[#E8C456]">Everything&rsquo;s free during beta.</span> Keep 100% of your ticket sales.
           </h2>
           <p className="mt-4 max-w-3xl text-base text-[#94A3B8]">
-            While HYVE Attend is in beta, every show registers for free — no $50 promotion
-            fee, full HYVE promotion campaign included. We earn our platform percentage on
-            ticket sales the same as we will at full launch, so attendees still see the
-            itemised checkout breakdown and creators still see Stripe Connect payouts.
-            At full launch the $50 registration fee turns on for everyone, with the first
-            2 shows on us — and the percentage on tickets stays exactly as it is today. No
-            subscriptions, no per-seat charges hiding in fine print.
+            While HYVE Attend is in beta, HYVE charges you nothing — no $50 registration
+            fee and a 0% platform fee on ticket sales, with the full HYVE promotion
+            campaign included on every show. You keep 100% of every ticket; the only
+            deduction is the card processor&rsquo;s own fee (Stripe&rsquo;s ~2.9% + 30¢),
+            which isn&rsquo;t ours to waive. Payouts settle through Stripe Connect just
+            like they will at launch. When beta ends, hosting becomes a one-time $50
+            registration per show (your first 2 free) and a small platform percentage on
+            tickets — both shown in the checkout breakdown. No subscriptions, no per-seat
+            charges hiding in fine print.
           </p>
         </>
       ) : (

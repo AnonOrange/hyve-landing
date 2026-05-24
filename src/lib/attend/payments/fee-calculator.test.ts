@@ -66,6 +66,42 @@ describe('calculateFees — registration fee', () => {
   })
 })
 
+describe('calculateFees — beta waiver (waivePlatformFee)', () => {
+  it('zeroes the platform fee so the artist keeps everything but Stripe (ABSORB)', () => {
+    const r = calculateFees({
+      showType: 'HUMAN_LIVE_BROADCAST',
+      ticketSubtotalCents: 2_500,
+      quantity: 1,
+      feeMode: 'ABSORB',
+      taxEstimateCents: 0,
+      discountsCents: 0,
+      currency: 'usd',
+      waivePlatformFee: true,
+    })
+    expect(r.hyvePlatformFeeCents).toBe(0)        // HYVE takes nothing in beta
+    expect(r.processorFeeCents).toBe(103)         // Stripe's fee is never waived
+    expect(r.buyerTotalCents).toBe(2_500)         // buyer still pays the ticket price
+    expect(r.artistNetEstimateCents).toBe(2_397)  // 2500 - 0 - 103
+    expect(r.promotionRegistrationFeeCents).toBe(0) // $50 registration also waived
+  })
+
+  it('drops the platform fee off the buyer total under PASS_TO_BUYER', () => {
+    const r = calculateFees({
+      showType: 'AI_SCHEDULED_PERFORMANCE',
+      ticketSubtotalCents: 2_500,
+      quantity: 1,
+      feeMode: 'PASS_TO_BUYER',
+      taxEstimateCents: 0,
+      discountsCents: 0,
+      currency: 'usd',
+      waivePlatformFee: true,
+    })
+    expect(r.hyvePlatformFeeCents).toBe(0)        // even the 5.5% AI fee is waived
+    expect(r.buyerTotalCents).toBe(2_603)         // 2500 + 0 hyve + 103 processor
+    expect(r.artistNetEstimateCents).toBe(2_500)
+  })
+})
+
 describe('calculateFees — tax and discounts', () => {
   it('adds tax to the buyer total and subtracts discounts from the subtotal', () => {
     const r = calculateFees({

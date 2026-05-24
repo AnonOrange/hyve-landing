@@ -134,7 +134,7 @@ export default function EventDashboardClient({
             ? 'Promote your show (free)'
             : 'Pay the registration fee'
         const body = beta
-          ? 'HYVE Attend is in beta — all shows register for free, no $50 fee. Platform percentages on ticket sales still apply. The fee starts at full launch.'
+          ? 'HYVE Attend is in beta — everything is free right now. No $50 fee and a 0% platform fee, so you keep 100% of ticket sales (only the card processor’s fee applies). The HYVE fees start at full launch.'
           : free
             ? `Your ${ordinal} show is on the house — registration opens its promotion campaign at no charge. Platform percentages on ticket sales still apply.`
             : 'A one-time $50 fee registers your show and opens its promotion campaign.'

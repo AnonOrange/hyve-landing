@@ -26,7 +26,7 @@ export default async function CreatorPage() {
         title="Run a live show like a working business."
         subtitle={
           ATTEND_BETA_MODE
-            ? "We're in beta — every show registers free, no $50 fee. Platform percentages on ticket sales still apply."
+            ? "We're in beta — everything's free right now. No $50 fee, 0% platform fee, you keep 100% of ticket sales (only card processing applies)."
             : 'Ticketing, payouts, promotion, and a real browser event room — under one roof.'
         }
         meta={
