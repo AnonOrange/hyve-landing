@@ -69,3 +69,16 @@ export async function listVenueSlugs(): Promise<string[]> {
   if (!res.ok) throw new Error(`listVenueSlugs failed: ${res.status} ${await res.text()}`)
   return ((await res.json()) as { slug: string }[]).map((r) => r.slug)
 }
+
+/** The latest displayable PANO_360 scan for a venue, or null. */
+export async function getVenueActivePano(
+  venueId: string,
+): Promise<{ storagePath: string; manifest: Record<string, unknown> } | null> {
+  const res = await supaGet(
+    'attend_venue_assets',
+    `venue_id=eq.${encodeURIComponent(venueId)}&tier=eq.PANO_360&status=in.(VALIDATED,ACTIVE)&deleted_at=is.null&order=created_at.desc&limit=1&select=storage_path,manifest`,
+  )
+  if (!res.ok) throw new Error(`getVenueActivePano failed: ${res.status} ${await res.text()}`)
+  const rows = (await res.json()) as { storage_path: string; manifest: Record<string, unknown> }[]
+  return rows[0] ? { storagePath: rows[0].storage_path, manifest: rows[0].manifest } : null
+}
