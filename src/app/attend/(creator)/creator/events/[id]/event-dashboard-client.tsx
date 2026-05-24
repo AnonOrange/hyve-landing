@@ -21,12 +21,14 @@ export default function EventDashboardClient({
   payoutsEnabled,
   stream,
   freeRegistrationsRemaining,
+  venues,
 }: {
   event: EventRow
   ticketTypes: TicketTypeRow[]
   payoutsEnabled: boolean
   stream: StreamRow | null
   freeRegistrationsRemaining: number
+  venues: { id: string; name: string }[]
 }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -97,6 +99,29 @@ export default function EventDashboardClient({
       }
       const data = (await res.json().catch(() => ({}))) as { error?: string }
       setError(data.error ?? 'Stream setup could not be completed')
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // Link (or clear) the event's 3D venue, then reload.
+  async function setVenue(venueId: string | null) {
+    setBusy(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/attend/events/${event.id}/venue`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ venueId }),
+      })
+      if (res.ok) {
+        window.location.reload()
+        return
+      }
+      const data = (await res.json().catch(() => ({}))) as { error?: string }
+      setError(data.error ?? 'Could not set the venue')
     } catch {
       setError('Something went wrong. Please try again.')
     } finally {
@@ -328,6 +353,38 @@ export default function EventDashboardClient({
       <div className="mt-6 flex flex-col gap-4">
         <SetupProgress status={event.status} showType={event.show_type} />
         {nextStep()}
+        <section className="rounded border border-[#2a2135] bg-[#111111] px-4 py-4">
+          <h2 className="text-xs font-black tracking-[0.2em] text-[#9e8a55]">3D VENUE</h2>
+          {venues.length === 0 ? (
+            <p className="mt-2 text-xs text-[#9e8a55]">
+              No venues yet —{' '}
+              <Link href="/attend/creator/venues" className="font-bold text-[#E8C456] hover:underline">
+                upload a 360° scan
+              </Link>{' '}
+              to let attendees watch inside your venue.
+            </p>
+          ) : (
+            <>
+              <p className="mt-2 text-xs text-[#9e8a55]">
+                Attach a venue so attendees can watch this show in 3D (the live stream mounts on
+                the venue&rsquo;s stage screen).
+              </p>
+              <select
+                value={event.venue_id ?? ''}
+                onChange={(e) => setVenue(e.target.value || null)}
+                disabled={busy}
+                className="mt-3 rounded border border-[#2a2135] bg-[#0E1E3A] px-3 py-2 text-sm text-[#ede8d8] outline-none focus:border-[#E8C456] disabled:opacity-50"
+              >
+                <option value="">No 3D venue</option>
+                {venues.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+        </section>
         <EventDetailsPanel event={event} editable={editable} />
         <TicketTypesPanel eventId={event.id} ticketTypes={ticketTypes} editable={editable} />
       </div>

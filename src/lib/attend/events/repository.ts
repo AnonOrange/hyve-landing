@@ -19,6 +19,7 @@ export interface EventRow {
   transfer_cutoff_hours: number
   policy_text: string | null
   replay_available: boolean
+  venue_id?: string | null
   created_at: string
   updated_at: string
   created_by: string | null

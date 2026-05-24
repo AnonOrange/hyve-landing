@@ -24,10 +24,12 @@ export interface ViewerStage {
 export default function VenueViewer({
   panoUrl,
   stage,
+  videoUrl,
 }: {
   panoUrl: string
   stage: ViewerStage
-  // videoUrl?: string — sub-plan #5 seam: live Mux video on the stage panel.
+  /** Live Mux HLS URL — when set, plays on the stage panel instead of the placeholder. */
+  videoUrl?: string
 }) {
   const mountRef = useRef<HTMLDivElement>(null)
   const [failed, setFailed] = useState(false)
@@ -84,6 +86,44 @@ export default function VenueViewer({
     panel.position.set(dir.x, dir.y, dir.z).multiplyScalar(STAGE_RADIUS)
     panel.lookAt(0, 0, 0)
     scene.add(panel)
+
+    // Live video on the stage panel (sub-plan #5): a Mux HLS stream as a
+    // VideoTexture. The toggle click that mounts the viewer is the user
+    // gesture that lets play() with audio through.
+    let video: HTMLVideoElement | null = null
+    let hls: { destroy: () => void } | null = null
+    let videoTex: THREE.VideoTexture | null = null
+    if (videoUrl) {
+      video = document.createElement('video')
+      video.crossOrigin = 'anonymous'
+      video.playsInline = true
+      video.loop = false
+      const play = () => video?.play().catch(() => {})
+      if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = videoUrl
+        video.addEventListener('loadedmetadata', play)
+      } else {
+        void import('hls.js').then(({ default: Hls }) => {
+          if (disposed || !video) return
+          if (Hls.isSupported()) {
+            const h = new Hls()
+            h.loadSource(videoUrl)
+            h.attachMedia(video)
+            hls = h
+            play()
+          } else {
+            video.src = videoUrl
+            play()
+          }
+        })
+      }
+      videoTex = new THREE.VideoTexture(video)
+      videoTex.colorSpace = THREE.SRGBColorSpace
+      panelMat.map = videoTex
+      panelMat.color.set(0xffffff) // don't tint the video
+      panelMat.opacity = 1
+      panelMat.needsUpdate = true
+    }
 
     // Gold edge so the placeholder reads as "the screen goes here".
     const edgesGeo = new THREE.EdgesGeometry(panelGeo)
@@ -146,6 +186,13 @@ export default function VenueViewer({
       el.removeEventListener('pointerdown', onDown)
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
+      hls?.destroy()
+      if (video) {
+        video.pause()
+        video.removeAttribute('src')
+        video.load()
+      }
+      videoTex?.dispose()
       sphereGeo.dispose()
       sphereMat.dispose()
       texture.dispose()
@@ -156,7 +203,7 @@ export default function VenueViewer({
       renderer.dispose()
       if (el.parentNode === mount) mount.removeChild(el)
     }
-  }, [panoUrl, stage.azimuthDeg, stage.elevationDeg, stage.hFovDeg])
+  }, [panoUrl, stage.azimuthDeg, stage.elevationDeg, stage.hFovDeg, videoUrl])
 
   if (failed) {
     return (

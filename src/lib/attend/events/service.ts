@@ -10,6 +10,7 @@ import {
 } from '@/lib/attend/events/repository'
 import { assertTransition, draftTargetStatus, EventStatus } from '@/lib/attend/events/lifecycle'
 import { slugifyTitle, uniqueSlug } from '@/lib/attend/events/slug'
+import { listVenuesManagedBy } from '@/lib/attend/venues/venue-repository'
 
 /** The caller is not allowed to act on this resource. */
 export class ForbiddenError extends Error {}
@@ -36,6 +37,28 @@ const EDITABLE_FIELDS = [
   'title', 'description', 'starts_at', 'ends_at', 'timezone',
   'visibility', 'policy_text', 'refund_cutoff_hours', 'transfer_cutoff_hours',
 ] as const
+
+/**
+ * Link an event to one of the creator's venues (or clear it with null). The
+ * venue must be managed by the same creator. Used by the event dashboard's
+ * venue picker; the room reads venue_id to offer the 3D venue view.
+ */
+export async function linkEventVenue(
+  eventId: string,
+  venueId: string | null,
+  creatorId: string,
+): Promise<void> {
+  const event = await getEventById(eventId)
+  if (!event) throw new NotFoundError('Event not found')
+  if (event.creator_id !== creatorId) throw new ForbiddenError('This is not your event')
+  if (venueId) {
+    const venues = await listVenuesManagedBy(creatorId)
+    if (!venues.some((v) => v.id === venueId)) {
+      throw new ValidationError('That venue is not one of yours')
+    }
+  }
+  await updateEvent(eventId, { venue_id: venueId, updated_by: creatorId })
+}
 
 export async function createDraftEvent(creatorId: string, input: EventInput): Promise<EventRow> {
   if (!input.title?.trim()) throw new ValidationError('Title is required')

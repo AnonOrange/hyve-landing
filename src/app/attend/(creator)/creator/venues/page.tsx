@@ -2,25 +2,12 @@ import { redirect } from 'next/navigation'
 import { requireCreator } from '@/lib/attend/identity/roles'
 import { listVenuesManagedBy, getVenueActivePano } from '@/lib/attend/venues/venue-repository'
 import { publicVenueUrl } from '@/lib/attend/venues/venue-storage'
+import { angularStageFromManifest } from '@/lib/attend/venues/viewer-math'
 import { PageHero } from '@/app/attend/_components/page-hero'
 import VenuesClient, { type VenueWithPano } from './venues-client'
 
 export const metadata = { title: 'Venues — HYVE Attend' }
 export const dynamic = 'force-dynamic'
-
-// Pull the angular stageScreen out of a stored manifest, if present.
-function stageFromManifest(
-  manifest: Record<string, unknown>,
-): { azimuthDeg: number; elevationDeg: number; hFovDeg: number } | null {
-  const anchors = manifest?.anchors as Record<string, unknown> | undefined
-  const ss = anchors?.stageScreen as Record<string, unknown> | undefined
-  if (!ss || ss.kind !== 'angular') return null
-  return {
-    azimuthDeg: Number(ss.azimuthDeg) || 0,
-    elevationDeg: Number(ss.elevationDeg) || 0,
-    hFovDeg: Number(ss.hFovDeg) || 60,
-  }
-}
 
 export default async function CreatorVenuesPage() {
   const profile = await requireCreator()
@@ -30,7 +17,7 @@ export default async function CreatorVenuesPage() {
   const withPano: VenueWithPano[] = await Promise.all(
     venues.map(async (v) => {
       const pano = await getVenueActivePano(v.id)
-      const stage = pano ? stageFromManifest(pano.manifest) : null
+      const stage = pano ? angularStageFromManifest(pano.manifest) : null
       return {
         id: v.id,
         slug: v.slug,

@@ -30,3 +30,24 @@ export function stagePanelSize(
   const width = 2 * radius * Math.tan((hFovDeg * DEG) / 2)
   return { width, height: width / aspect }
 }
+
+export interface AngularStage {
+  azimuthDeg: number
+  elevationDeg: number
+  hFovDeg: number
+}
+
+/** Pull the angular stageScreen out of a stored manifest, or null. Shared by
+ *  the venues page and the room so they extract it identically. */
+export function angularStageFromManifest(
+  manifest: Record<string, unknown> | null | undefined,
+): AngularStage | null {
+  const anchors = manifest?.anchors as Record<string, unknown> | undefined
+  const ss = anchors?.stageScreen as Record<string, unknown> | undefined
+  if (!ss || ss.kind !== 'angular') return null
+  return {
+    azimuthDeg: Number(ss.azimuthDeg) || 0,
+    elevationDeg: Number(ss.elevationDeg) || 0,
+    hFovDeg: Number(ss.hFovDeg) || 60,
+  }
+}

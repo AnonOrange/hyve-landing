@@ -1,10 +1,23 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
+import type { ViewerStage } from '@/app/attend/_components/venue-viewer'
 import MuxPlayer from './mux-player'
 import LivePanel from './live-panel'
+
+// 3D venue viewer is heavy + WebGL-only — load it only when an attendee opts
+// into the 3D view. The 2D MuxPlayer path below is unchanged.
+const VenueViewer = dynamic(() => import('@/app/attend/_components/venue-viewer'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex aspect-video w-full items-center justify-center rounded border border-[#2a2135] bg-black text-xs text-[#9e8a55]">
+      Loading 3D venue…
+    </div>
+  ),
+})
 
 export default function RoomClient({
   slug,
@@ -13,6 +26,7 @@ export default function RoomClient({
   eventStatus,
   playbackId,
   playbackToken,
+  venuePano,
 }: {
   slug: string
   eventId: string
@@ -20,8 +34,10 @@ export default function RoomClient({
   eventStatus: string
   playbackId: string | null
   playbackToken: string | null
+  venuePano: { url: string; stage: ViewerStage } | null
 }) {
   const [error, setError] = useState<string | null>(null)
+  const [view3d, setView3d] = useState(false)
   const checkedIn = useRef(false)
 
   // Check in on entry (once — the ref guards React 18 StrictMode's double
@@ -50,14 +66,34 @@ export default function RoomClient({
 
       <div className="mt-4 flex items-center justify-between gap-4">
         <h1 className="text-2xl font-black">{eventTitle}</h1>
-        <span className="font-mono text-[10px] tracking-widest text-[#E8C456]">{eventStatus}</span>
+        <div className="flex items-center gap-3">
+          {venuePano && (
+            <button
+              onClick={() => setView3d((v) => !v)}
+              className="rounded border border-[#E8C456] px-2.5 py-1 text-[10px] font-bold tracking-widest text-[#E8C456] transition hover:bg-[#E8C456]/10"
+            >
+              {view3d ? '2D VIEW' : '3D VENUE'}
+            </button>
+          )}
+          <span className="font-mono text-[10px] tracking-widest text-[#E8C456]">{eventStatus}</span>
+        </div>
       </div>
 
       {error && <p className="mt-3 text-xs text-red-400">{error}</p>}
 
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          {playbackId && playbackToken ? (
+          {view3d && venuePano ? (
+            <VenueViewer
+              panoUrl={venuePano.url}
+              stage={venuePano.stage}
+              videoUrl={
+                playbackId && playbackToken
+                  ? `https://stream.mux.com/${playbackId}.m3u8?token=${playbackToken}`
+                  : undefined
+              }
+            />
+          ) : playbackId && playbackToken ? (
             <MuxPlayer playbackId={playbackId} playbackToken={playbackToken} />
           ) : (
             // Stage-background placeholder while the stream isn't live yet,

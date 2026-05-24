@@ -20,6 +20,7 @@ export default async function RoomPage({ params }: { params: { slug: string } })
       eventStatus={view.event.status}
       playbackId={view.playbackId}
       playbackToken={view.playbackToken}
+      venuePano={view.venuePano}
     />
   )
 }
