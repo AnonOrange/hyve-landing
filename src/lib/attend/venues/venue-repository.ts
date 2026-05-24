@@ -54,3 +54,18 @@ export async function listVenueAssets(venueId: string): Promise<unknown[]> {
   if (!res.ok) throw new Error(`listVenueAssets failed: ${res.status} ${await res.text()}`)
   return (await res.json()) as unknown[]
 }
+
+export async function listVenuesManagedBy(profileId: string): Promise<VenueRow[]> {
+  const res = await supaGet(
+    'attend_venues',
+    `managed_by=eq.${encodeURIComponent(profileId)}&deleted_at=is.null&order=created_at.desc&select=id,slug,name,managed_by`,
+  )
+  if (!res.ok) throw new Error(`listVenuesManagedBy failed: ${res.status} ${await res.text()}`)
+  return (await res.json()) as VenueRow[]
+}
+
+export async function listVenueSlugs(): Promise<string[]> {
+  const res = await supaGet('attend_venues', `select=slug`)
+  if (!res.ok) throw new Error(`listVenueSlugs failed: ${res.status} ${await res.text()}`)
+  return ((await res.json()) as { slug: string }[]).map((r) => r.slug)
+}

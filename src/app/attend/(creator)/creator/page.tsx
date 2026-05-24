@@ -30,12 +30,20 @@ export default async function CreatorPage() {
             : 'Ticketing, payouts, promotion, and a real browser event room — under one roof.'
         }
         meta={
-          <Link
-            href="/attend/creator/payouts"
-            className="font-mono text-[10px] font-bold tracking-widest text-[#E8C456] backdrop-blur hover:underline"
-          >
-            View payouts →
-          </Link>
+          <div className="flex flex-col items-end gap-1.5">
+            <Link
+              href="/attend/creator/venues"
+              className="font-mono text-[10px] font-bold tracking-widest text-[#E8C456] backdrop-blur hover:underline"
+            >
+              Venues →
+            </Link>
+            <Link
+              href="/attend/creator/payouts"
+              className="font-mono text-[10px] font-bold tracking-widest text-[#E8C456] backdrop-blur hover:underline"
+            >
+              View payouts →
+            </Link>
+          </div>
         }
       />
       <CreatorEventsClient events={events} payoutsEnabled={payouts} />
