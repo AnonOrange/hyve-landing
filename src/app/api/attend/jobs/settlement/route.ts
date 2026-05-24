@@ -8,7 +8,9 @@ import {
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const CRON_SECRET = process.env.ATTEND_CRON_SECRET
+// Vercel crons send `Authorization: Bearer $CRON_SECRET` (env var named
+// exactly CRON_SECRET), matching the umbrella/spy cron routes.
+const CRON_SECRET = process.env.CRON_SECRET
 
 // Constant-time bearer check — avoids leaking the secret via response timing.
 function authorized(header: string | null, secret: string): boolean {
@@ -25,7 +27,7 @@ function authorized(header: string | null, secret: string): boolean {
 // gated; both passes are idempotent, so a missed item is retried next tick.
 export async function GET(req: NextRequest) {
   if (!CRON_SECRET) {
-    console.error('[settlement] ATTEND_CRON_SECRET not set')
+    console.error('[settlement] CRON_SECRET not set')
     return NextResponse.json({ error: 'Cron not configured' }, { status: 500 })
   }
   if (!authorized(req.headers.get('authorization'), CRON_SECRET)) {

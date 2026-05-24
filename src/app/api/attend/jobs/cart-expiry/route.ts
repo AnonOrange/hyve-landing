@@ -5,7 +5,9 @@ import { expireStaleCarts } from '@/lib/attend/payments/cart-expiry-service'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const CRON_SECRET = process.env.ATTEND_CRON_SECRET
+// Vercel crons send `Authorization: Bearer $CRON_SECRET` (the env var must be
+// named exactly CRON_SECRET), matching the umbrella/spy cron routes.
+const CRON_SECRET = process.env.CRON_SECRET
 
 // Constant-time bearer check — avoids leaking the secret via response timing.
 function authorized(header: string | null, secret: string): boolean {
@@ -17,11 +19,12 @@ function authorized(header: string | null, secret: string): boolean {
   )
 }
 
-// GET /api/attend/jobs/cart-expiry — invoked on a schedule (GitHub Actions).
-// Bearer-secret gated; idempotent (attend_expire_order no-ops a non-PENDING order).
+// GET /api/attend/jobs/cart-expiry — invoked on a schedule (Vercel cron, see
+// vercel.json). Bearer-secret gated; idempotent (attend_expire_order no-ops a
+// non-PENDING order).
 export async function GET(req: NextRequest) {
   if (!CRON_SECRET) {
-    console.error('[cart-expiry] ATTEND_CRON_SECRET not set')
+    console.error('[cart-expiry] CRON_SECRET not set')
     return NextResponse.json({ error: 'Cron not configured' }, { status: 500 })
   }
   if (!authorized(req.headers.get('authorization'), CRON_SECRET)) {
