@@ -1,0 +1,56 @@
+// Raw-REST CRUD for venues + venue assets, via the shared Supabase helpers
+// (service-key access, matching the rest of attend). No business logic here.
+import { supaGet, supaPost } from '@/lib/supabase'
+import type { VenueAssetInsert } from '@/lib/attend/venues/venue-record'
+
+export interface VenueRow {
+  id: string
+  slug: string
+  name: string
+  managed_by: string | null
+}
+
+export async function getVenueBySlug(slug: string): Promise<VenueRow | null> {
+  const res = await supaGet(
+    'attend_venues',
+    `slug=eq.${encodeURIComponent(slug)}&deleted_at=is.null&select=id,slug,name,managed_by`,
+  )
+  if (!res.ok) throw new Error(`getVenueBySlug failed: ${res.status} ${await res.text()}`)
+  const rows = (await res.json()) as VenueRow[]
+  return rows[0] ?? null
+}
+
+export async function insertVenue(input: {
+  slug: string
+  name: string
+  city?: string
+  country?: string
+  managedBy?: string | null
+  actor: string
+}): Promise<VenueRow> {
+  const res = await supaPost('attend_venues', {
+    slug: input.slug,
+    name: input.name,
+    city: input.city ?? null,
+    country: input.country ?? null,
+    managed_by: input.managedBy ?? null,
+    created_by: input.actor,
+  })
+  if (!res.ok) throw new Error(`insertVenue failed: ${res.status} ${await res.text()}`)
+  return ((await res.json()) as VenueRow[])[0]
+}
+
+export async function insertVenueAsset(record: VenueAssetInsert): Promise<{ id: string }> {
+  const res = await supaPost('attend_venue_assets', record)
+  if (!res.ok) throw new Error(`insertVenueAsset failed: ${res.status} ${await res.text()}`)
+  return ((await res.json()) as { id: string }[])[0]
+}
+
+export async function listVenueAssets(venueId: string): Promise<unknown[]> {
+  const res = await supaGet(
+    'attend_venue_assets',
+    `venue_id=eq.${encodeURIComponent(venueId)}&deleted_at=is.null&order=created_at.desc`,
+  )
+  if (!res.ok) throw new Error(`listVenueAssets failed: ${res.status} ${await res.text()}`)
+  return (await res.json()) as unknown[]
+}
